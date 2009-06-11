@@ -25,6 +25,7 @@ setup(name='silva.core.upgrade',
       zip_safe=False,
       install_requires=[
           'setuptools',
+          'five.intid',
           'five.localsitemanager',
           ],
       )
