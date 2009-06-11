@@ -8,13 +8,14 @@ setup(name='silva.core.upgrade',
       description="Generic upgrade functions",
       long_description=open("README.txt").read() + "\n" +
                        open(os.path.join("docs", "HISTORY.txt")).read(),
-      # Get more strings from http://www.python.org/pypi?%3Aaction=list_classifiers
       classifiers=[
+        "Framework :: Zope2",
         "Programming Language :: Python",
         "Topic :: Software Development :: Libraries :: Python Modules",
+        "License :: OSI Approved :: BSD License",
         ],
       keywords='silva core upgrade',
-      author='Infrae',
+      author='Sylvain Viollon',
       author_email='info@infrae.com',
       url='',
       license='BSD',
@@ -24,9 +25,6 @@ setup(name='silva.core.upgrade',
       zip_safe=False,
       install_requires=[
           'setuptools',
-          # -*- Extra requirements: -*-
-      ],
-      entry_points="""
-      # -*- Entry points: -*-
-      """,
+          'five.localsitemanager',
+          ],
       )
