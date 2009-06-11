@@ -4,6 +4,7 @@
 
 from Products.Silva.interfaces import IInvisibleService
 from Products.Five.site.interfaces import IFiveSiteManager
+from OFS.SimpleItem import SimpleItem
 from zope.app.intid.interfaces import IIntIds
 from zope.app.component.interfaces import ISite
 from zope.app.component.hooks import setSite
@@ -11,6 +12,11 @@ from zope.component import queryUtility
 from zope.interface import alsoProvides
 
 from five.localsitemanager import make_objectmanager_site
+from five.intid.intid import OFSIntIds
+
+
+class IntIds(OFSIntIds, SimpleItem):
+    pass
 
 
 def clean_old_five_sm(context, create=True):
@@ -37,10 +43,10 @@ def setup_intid(context):
     """
     service = queryUtility(IIntIds)
     if service is None:
-        root._setObject('service_ids', OFSIntIds())
-        service = getattr(root, 'service_ids')
+        context._setObject('IIntIds', IntIds())
+        service = getattr(context, 'IIntIds')
         alsoProvides(service, IInvisibleService)
-        sm = root.getSiteManager()
+        sm = context.getSiteManager()
         sm.registerUtility(service, IIntIds)
 
 
@@ -52,7 +58,7 @@ def activate(context):
     sm = context.getSiteManager()
     if IFiveSiteManager.providedBy(sm):
         clean_old_five_sm(context, create=True)
-    setup_intid(sm)
+    setup_intid(context)
 
 
 def disable(context, interface):
