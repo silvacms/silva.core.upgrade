@@ -2,7 +2,6 @@
 # See also LICENSE.txt
 # $Id$
 
-from Products.Silva.interfaces import IInvisibleService
 from Products.Five.site.interfaces import IFiveSiteManager
 from OFS.SimpleItem import SimpleItem
 from zope.app.intid.interfaces import IIntIds
@@ -13,7 +12,7 @@ from zope.interface import alsoProvides
 
 from five.localsitemanager import make_objectmanager_site
 from five.intid.intid import OFSIntIds
-
+from five.grok.meta import setupUtility
 
 class IntIds(OFSIntIds, SimpleItem):
     pass
@@ -43,11 +42,7 @@ def setup_intid(context):
     """
     service = queryUtility(IIntIds)
     if service is None:
-        context._setObject('IIntIds', IntIds())
-        service = getattr(context, 'IIntIds')
-        alsoProvides(service, IInvisibleService)
-        sm = context.getSiteManager()
-        sm.registerUtility(service, IIntIds)
+        setupUtility(context, IntIds(), IIntds)
 
 
 def activate(context):
