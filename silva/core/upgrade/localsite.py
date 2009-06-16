@@ -67,5 +67,3 @@ def disable(context, interface):
         parent.manage_delObjects([name])
     else:
         sm.unregisterUtility(utility, interface)
-
-

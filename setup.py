@@ -5,7 +5,7 @@ version = '2.1'
 
 setup(name='silva.core.upgrade',
       version=version,
-      description="Generic upgrade functions",
+      description="Generic upgrade functions used in Silva",
       long_description=open("README.txt").read() + "\n" +
                        open(os.path.join("docs", "HISTORY.txt")).read(),
       classifiers=[
