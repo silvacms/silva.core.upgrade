@@ -42,7 +42,7 @@ def setup_intid(context):
     """
     service = queryUtility(IIntIds)
     if service is None:
-        setupUtility(context, IntIds(), IIntds)
+        setupUtility(context, IntIds(), IIntIds)
 
 
 def activate(context):
