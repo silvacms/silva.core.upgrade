@@ -3,19 +3,16 @@
 # $Id$
 
 from Products.Five.site.interfaces import IFiveSiteManager
-from OFS.SimpleItem import SimpleItem
+
 from zope.app.intid.interfaces import IIntIds
 from zope.app.component.interfaces import ISite
 from zope.app.component.hooks import setSite
 from zope.component import queryUtility
 from zope.interface import alsoProvides
 
+from silva.core.services.base import IntIdService
 from five.localsitemanager import make_objectmanager_site
-from five.intid.intid import OFSIntIds
 from five.grok.meta import setupUtility
-
-class IntIds(OFSIntIds, SimpleItem):
-    pass
 
 
 def clean_old_five_sm(context, create=True):
@@ -42,7 +39,7 @@ def setup_intid(context):
     """
     service = queryUtility(IIntIds)
     if service is None:
-        setupUtility(context, IntIds(), IIntIds)
+        setupUtility(context, IntIdService(), IIntIds)
 
 
 def activate(context):

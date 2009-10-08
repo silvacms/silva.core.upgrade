@@ -1,7 +1,7 @@
 from setuptools import setup, find_packages
 import os
 
-version = '2.1'
+version = '2.2dev'
 
 setup(name='silva.core.upgrade',
       version=version,
@@ -26,7 +26,7 @@ setup(name='silva.core.upgrade',
       install_requires=[
           'setuptools',
           'five.grok',
-          'five.intid',
+          'silva.core.services',
           'five.localsitemanager',
           ],
       )
