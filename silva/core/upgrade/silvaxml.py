@@ -3,6 +3,7 @@
 # $Id$
 
 import sys
+import cStringIO
 
 NAMESPACES_CHANGES = {
     'http://infrae.com/ns/silva':
@@ -24,13 +25,14 @@ def upgradeNamespace(data):
     return data
 
 
-def upgradeNamespaceOnFD(fd):
+def upgradeXMLOnFD(fd):
     """Upgrade namespace information on file.
     """
 
     fd.seek(0)
     data = fd.read()
-    fd.seek(0)
-    fd.write(upgradeNamespace(data))
-    fd.seek(0)
+    new_fd = cStringIO.StringIO()
+    new_fd.write(upgradeNamespace(data))
+    new_fd.seek(0)
+    return new_fd
 
