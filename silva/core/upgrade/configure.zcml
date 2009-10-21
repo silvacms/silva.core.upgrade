@@ -1,53 +1,15 @@
 <configure
-    xmlns="http://namespaces.zope.org/zope"
-    xmlns:five="http://namespaces.zope.org/five">
+   xmlns="http://namespaces.zope.org/zope"
+   xmlns:zcml="http://namespaces.zope.org/zcml"
+   xmlns:grok="http://namespaces.zope.org/grok">
 
-  <include package="five.localsitemanager" />
-  <include package="five.intid" />
+  <include package="silva.core.service" />
 
-  <!-- Prevent FileSystemSite to broke everything -->
-  <subscriber
-     handler="five.intid.unreferenceable.addIntIdSubscriber"
-     for="Products.FileSystemSite.interfaces.IDirectoryView
-          zope.app.container.interfaces.IObjectAddedEvent"
-     />
-  <subscriber
-     handler="five.intid.unreferenceable.removeIntIdSubscriber"
-     for="Products.FileSystemSite.interfaces.IDirectoryView
-          zope.app.container.interfaces.IObjectRemovedEvent"
-     />
-  <subscriber
-     handler="five.intid.unreferenceable.moveIntIdSubscriber"
-     for="Products.FileSystemSite.interfaces.IDirectoryView
-          zope.app.container.interfaces.IObjectMovedEvent"
-     />
-  <adapter
-     factory="five.intid.unreferenceable.KeyReferenceNever"
-     for="Products.FileSystemSite.interfaces.IDirectoryView"
-     trusted="y"
-     />
+  <!-- Grok grokker -->
+  <grok:grok package=".martiansupport" />
 
-  <!-- FSObject -->
-  <subscriber
-     handler="five.intid.unreferenceable.addIntIdSubscriber"
-     for="Products.FileSystemSite.FSObject.FSObject
-          zope.app.container.interfaces.IObjectAddedEvent"
-     />
-  <subscriber
-     handler="five.intid.unreferenceable.removeIntIdSubscriber"
-     for="Products.FileSystemSite.FSObject.FSObject
-           zope.app.container.interfaces.IObjectRemovedEvent"
-     />
-  <subscriber
-     handler="five.intid.unreferenceable.moveIntIdSubscriber"
-     for="Products.FileSystemSite.FSObject.FSObject
-          zope.app.container.interfaces.IObjectMovedEvent"
-     />
-  <adapter
-     factory="five.intid.unreferenceable.KeyReferenceNever"
-     for="Products.FileSystemSite.FSObject.FSObject"
-     trusted="y"
-     />
-
+  <!-- Grok Silva upgraders if Silva is here -->
+  <grok:grok package=".upgrader"
+             zcml:condition="installed Products.Silva" />
 
 </configure>

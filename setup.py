@@ -25,8 +25,10 @@ setup(name='silva.core.upgrade',
       zip_safe=False,
       install_requires=[
           'setuptools',
+          'martian',
           'five.grok',
-          'silva.core.services',
           'five.localsitemanager',
+          'silva.core.interfaces',
+          'silva.core.services',
           ],
       )
