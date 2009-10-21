@@ -3,7 +3,7 @@
    xmlns:zcml="http://namespaces.zope.org/zcml"
    xmlns:grok="http://namespaces.zope.org/grok">
 
-  <include package="silva.core.service" />
+  <include package="silva.core.services" />
 
   <!-- Grok grokker -->
   <grok:grok package=".martiansupport" />
