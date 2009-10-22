@@ -5,7 +5,10 @@
 # silva imports
 from silva.core.interfaces import ISilvaObject, IRoot
 from silva.core.upgrade.upgrade import BaseUpgrader
-import zLOG
+
+import logging
+
+logger = logging.getLogger('Silva upgrader')
 
 #-----------------------------------------------------------------------------
 # 2.0.0 to 2.1.0
@@ -16,9 +19,7 @@ VERSION='2.1'
 class AutoTOCUpgrader(BaseUpgrader):
 
     def upgrade(self, autotoc):
-        zLOG.LOG(
-            'Silva', zLOG.INFO,
-            'Upgrading AutoTOC: %s' % autotoc.get_title_or_id())
+        logger.info('Upgrading AutoTOC: %s' % autotoc.get_title_or_id())
         if not hasattr(autotoc,'_local_types'):
             autotoc._local_types = ['Silva Document', 'Silva Publication',
                                  'Silva Folder']
@@ -33,6 +34,7 @@ class AutoTOCUpgrader(BaseUpgrader):
         autotoc.index_object()
         return autotoc
 
+
 AutoTOCUpgrader = AutoTOCUpgrader(VERSION, 'Silva AutoTOC')
 
 
@@ -44,6 +46,7 @@ class DocumentUpgrader(BaseUpgrader):
         obj._clean_cache()
         return obj
 
+
 DocumentUpgrader = DocumentUpgrader(VERSION, 'Silva Document')
 
 
@@ -53,7 +56,7 @@ class CleanRolesUpgrader(BaseUpgrader):
 
     def upgrade(self, obj):
          if IRoot.providedBy(obj):
-             zLOG.LOG('Silva', zLOG.INFO, "Cleaning Stale Role Mappings: this may take some time")
+             logger.info("Cleaning Stale Role Mappings: this may take some time")
          if ISilvaObject.providedBy(obj):
              obj.sec_clean_roles()
          return obj

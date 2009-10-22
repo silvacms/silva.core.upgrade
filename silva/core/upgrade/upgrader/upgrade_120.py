@@ -3,7 +3,7 @@
 # $Id$
 
 # silva imports
-from silva.core.upgrade.upgrade import BaseUpgrader, BaseRefreshAll
+from silva.core.upgrade.upgrade import BaseUpgrader
 
 import zLOG
 
@@ -12,6 +12,7 @@ import zLOG
 #-----------------------------------------------------------------------------
 
 VERSION='1.2'
+
 
 class CatalogUpgrade(BaseUpgrader):
     """Call the setup_catalog method in the install module - this will
@@ -26,6 +27,7 @@ class CatalogUpgrade(BaseUpgrader):
         from Products.Silva import install
         install.setup_catalog(silvaroot)
         return silvaroot
+
 
 catalogUpgrade = CatalogUpgrade(VERSION, 'Silva Root', 10)
 
@@ -44,7 +46,9 @@ class ReindexHauntedPath(BaseUpgrader):
         catalog.reindexIndex('haunted_path', None)
         return silvaroot
 
+
 reindexHauntedPath = ReindexHauntedPath(VERSION, 'Silva Root', 20)
+
 
 class UpdateIndexers(BaseUpgrader):
     """The indexers' implementation has changed. We need to trigger
@@ -59,12 +63,9 @@ class UpdateIndexers(BaseUpgrader):
         indexer.update()
         return indexer
 
+
 updateIndexers = UpdateIndexers(VERSION, 'Silva Indexer')
 
-class RefreshAll(BaseRefreshAll):
-    pass
-
-refreshAll = RefreshAll(VERSION, 'Silva Root', 30)
 
 
 

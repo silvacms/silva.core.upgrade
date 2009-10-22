@@ -14,10 +14,14 @@ import OFS.Image
 
 # python
 from cStringIO import StringIO
+import logging
+
+logger = logging.getLogger('Silva upgrader')
 
 # silva imports
 from silva.core import interfaces
 from silva.core.upgrade.upgrade import BaseUpgrader, AnyMetaType
+from silva.core.upgrade.silvaxml import NAMESPACES_CHANGES
 
 from Products.Silva.adapters import version_management
 from Products.Silva.File import FileSystemFile
@@ -25,7 +29,6 @@ from Products.SilvaExternalSources.interfaces import ICodeSourceService
 from Products.SilvaMetadata.interfaces import IMetadataService, \
     ICatalogService
 from Products.SilvaMetadata.CatalogTool import CatalogService
-import zLOG
 
 
 #-----------------------------------------------------------------------------
@@ -33,6 +36,7 @@ import zLOG
 #-----------------------------------------------------------------------------
 
 VERSION_A1='2.2a1'
+
 
 class RootUpgrader(BaseUpgrader):
 
@@ -93,6 +97,7 @@ class RootUpgrader(BaseUpgrader):
         service_ext.refresh_all()
         return obj
 
+
 RootUpgrader = RootUpgrader(VERSION_A1, 'Silva Root')
 
 
@@ -125,8 +130,7 @@ class ImagesUpgrader(BaseUpgrader):
         obj._image_factory('hires_image', data, ct)
         obj._createDerivedImages()
         data.close()
-        zLOG.LOG('Silva', zLOG.INFO,
-                 "Image %s upgraded" % '/'.join(obj.getPhysicalPath()))
+        logger.info("Image %s upgraded" % '/'.join(obj.getPhysicalPath()))
         return obj
 
 
@@ -137,7 +141,9 @@ ImagesUpgrader = ImagesUpgrader(VERSION_A1, 'Silva Image')
 # 2.2.0a1 to 2.2.0a2
 #-----------------------------------------------------------------------------
 
+
 VERSION_A2='2.2a2'
+
 
 class SilvaXMLUpgrader(BaseUpgrader):
     '''Upgrades all SilvaXML (documents), converting
@@ -157,9 +163,7 @@ class SilvaXMLUpgrader(BaseUpgrader):
     def _upgrade_citations(self, obj, doc_el):
         cites = doc_el.getElementsByTagName('cite')
         if cites:
-            zLOG.LOG(
-                'Silva', zLOG.INFO,
-                'Upgrading CITE Elements in: %s' % ('/'.join(obj.getPhysicalPath())))
+            logger.info('Upgrading CITE Elements in: %s' % ('/'.join(obj.getPhysicalPath())))
         for c in cites:
             author = source = ''
             citation = []
@@ -204,9 +208,7 @@ class SilvaXMLUpgrader(BaseUpgrader):
     def _upgrade_tocs(self, obj, doc_el):
         tocs = doc_el.getElementsByTagName('toc')
         if tocs:
-            zLOG.LOG(
-                'Silva', zLOG.INFO,
-                'Upgrading TOC Elements in: %s' % ('/'.join(obj.getPhysicalPath())))
+            logger.info('Upgrading TOC Elements in: %s' % ('/'.join(obj.getPhysicalPath())))
         path = '/'.join(obj.get_container().getPhysicalPath())
         for t in tocs:
             depth = t.getAttribute('toc_depth')
@@ -325,7 +327,9 @@ class UpdateIndexerUpgrader(BaseUpgrader):
         obj.update()
         return obj
 
+
 UpdateIndexerUpgrader = UpdateIndexerUpgrader(VERSION_B1, 'Silva Indexer')
+
 
 class SecondRootUpgrader(BaseUpgrader):
     """Change standard_error_message to default_standard_error_message.
@@ -359,32 +363,29 @@ class SecondRootUpgrader(BaseUpgrader):
         if not hasattr(obj, 'cs_citation'):
             cit = obj.service_codesources.manage_copyObjects(['cs_citation',])
             obj.manage_pasteObjects(cit)
-        
+
         return obj
 
 SecondRootUpgrader = SecondRootUpgrader(VERSION_B1, 'Silva Root')
 
-new_ns_mappings = {'http://infrae.com/ns/silva-news-network': 'http://infrae.com/namespace/silva-news-network',
-              'http://infrae.com/ns/silva': 'http://infrae.com/namespace/silva',
-              'http://infrae.com/ns/silva_document': 'http://infrae.com/namespace/silva-document',
-              'http://infrae.com/namespaces/metadata/silva': 'http://infrae.com/namespace/silva-content',              'http://infrae.com/namespaces/metadata/silva-extra': 'http://infrae.com/namespace/silva-extra',
-              'http://infrae.com/namespaces/metadata/snn-np-settings':'http://infrae.com/namespace/metadata/snn-np-settings',
-              'http://infrae.com/namespaces/metadata/silva-layout':'http://infrae.com/namespace/metadata/silva-layout'}
 
 class MetadataSetUpgrader(BaseUpgrader):
-    """Update the namespaces of existing metadata sets
-       NOTE: this 'may' not be needed, since I think the metadata sets
-       _are_ reinstalled during the refresh, but we do it here
-       for good measure"""
+    """Update the namespaces of existing metadata sets NOTE: this
+    'may' not be needed, since I think the metadata sets _are_
+    reinstalled during the refresh, but we do it here for good measure.
+    """
+
     def upgrade(self, obj):
         sm = obj.service_metadata
         sets = sm.getCollection().getMetadataSets()
         for s in sets:
             prefix,uri = s.getNamespace()
-            if new_ns_mapping.has_key(uri):
-                s.setNamespace(new_ns_mapping[uri], prefix)
-            
-MetadataSetUpgrader = MetadataSetUpgrader(VERSION_B1, 'Silva Root')    
+            if NAMESPACES_CHANGES.has_key(uri):
+                s.setNamespace(NAMESPACES_CHANGES[uri], prefix)
+
+
+MetadataSetUpgrader = MetadataSetUpgrader(VERSION_B1, 'Silva Root')
+
 
 class MetadataUpgrader(BaseUpgrader):
     """Migrate metadata information.
@@ -396,11 +397,11 @@ class MetadataUpgrader(BaseUpgrader):
             return obj
         old_annotations = getattr(aq_base(obj), '_portal_annotations_', None)
         if old_annotations is not None:
-            zLOG.LOG(
-                'Silva', zLOG.INFO,
-                'Upgrading metadata: %s' % ('/'.join(obj.getPhysicalPath())))
+            logger.info('Upgrading metadata: %s' % ('/'.join(obj.getPhysicalPath())))
             new_annotations = IAnnotations(aq_base(obj))
             for key in old_annotations.keys():
                 new_annotations[key] = old_annotations[key]
         return obj
+
+
 MetadataUpgrader = MetadataUpgrader(VERSION_B1, AnyMetaType)

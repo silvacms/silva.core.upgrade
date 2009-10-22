@@ -61,7 +61,9 @@ class IndexItemUpgrader(BaseUpgrader):
             for child in node.childNodes:
                 self._upgrade_helper(child)
 
+
 indexItemUpgrader = IndexItemUpgrader(VERSION, AnyMetaType, 10)
+
 
 class IndexerUpgrader(BaseUpgrader):
 
@@ -72,7 +74,9 @@ class IndexerUpgrader(BaseUpgrader):
         indexer.update()
         return indexer
 
+
 indexerUpgrader = IndexerUpgrader(VERSION, 'Silva Indexer')
+
 
 class AutoTOCUpgrader(BaseUpgrader):
 
@@ -84,7 +88,9 @@ class AutoTOCUpgrader(BaseUpgrader):
             autotoc._toc_depth = -1
         return autotoc
 
+
 autoTOCUpgrader = AutoTOCUpgrader(VERSION, 'Silva AutoTOC')
+
 
 class CatalogRefresher(BaseUpgrader):
     """Refreshes the whole Silva catalog"""
@@ -102,7 +108,9 @@ class CatalogRefresher(BaseUpgrader):
                 obj.index_object()
         return obj
 
+
 catalogRefresher = CatalogRefresher(VERSION, AnyMetaType, 20)
+
 
 class InvisibleMan(BaseUpgrader):
     """Makes Widget Registry services invisible by putting a marker
@@ -129,7 +137,9 @@ class InvisibleMan(BaseUpgrader):
                         interface.directlyProvidedBy(service))
         return obj
 
+
 invisibleMan = InvisibleMan(VERSION, AnyMetaType, 30)
+
 
 class LanguageMetadataLowerCaser(BaseUpgrader):
     """The metadata field language in silva-extra was incorrectly
@@ -152,5 +162,6 @@ class LanguageMetadataLowerCaser(BaseUpgrader):
             return obj
         binding.setValues('silva-extra', {'language': llang})
         return obj
+
 
 languageMetadataLowerCaser = LanguageMetadataLowerCaser(VERSION, AnyMetaType, 40)

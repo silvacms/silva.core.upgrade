@@ -14,6 +14,12 @@ NAMESPACES_CHANGES = {
         'http://infrae.com/namespace/metadata/silva-content',
     'http://infrae.com/namespaces/metadata/silva-extra':
         'http://infrae.com/namespace/metadata/silva-extra',
+    'http://infrae.com/namespaces/metadata/silva-layout':
+        'http://infrae.com/namespace/metadata/silva-layout',
+    'http://infrae.com/ns/silva-news-network':
+        'http://infrae.com/namespace/silva-news-network',
+    'http://infrae.com/namespaces/metadata/snn-np-settings':
+        'http://infrae.com/namespace/metadata/snn-np-settings',
     }
 
 

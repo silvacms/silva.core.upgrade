@@ -5,10 +5,12 @@
 # Python
 from bisect import insort_right
 from pkg_resources import parse_version
+import logging
+
+logger = logging.getLogger('Silva upgrader')
 
 # Zope
 from zope.interface import implements
-import zLOG
 import DateTime
 import transaction
 
@@ -19,6 +21,7 @@ threshold = 50
 
 # marker for upgraders to be called for any object
 AnyMetaType = object()
+
 
 class BaseUpgrader(object):
     """All upgrader should inherit from this upgrader.
@@ -40,16 +43,6 @@ class BaseUpgrader(object):
             sort = cmp(self.__class__.__name__,
                        other.__class__.__name__)
         return sort
-
-
-class BaseRefreshAll(BaseUpgrader):
-    """Refresh all products.
-    """
-
-    def upgrade(self, root):
-        zLOG.LOG('Silva', zLOG.INFO, 'refresh all installed products')
-        root.service_extensions.refresh_all()
-        return root
 
 
 def get_version_index(version_list, wanted_version):
@@ -90,8 +83,6 @@ class UpgradeRegistry(object):
 
     def __init__(self):
         self.__registry = {}
-        self._setUp = {}
-        self._tearDown = {}
 
     def registerUpgrader(self, upgrader, version=None, meta_type=None):
         assert IUpgrader.providedBy(upgrader)
@@ -104,12 +95,6 @@ class UpgradeRegistry(object):
         for type_ in meta_type:
             registry = self.__registry.setdefault(version, {}).setdefault(type_, [])
             insort_right(registry, upgrader)
-
-    def registerSetUp(self, function, version):
-        self._setUp.setdefault(version, []).append(function)
-
-    def registerTearDown(self, function, version):
-        self._tearDown.setdefault(version, []).append(function)
 
     def getUpgraders(self, version, meta_type):
         """Return the registered upgrade_handlers of meta_type
@@ -125,9 +110,7 @@ class UpgradeRegistry(object):
         for upgrader in self.getUpgraders(version, mt):
             if getattr(obj, 'absolute_url', None):
                 # Not all objects have an absolute_url ...
-                zLOG.LOG('Silva', zLOG.BLATHER,
-                         'Upgrading %s' % obj.absolute_url(),
-                         'Upgrading with %r' % upgrader)
+                logger.debug('Upgrading %s with %r' % (obj.absolute_url(), upgrader))
             # sometimes upgrade methods will replace objects, if so the
             # new object should be returned so that can be used for the rest
             # of the upgrade chain instead of the old (probably deleted) one
@@ -147,7 +130,6 @@ class UpgradeRegistry(object):
             'maxqueue' : 0,
             }
 
-        self.setUp(root, version)
         object_list = [root]
         try:
             while object_list:
@@ -175,32 +157,23 @@ class UpgradeRegistry(object):
                         o._p_jar.cacheGC()
                     stats['threshold'] = 0
             stats['endtime'] = DateTime.DateTime()
-            self.tearDown(root, version)
         finally:
             #print repr(stats)
             pass
 
     def upgrade(self, root, from_version, to_version):
-        zLOG.LOG('Silva', zLOG.INFO, 'Upgrading content from %s to %s.' % (
-            from_version, to_version))
-        upgrade_chain = get_upgrade_chain(self.__registry.keys(),
-                                          from_version, to_version)
+        logger.info('Upgrading content from %s to %s.' % (from_version, to_version))
+
+        upgrade_chain = get_upgrade_chain(
+            self.__registry.keys(), from_version, to_version)
         if not upgrade_chain:
-            zLOG.LOG('Silva', zLOG.INFO, 'Nothing needs to be done.')
-        zLOG.LOG('Silva', zLOG.INFO, 'Refreshing all installed extensions.')
-        root.service_extensions.refresh_all()
+            logger.info('Nothing needs to be done.')
+
         for version in upgrade_chain:
-            zLOG.LOG('Silva', zLOG.INFO, 'Upgrading to version %s.' % version)
+            logger.info('Upgrading to version %s.' % version)
             self.upgradeTree(root, version)
-        zLOG.LOG('Silva', zLOG.INFO, 'Upgrade finished.')
 
-    def setUp(self, root, version):
-        for function in self._setUp.get(version, []):
-            function(root)
-
-    def tearDown(self, root, version):
-        for function in self._tearDown.get(version, []):
-            function(root)
+        logger.info('Upgrade finished.')
 
 
 registry = UpgradeRegistry()
@@ -208,9 +181,9 @@ registry = UpgradeRegistry()
 
 class UpgraderTracebackSupplement(object):
     """Implementation of zope.exceptions.ITracebackSupplement,
-       to amend the traceback during upgrades so that object
-       information is present.  Inspiration from
-       zope.tales.tales.TALESTracebackSupplement"""
+    to amend the traceback during upgrades so that object
+    information is present.
+    """
 
     def __init__(self, context, obj, upgrader):
         self.context = context

@@ -5,7 +5,7 @@
 import sys
 
 # silva imports
-from silva.core.upgrade.upgrade import BaseUpgrader, BaseRefreshAll
+from silva.core.upgrade.upgrade import BaseUpgrader
 
 import zLOG
 
@@ -14,6 +14,7 @@ import zLOG
 #-----------------------------------------------------------------------------
 
 VERSION='1.0'
+
 
 class ImageUpgrade(BaseUpgrader):
     """handle view registry beeing moved out of the core"""
@@ -31,10 +32,5 @@ class ImageUpgrade(BaseUpgrader):
                     'probably broken.') % (image.absolute_url(), exc, e))
         return image
 
-imageUpgrade = ImageUpgrade(VERSION, 'Silva Image')
-            
-class RefreshAll(BaseRefreshAll):
-    pass
 
-refreshAll = RefreshAll(VERSION, 'Silva Root')
-    
+imageUpgrade = ImageUpgrade(VERSION, 'Silva Image')
