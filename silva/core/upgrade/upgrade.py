@@ -182,7 +182,7 @@ class UpgradeRegistry(object):
         root.service_extensions.refresh_all()
 
         end = datetime.datetime.now()
-        logger.info('upgrade finished in %d seconds.' % (start - end).seconds)
+        logger.info('upgrade finished in %d seconds.' % (end - start).seconds)
 
 
 registry = UpgradeRegistry()
