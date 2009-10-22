@@ -93,7 +93,8 @@ class UpgradeRegistry(object):
         if isinstance(meta_type, str) or meta_type is AnyMetaType:
             meta_type = [meta_type,]
         for type_ in meta_type:
-            registry = self.__registry.setdefault(version, {}).setdefault(type_, [])
+            registry = self.__registry.setdefault(version, {}).setdefault(
+                type_, [])
             insort_right(registry, upgrader)
 
     def getUpgraders(self, version, meta_type):
@@ -155,31 +156,33 @@ class UpgradeRegistry(object):
         return stats
 
     def upgrade(self, root, from_version, to_version):
-        logger.info('Upgrading from %s to %s.' %
+        logger.info('upgrading from %s to %s.' %
                     (from_version, to_version))
 
+        start = datetime.datetime.now()
         upgrade_chain = get_upgrade_chain(
             self.__registry.keys(), from_version, to_version)
         if not upgrade_chain:
-            logger.info('Nothing needs to be done.')
+            logger.info('nothing needs to be done.')
 
         # First, upgrade Silva Root so Silva services / extensions
         # will be upgraded
 
         for version in upgrade_chain:
-            logger.info('Upgrading root to version %s.' % version)
+            logger.info('upgrading root to version %s.' % version)
             self.upgradeObject(root, version)
 
         # Now, upgrade site content
         for version in upgrade_chain:
-            logger.info('Upgrading content to version %s.' % version)
+            logger.info('upgrading content to version %s.' % version)
             self.upgradeTree(root, version, blacklist=['Silva Root',])
 
         # Now, refresh extensions
-        logger.info('Refresh extensions.')
+        logger.info('refresh extensions.')
         root.service_extensions.refresh_all()
 
-        logger.info('Upgrade finished.')
+        end = datetime.datetime.now()
+        logger.info('upgrade finished in %d seconds.' % (start - end).seconds)
 
 
 registry = UpgradeRegistry()

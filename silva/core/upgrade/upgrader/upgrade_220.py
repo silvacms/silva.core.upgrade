@@ -22,6 +22,7 @@ logger = logging.getLogger('silva.core.upgrade')
 from silva.core import interfaces
 from silva.core.upgrade.upgrade import BaseUpgrader, AnyMetaType
 from silva.core.upgrade.silvaxml import NAMESPACES_CHANGES
+from silva.core.upgrade.localsite import setup_intid
 
 from Products.Silva.adapters import version_management
 from Products.Silva.File import FileSystemFile
@@ -128,7 +129,7 @@ class ImagesUpgrader(BaseUpgrader):
         obj._image_factory('hires_image', data, ct)
         obj._createDerivedImages()
         data.close()
-        logger.info("Image %s upgraded" % '/'.join(obj.getPhysicalPath()))
+        logger.info("image %s rebuilt" % '/'.join(obj.getPhysicalPath()))
         return obj
 
 
@@ -161,7 +162,7 @@ class SilvaXMLUpgrader(BaseUpgrader):
     def _upgrade_citations(self, obj, doc_el):
         cites = doc_el.getElementsByTagName('cite')
         if cites:
-            logger.info('Upgrading CITE Elements in: %s' % ('/'.join(obj.getPhysicalPath())))
+            logger.info('upgrading CITE Elements in: %s' % ('/'.join(obj.getPhysicalPath())))
         for c in cites:
             author = source = ''
             citation = []
@@ -206,7 +207,8 @@ class SilvaXMLUpgrader(BaseUpgrader):
     def _upgrade_tocs(self, obj, doc_el):
         tocs = doc_el.getElementsByTagName('toc')
         if tocs:
-            logger.info('Upgrading TOC Elements in: %s' % ('/'.join(obj.getPhysicalPath())))
+            logger.info('upgrading TOC Elements in: %s' %
+                        ('/'.join(obj.getPhysicalPath())))
         path = '/'.join(obj.get_container().getPhysicalPath())
         for t in tocs:
             depth = t.getAttribute('toc_depth')
@@ -325,6 +327,8 @@ class UpdateIndexerUpgrader(BaseUpgrader):
 
     def upgrade(self, obj):
         obj.update()
+        logger.info('refresh indexer %s' % (
+                '/'.join(obj.getPhysicalPath())))
         return obj
 
 
@@ -350,6 +354,8 @@ class SecondRootUpgrader(BaseUpgrader):
         sm.registerUtility(obj.service_metadata, IMetadataService)
         obj.service_catalog.__class__ = CatalogService
         sm.registerUtility(obj.service_catalog, ICatalogService)
+        setup_intid(obj)
+
         if hasattr(obj.aq_explicit, 'service_annotations'):
             obj.manage_delObjects(['service_annotations',])
 
@@ -400,7 +406,7 @@ class MetadataUpgrader(BaseUpgrader):
             return obj
         old_annotations = getattr(aq_base(obj), '_portal_annotations_', None)
         if old_annotations is not None:
-            logger.info('Upgrading metadata: %s' % (
+            logger.info('upgrading metadata for %s' % (
                     '/'.join(obj.getPhysicalPath())))
             new_annotations = IAnnotations(aq_base(obj))
             for key in old_annotations.keys():
