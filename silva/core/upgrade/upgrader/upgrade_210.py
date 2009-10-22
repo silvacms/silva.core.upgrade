@@ -8,7 +8,7 @@ from silva.core.upgrade.upgrade import BaseUpgrader
 
 import logging
 
-logger = logging.getLogger('Silva upgrader')
+logger = logging.getLogger('silva.core.upgrade')
 
 #-----------------------------------------------------------------------------
 # 2.0.0 to 2.1.0

@@ -6,12 +6,12 @@
 from bisect import insort_right
 from pkg_resources import parse_version
 import logging
+import datetime
 
-logger = logging.getLogger('Silva upgrader')
+logger = logging.getLogger('silva.core.upgrade')
 
 # Zope
 from zope.interface import implements
-import DateTime
 import transaction
 
 # Silva
@@ -110,68 +110,74 @@ class UpgradeRegistry(object):
         for upgrader in self.getUpgraders(version, mt):
             if getattr(obj, 'absolute_url', None):
                 # Not all objects have an absolute_url ...
-                logger.debug('Upgrading %s with %r' % (obj.absolute_url(), upgrader))
-            # sometimes upgrade methods will replace objects, if so the
-            # new object should be returned so that can be used for the rest
-            # of the upgrade chain instead of the old (probably deleted) one
-            __traceback_supplement__ = (UpgraderTracebackSupplement, self, obj, upgrader)
+                logger.debug('Upgrading %s with %r' %
+                             (obj.absolute_url(), upgrader))
+            # sometimes upgrade methods will replace objects, if so
+            # the new object should be returned so that can be used
+            # for the rest of the upgrade chain instead of the old
+            # (probably deleted) one
+            __traceback_supplement__ = (
+                UpgraderTracebackSupplement, self, obj, upgrader)
             obj = upgrader.upgrade(obj)
-            assert obj is not None, "Upgrader %r seems to be broken, "\
+            assert obj is not None, "Upgrader %r seems to be broken, " \
                 "this is a bug." % (upgrader, )
         return obj
 
-    def upgradeTree(self, root, version):
-        """upgrade a whole tree to version"""
+    def upgradeTree(self, root, version, blacklist=[]):
         stats = {
             'total': 0,
             'threshold': 0,
-            'starttime': DateTime.DateTime(),
-            'endtime': None,
             'maxqueue' : 0,
             }
 
         object_list = [root]
-        try:
-            while object_list:
-                o = object_list[-1]
-                del object_list[-1]
-                # print 'Upgrading object', o.absolute_url(), '(still
-                # %s objects to go)' % len(object_list)
-                o = self.upgradeObject(o, version)
-                if hasattr(o.aq_base, 'objectValues'):
-                    if o.meta_type == "Parsed XML":
-                        #print '#### Skip the Parsed XML object'
-                        pass
-                    else:
-                        object_list.extend(o.objectValues())
-                        stats['maxqueue'] = max(stats['maxqueue'],
-                                                len(object_list))
-                stats['total'] += 1
-                stats['threshold'] += 1
-                #print '#### threshold subtotal: %s, total: %s ####' % (
-                #    stats['threshold'], stats['total'])
-                if stats['threshold'] > threshold:
-                    #print '#### Commit sub transaction ####'
-                    transaction.get().commit()
-                    if hasattr(o, '_p_jar') and o._p_jar is not None:
-                        o._p_jar.cacheGC()
-                    stats['threshold'] = 0
-            stats['endtime'] = DateTime.DateTime()
-        finally:
-            #print repr(stats)
-            pass
+        while object_list:
+            obj = object_list.pop()
+
+            if not (obj.meta_type in blacklist):
+                obj = self.upgradeObject(obj, version)
+
+            if (hasattr(obj.aq_base, 'objectValues') and
+                obj.meta_type != "Parsed XML"):
+
+                object_list.extend(obj.objectValues())
+                stats['maxqueue'] = max(
+                    stats['maxqueue'], len(object_list))
+
+            stats['total'] += 1
+            stats['threshold'] += 1
+            if stats['threshold'] > threshold:
+                transaction.get().commit()
+                if hasattr(obj, '_p_jar') and obj._p_jar is not None:
+                    obj._p_jar.cacheGC()
+                stats['threshold'] = 0
+
+        return stats
 
     def upgrade(self, root, from_version, to_version):
-        logger.info('Upgrading content from %s to %s.' % (from_version, to_version))
+        logger.info('Upgrading from %s to %s.' %
+                    (from_version, to_version))
 
         upgrade_chain = get_upgrade_chain(
             self.__registry.keys(), from_version, to_version)
         if not upgrade_chain:
             logger.info('Nothing needs to be done.')
 
+        # First, upgrade Silva Root so Silva services / extensions
+        # will be upgraded
+
         for version in upgrade_chain:
-            logger.info('Upgrading to version %s.' % version)
-            self.upgradeTree(root, version)
+            logger.info('Upgrading root to version %s.' % version)
+            self.upgradeObject(root, version)
+
+        # Now, upgrade site content
+        for version in upgrade_chain:
+            logger.info('Upgrading content to version %s.' % version)
+            self.upgradeTree(root, version, blacklist=['Silva Root',])
+
+        # Now, refresh extensions
+        logger.info('Refresh extensions.')
+        root.service_extensions.refresh_all()
 
         logger.info('Upgrade finished.')
 

@@ -16,7 +16,7 @@ import OFS.Image
 from cStringIO import StringIO
 import logging
 
-logger = logging.getLogger('Silva upgrader')
+logger = logging.getLogger('silva.core.upgrade')
 
 # silva imports
 from silva.core import interfaces
@@ -93,8 +93,6 @@ class RootUpgrader(BaseUpgrader):
                 service_files.storage = FileSystemFile
             delattr(service_files , '_filesystem_storage_enabled')
 
-        # Refresh all products
-        service_ext.refresh_all()
         return obj
 
 
@@ -309,6 +307,8 @@ class AllowedAddablesUpgrader(BaseUpgrader):
             elif not hasattr(obj.aq_explicit, '_addables_allowed_in_container'):
                 obj._addables_allowed_in_container = None
         return obj
+
+
 AllowedAddablesUpgrader = AllowedAddablesUpgrader(VERSION_A2, AnyMetaType)
 
 #-----------------------------------------------------------------------------
@@ -357,6 +357,8 @@ class SecondRootUpgrader(BaseUpgrader):
         service_ext = obj.service_extensions
         if not service_ext.is_installed('SilvaExternalSources'):
             service_ext.install('SilvaExternalSources')
+        else:
+            service_ext.refresh('SilvaExternalSources')
         if not hasattr(obj, 'cs_toc'):
             toc = obj.service_codesources.manage_copyObjects(['cs_toc',])
             obj.manage_pasteObjects(toc)
@@ -382,6 +384,7 @@ class MetadataSetUpgrader(BaseUpgrader):
             prefix,uri = s.getNamespace()
             if NAMESPACES_CHANGES.has_key(uri):
                 s.setNamespace(NAMESPACES_CHANGES[uri], prefix)
+        return obj
 
 
 MetadataSetUpgrader = MetadataSetUpgrader(VERSION_B1, 'Silva Root')
@@ -397,7 +400,8 @@ class MetadataUpgrader(BaseUpgrader):
             return obj
         old_annotations = getattr(aq_base(obj), '_portal_annotations_', None)
         if old_annotations is not None:
-            logger.info('Upgrading metadata: %s' % ('/'.join(obj.getPhysicalPath())))
+            logger.info('Upgrading metadata: %s' % (
+                    '/'.join(obj.getPhysicalPath())))
             new_annotations = IAnnotations(aq_base(obj))
             for key in old_annotations.keys():
                 new_annotations[key] = old_annotations[key]
