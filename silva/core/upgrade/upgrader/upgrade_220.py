@@ -409,8 +409,12 @@ class MetadataUpgrader(BaseUpgrader):
             logger.info('upgrading metadata for %s' % (
                     '/'.join(obj.getPhysicalPath())))
             new_annotations = IAnnotations(aq_base(obj))
-            for key in old_annotations.keys():
-                new_annotations[key] = old_annotations[key]
+            for old_key in old_annotations.keys():
+                if old_key in NAMESPACES_CHANGES:
+                    new_key = NAMESPACES_CHANGES[old_key]
+                else:
+                    new_key = old_key
+                new_annotations[new_key] = old_annotations[old_key]
         return obj
 
 
