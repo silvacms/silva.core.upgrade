@@ -10,6 +10,7 @@ from zope.annotation.interfaces import IAnnotations
 from Products.Five.site.interfaces import IFiveSiteManager
 from Products.SilvaLayout.install import resetMetadata # Should be in Silva ?
 from Acquisition import aq_base
+from Persistence import PersistentMapping
 import OFS.Image
 
 # python
@@ -409,12 +410,27 @@ class MetadataUpgrader(BaseUpgrader):
             logger.info('upgrading metadata for %s' % (
                     '/'.join(obj.getPhysicalPath())))
             new_annotations = IAnnotations(aq_base(obj))
-            for old_key in old_annotations.keys():
-                if old_key in NAMESPACES_CHANGES:
-                    new_key = NAMESPACES_CHANGES[old_key]
+            for key in old_annotations.keys():
+                old_data = old_annotations[key]
+                # if it is metadata, we have to update the namespaces
+                # as well inside the data, which is a
+                # persistentmapping.
+                if key == 'http://www.infrae.com/xml/metadata':
+                    new_data = PersistentMapping()
+
+                    for old_key in old_data.keys():
+                        if old_key in NAMESPACES_CHANGES:
+                            new_key = NAMESPACES_CHANGES[old_key]
+                        else:
+                            new_key = old_key
+                        new_data[new_key] = old_data[old_key]
                 else:
-                    new_key = old_key
-                new_annotations[new_key] = old_annotations[old_key]
+                    new_data = old_data
+
+                new_annotations[key] = new_data
+
+            # remove old annotations
+            del aq_base(obj)._portal_annotations_
         return obj
 
 
