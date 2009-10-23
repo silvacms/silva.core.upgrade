@@ -374,7 +374,7 @@ class SecondRootUpgrader(BaseUpgrader):
 
         return obj
 
-SecondRootUpgrader = SecondRootUpgrader(VERSION_B1, 'Silva Root')
+SecondRootUpgrader = SecondRootUpgrader(VERSION_B1, 'Silva Root', 50)
 
 
 class MetadataSetUpgrader(BaseUpgrader):
@@ -393,7 +393,7 @@ class MetadataSetUpgrader(BaseUpgrader):
         return obj
 
 
-MetadataSetUpgrader = MetadataSetUpgrader(VERSION_B1, 'Silva Root')
+MetadataSetUpgrader = MetadataSetUpgrader(VERSION_B1, 'Silva Root', 40)
 
 
 class MetadataUpgrader(BaseUpgrader):
