@@ -5,5 +5,5 @@
 
 CLASS_CHANGES = {
     'Products.Annotations.AnnotationTool Annotations':
-        'Persistent.mapping PersistentMapping'
+        'persistent.mapping PersistentMapping'
     }
