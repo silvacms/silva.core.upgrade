@@ -31,4 +31,8 @@ setup(name='silva.core.upgrade',
           'silva.core.interfaces',
           'silva.core.services',
           ],
+      entry_points = """
+      [zodbupdate]
+      renames = silva.core.upgrade:CLASS_CHANGES
+      """
       )
