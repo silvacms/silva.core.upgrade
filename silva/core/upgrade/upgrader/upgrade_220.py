@@ -357,7 +357,7 @@ class SecondRootUpgrader(BaseUpgrader):
         setup_intid(obj)
 
         if hasattr(obj.aq_explicit, 'service_annotations'):
-            del obj.service_annotations
+            del obj..manage_delObjects(['service_annotations'])
 
         # Setup the cs_toc and cs_citation CS's.
         service_ext = obj.service_extensions
