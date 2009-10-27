@@ -155,14 +155,15 @@ class SilvaXMLUpgrader(BaseUpgrader):
                 if hasattr(version, 'content'):
                     dom = version.content
                     if hasattr(dom, 'documentElement'):
-                        self._upgrade_tocs(obj, dom.documentElement)
-                        self._upgrade_citations(obj, dom.documentElement)
+                        self._upgrade_tocs(version, dom.documentElement)
+                        self._upgrade_citations(version, dom.documentElement)
         return obj
 
-    def _upgrade_citations(self, obj, doc_el):
+    def _upgrade_citations(self, version, doc_el):
         cites = doc_el.getElementsByTagName('cite')
         if cites:
-            logger.info('upgrading CITE Elements in: %s' % ('/'.join(obj.getPhysicalPath())))
+            logger.info('upgrading CITE Elements in: %s' % (
+                '/'.join(version.getPhysicalPath())))
         for c in cites:
             author = source = ''
             citation = []
@@ -204,12 +205,12 @@ class SilvaXMLUpgrader(BaseUpgrader):
 
             c.parentNode.replaceChild(cs,c)
 
-    def _upgrade_tocs(self, obj, doc_el):
+    def _upgrade_tocs(self, version, doc_el):
         tocs = doc_el.getElementsByTagName('toc')
         if tocs:
             logger.info('upgrading TOC Elements in: %s' %
-                        ('/'.join(obj.getPhysicalPath())))
-        path = '/'.join(obj.get_container().getPhysicalPath())
+                        ('/'.join(version.getPhysicalPath())))
+        path = '/'.join(version.get_container().getPhysicalPath())
         for t in tocs:
             depth = t.getAttribute('toc_depth')
             if not depth:
