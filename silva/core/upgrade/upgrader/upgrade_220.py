@@ -76,6 +76,8 @@ class RootUpgrader(BaseUpgrader):
         service_ext = obj.service_extensions
         if not service_ext.is_installed('SilvaExternalSources'):
             service_ext.install('SilvaExternalSources')
+        if not service_ext.is_installed('SilvaLayout'):
+            service_ext.install('SilvaLayout')
 
         # Clean SilvaLayout mess
         if hasattr(obj, "__silva_layout_installed__"):
