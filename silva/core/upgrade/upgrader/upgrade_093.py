@@ -8,7 +8,7 @@ import os
 
 # zope imports
 import zLOG
-from Globals import package_home
+from App.Common import package_home
 
 # silva imports
 from silva.core.upgrade.upgrade import BaseUpgrader, AnyMetaType
