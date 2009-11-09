@@ -81,18 +81,18 @@ class RootUpgrader(BaseUpgrader):
         service_ext = obj.service_extensions
         if not service_ext.is_installed('SilvaExternalSources'):
             service_ext.install('SilvaExternalSources')
-        if not service_ext.is_installed('SilvaLayout'):
-            service_ext.install('SilvaLayout')
 
         # Clean SilvaLayout mess
         if hasattr(obj, "__silva_layout_installed__"):
             if 'silva-layout-vhost-root' in obj.service_metadata.getCollection().getMetadataSets():
                 resetMetadata(obj, ['silva-layout-vhost-root'])
-            reg.unregister('edit', 'LayoutConfiguration')
-            reg.unregister('public', 'LayoutConfiguration')
-            reg.unregister('add', 'LayoutConfiguration')
+            reg.unregister('edit', 'Silva Layout Configuration')
+            reg.unregister('public', 'Silva Layout Configuration')
+            reg.unregister('add', 'Silva Layout Configuration')
             if hasattr(obj.service_views, 'SilvaLayout'):
                 obj.service_views.manage_delObjects(['SilvaLayout'])
+        if not service_ext.is_installed('SilvaLayout'):
+            service_ext.install('SilvaLayout')
 
         # Update service_files settings
         service_files = obj.service_files
@@ -353,6 +353,7 @@ class SecondRootUpgrader(BaseUpgrader):
                 'default_standard_error_message',
                 obj.__dict__['standard_error_message'])
             obj._delObject('standard_error_message')
+
         # Register service_files and others
         sm = obj.getSiteManager()
         sm.registerUtility(obj.service_files, interfaces.IFilesService)
@@ -364,8 +365,15 @@ class SecondRootUpgrader(BaseUpgrader):
         sm.registerUtility(obj.service_catalog, ICatalogService)
         setup_intid(obj)
 
-        if hasattr(obj.aq_explicit, 'service_annotations'):
+        if hasattr(obj, 'service_annotations'):
             obj.manage_delObjects(['service_annotations'])
+
+        reg = obj.service_view_registry
+        reg.unregister('public', 'Silva Document')
+        reg.unregister('public', 'Silva Link')
+        reg.unregister('public', 'Silva Find')
+        reg.unregister('preview', 'Silva Find')
+        reg.unregister('add', 'Silva Find')
 
         # Setup the cs_toc and cs_citation CS's.
         service_ext = obj.service_extensions
