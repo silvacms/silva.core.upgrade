@@ -7,7 +7,12 @@ from zope.app.component.interfaces import ISite
 from zope.app.component.hooks import setSite
 from zope.annotation.interfaces import IAnnotations
 
-from Products.Five.site.interfaces import IFiveSiteManager
+try:
+    # Old FiveSiteManager. This have been removed in Zope 2.12.
+    from Products.Five.site.interfaces import IFiveSiteManager
+except ImportError:
+    IFiveSiteManager = None
+
 from Products.SilvaLayout.install import resetMetadata # Should be in Silva ?
 from Acquisition import aq_base
 import OFS.Image
@@ -45,7 +50,7 @@ class RootUpgrader(BaseUpgrader):
         # If it's a Five site manager disable it first.
         if ISite.providedBy(obj):
             sm = obj.getSiteManager()
-            if IFiveSiteManager.providedBy(sm):
+            if IFiveSiteManager is not None and IFiveSiteManager.providedBy(sm):
                 from Products.Five.site.localsite import disableLocalSiteHook
                 disableLocalSiteHook(obj)
 

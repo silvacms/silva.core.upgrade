@@ -2,7 +2,11 @@
 # See also LICENSE.txt
 # $Id$
 
-from Products.Five.site.interfaces import IFiveSiteManager
+try:
+    # Old FiveSiteManager. This have been removed in Zope 2.12.
+    from Products.Five.site.interfaces import IFiveSiteManager
+except ImportError:
+    IFiveSiteManager = None
 
 from zope.app.intid.interfaces import IIntIds
 from zope.app.component.interfaces import ISite
@@ -12,7 +16,10 @@ from zope.interface import alsoProvides
 
 from silva.core.services.base import IntIdService
 from five.localsitemanager import make_objectmanager_site
-from five.grok.meta import setupUtility
+try:
+    from five.grok.meta import setupUtility
+except ImportError:
+    from grokcore.site.meta import setupUtility
 
 
 def clean_old_five_sm(context, create=True):
@@ -48,7 +55,7 @@ def activate(context):
     if not ISite.providedBy(context):
         create_new_sm(context)
     sm = context.getSiteManager()
-    if IFiveSiteManager.providedBy(sm):
+    if IFiveSiteManager is not None and IFiveSiteManager.providedBy(sm):
         clean_old_five_sm(context, create=True)
     setup_intid(context)
 
@@ -58,7 +65,7 @@ def disable(context, interface):
     """
     sm = context.getSiteManager()
     utility = sm.queryUtility(interface)
-    if IFiveSiteManager.providedBy(sm):
+    if IFiveSiteManager is not None and IFiveSiteManager.providedBy(sm):
         parent = utility.aq_parent
         name = interface.__name__
         parent.manage_delObjects([name])
