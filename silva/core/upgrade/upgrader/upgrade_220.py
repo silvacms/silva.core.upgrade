@@ -91,8 +91,6 @@ class RootUpgrader(BaseUpgrader):
             reg.unregister('add', 'Silva Layout Configuration')
             if hasattr(obj.service_views, 'SilvaLayout'):
                 obj.service_views.manage_delObjects(['SilvaLayout'])
-        if not service_ext.is_installed('SilvaLayout'):
-            service_ext.install('SilvaLayout')
 
         # Update service_files settings
         service_files = obj.service_files
@@ -387,6 +385,8 @@ class SecondRootUpgrader(BaseUpgrader):
         if not hasattr(obj, 'cs_citation'):
             cit = obj.service_codesources.manage_copyObjects(['cs_citation',])
             obj.manage_pasteObjects(cit)
+        if not service_ext.is_installed('SilvaLayout'):
+            service_ext.install('SilvaLayout')
 
         return obj
 
