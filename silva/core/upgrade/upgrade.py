@@ -109,17 +109,25 @@ class UpgradeRegistry(object):
     def upgradeObject(self, obj, version):
         mt = obj.meta_type
         for upgrader in self.getUpgraders(version, mt):
+            url = None
             if getattr(obj, 'absolute_url', None):
                 # Not all objects have an absolute_url ...
-                logger.debug('Upgrading %s with %r' %
-                             (obj.absolute_url(), upgrader))
+                url = obj.absolute_url()
+            if url is not None:
+                logger.debug('Upgrading %s with %r' % (url, upgrader))
+
             # sometimes upgrade methods will replace objects, if so
             # the new object should be returned so that can be used
             # for the rest of the upgrade chain instead of the old
             # (probably deleted) one
             __traceback_supplement__ = (
                 UpgraderTracebackSupplement, self, obj, upgrader)
-            obj = upgrader.upgrade(obj)
+            try:
+                obj = upgrader.upgrade(obj)
+            except ValueError:
+                if url is not None:
+                    logger.error('Error while upgrading object %s with %r' %
+                                 (url, upgrader))
             assert obj is not None, "Upgrader %r seems to be broken, " \
                 "this is a bug." % (upgrader, )
         return obj
