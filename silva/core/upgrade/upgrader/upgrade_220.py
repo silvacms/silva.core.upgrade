@@ -380,6 +380,7 @@ class SecondRootUpgrader(BaseUpgrader):
         if not hasattr(obj, 'cs_citation'):
             cit = obj.service_codesources.manage_copyObjects(['cs_citation',])
             obj.manage_pasteObjects(cit)
+        # Setup SilvaLayout
         if not service_ext.is_installed('SilvaLayout'):
             service_ext.install('SilvaLayout')
 
