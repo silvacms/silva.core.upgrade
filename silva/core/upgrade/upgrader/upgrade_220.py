@@ -115,7 +115,10 @@ class ImagesUpgrader(BaseUpgrader):
             data = StringIO(str(hires_image.data))
         elif hires_image.meta_type == 'ExtImage':
             filename = hires_image.get_filename()
-            data = open(filename, 'rb')
+            try:
+                data = open(filename, 'rb')
+            except IOError:
+                raise ValueError, "Missing file %s" % filename
         elif hires_image.meta_type == 'Silva File':
             # Already converted ?
             return obj
