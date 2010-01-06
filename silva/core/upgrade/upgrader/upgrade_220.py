@@ -77,11 +77,6 @@ class RootUpgrader(BaseUpgrader):
         # Delete unused Silva views
         reg.unregister('public', 'Silva AutoTOC')
 
-        # Install ExternalSources
-        service_ext = obj.service_extensions
-        if not service_ext.is_installed('SilvaExternalSources'):
-            service_ext.install('SilvaExternalSources')
-
         # Clean SilvaLayout mess
         if hasattr(obj, "__silva_layout_installed__"):
             if 'silva-layout-vhost-root' in obj.service_metadata.getCollection().getMetadataSets():
