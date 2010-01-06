@@ -124,10 +124,10 @@ class UpgradeRegistry(object):
                 UpgraderTracebackSupplement, self, obj, upgrader)
             try:
                 obj = upgrader.upgrade(obj)
-            except ValueError:
+            except ValueError, e:
                 if url is not None:
-                    logger.error('Error while upgrading object %s with %r' %
-                                 (url, upgrader))
+                    logger.error('Error while upgrading object %s with %r: %s' %
+                                 (url, upgrader, str(e)))
             assert obj is not None, "Upgrader %r seems to be broken, " \
                 "this is a bug." % (upgrader, )
         return obj
