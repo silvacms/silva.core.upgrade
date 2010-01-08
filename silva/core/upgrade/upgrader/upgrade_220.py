@@ -60,8 +60,6 @@ class RootUpgrader(BaseUpgrader):
             ism.makeSite()
             setSite(obj)
 
-        # TODO: IntID
-
         reg = obj.service_view_registry
 
         # Delete unused Silva Document service
