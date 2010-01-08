@@ -102,8 +102,8 @@ class UpgradeRegistry(object):
         """
         upgraders = []
         v_mt = self.__registry.get(version, {})
-        upgraders.extend(v_mt.get(meta_type, []))
         upgraders.extend(v_mt.get(AnyMetaType, []))
+        upgraders.extend(v_mt.get(meta_type, []))
         return upgraders
 
     def upgradeObject(self, obj, version):
