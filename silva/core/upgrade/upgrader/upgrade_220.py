@@ -32,9 +32,9 @@ from silva.core.upgrade.localsite import setup_intid
 from Products.Silva.adapters import version_management
 from Products.Silva.File import FileSystemFile
 from Products.SilvaExternalSources.interfaces import ICodeSourceService
-from Products.SilvaMetadata.interfaces import IMetadataService, \
-    ICatalogService
-from Products.SilvaMetadata.CatalogTool import CatalogService
+from Products.SilvaMetadata.interfaces import IMetadataService
+from silva.core.services.interfaces import ICatalogService
+from silva.core.services.catalog import CatalogService
 
 
 #-----------------------------------------------------------------------------
