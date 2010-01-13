@@ -10,4 +10,8 @@ CLASS_CHANGES = {
         'silva.core.interfaces.service IInvisibleService',
     'Products.Silva.interfaces.service IInvisibleService':
         'silva.core.interfaces.service IInvisibleService',
+    'Products.SilvaMetadata.interfaces ICatalogService':
+        'silva.core.services.interfaces ICatalogService',
+    'Products.SilvaMetadata.CatalogTool CatalogService':
+        'silva.core.services.catalog CatalogService'
     }
