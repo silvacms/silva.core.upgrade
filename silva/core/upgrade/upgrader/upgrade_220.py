@@ -372,6 +372,9 @@ class SecondRootUpgrader(BaseUpgrader):
         catalog._catalog.indexes = indexes
         # We reinitialize the metadata sets to recreate indexes
         for mset in metadata.collection.objectValues():
+            for melt in mset.objectValues():
+                if 'doc_attr' in melt.index_constructor_args:
+                    del melt.index_constructor_args['doc_attr']
             mset.initialized = 0
             mset.initialize()
 
