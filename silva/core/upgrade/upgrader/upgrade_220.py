@@ -342,6 +342,7 @@ class SecondRootUpgrader(BaseUpgrader):
     """
 
     def upgrade(self, obj):
+        # Update the error message handling
         if obj.__dict__.has_key('standard_error_message'):
             obj._setObject(
                 'default_standard_error_message',
@@ -355,9 +356,13 @@ class SecondRootUpgrader(BaseUpgrader):
             # We should have it however ...
             sm.registerUtility(obj.service_codesources, ICodeSourceService)
         sm.registerUtility(obj.service_metadata, IMetadataService)
-        obj.service_catalog.__class__ = CatalogService
-        sm.registerUtility(obj.service_catalog, ICatalogService)
+
+        # Update the catalog
         setup_intid(obj)
+        catalog = obj.service_catalog
+        catalog.__class__ = CatalogService
+        sm.registerUtility(obj.catalog, ICatalogService)
+
 
         if hasattr(obj, 'service_annotations'):
             obj.manage_delObjects(['service_annotations'])
