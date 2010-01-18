@@ -355,14 +355,25 @@ class SecondRootUpgrader(BaseUpgrader):
         if hasattr(obj, 'service_codesources'):
             # We should have it however ...
             sm.registerUtility(obj.service_codesources, ICodeSourceService)
-        sm.registerUtility(obj.service_metadata, IMetadataService)
+
+        # Update metadata service
+        metadata = obj.service_metadata
+        sm.registerUtility(metadata, IMetadataService)
 
         # Update the catalog
         setup_intid(obj)
         catalog = obj.service_catalog
         catalog.__class__ = CatalogService
-        sm.registerUtility(obj.catalog, ICatalogService)
-
+        sm.registerUtility(catalog, ICatalogService)
+        indexes = catalog._catalog.indexes
+        for key, index in indexes.items():
+            if index.__class__.__name__ == 'ProxyIndex':
+                del indexes[key]
+        catalog._catalog.indexes = indexes
+        # We reinitialize the metadata sets to recreate indexes
+        for mset in metadata.collection.objectValues():
+            mset.initialized = 0
+            mset.initialize()
 
         if hasattr(obj, 'service_annotations'):
             obj.manage_delObjects(['service_annotations'])
