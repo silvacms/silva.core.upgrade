@@ -238,7 +238,10 @@ class SilvaXMLUpgrader(BaseUpgrader):
             #p = doc_el.createElement('parameter')
             #p.setAttribute('type','list')
             #p.setAttribute('key','toc_types')
-            #p.appendChild(doc_el.createTextNode("['Silva Document','Silva Folder','Silva Publication']"))
+            #toc_types = tocrendering.compute_default_show_types()
+            #s = str(toc_types)
+            #p.appendChild(doc_el.createTextNode(str(toc_types))
+            #"['Silva Document','Silva Folder','Silva Publication']"))
             #cs.appendChild(p)
 
             p = doc_el.createElement('parameter')
