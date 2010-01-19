@@ -175,16 +175,19 @@ class SilvaXMLUpgrader(BaseUpgrader):
             #html isn't currently allowed in author, source, so
             # we don't need to "sanity" check them!
             for node in c.childNodes:
+                val = node.firstChild.writeStream().getvalue().replace('&lt;','<')
                 if node.nodeType == node.ELEMENT_NODE:
                     if node.firstChild:
                         if node.nodeName == 'author':
-                            author = node.firstChild.writeStream().getvalue().replace('&lt;','<')
+                            author = val
                         elif node.nodeName == 'source':
-                            source = node.firstChild.writeStream().getvalue().replace('&lt;','<')
+                            source = val
+                        else:
+                            citation.append(val)
                     else:
-                        citation.append(node.writeStream().getvalue().replace('&lt;','<'))
+                        citation.append(val)
                 else:
-                    citation.append(node.writeStream().getvalue().replace('&lt;','<'))
+                    citation.append(val)
             citation = ''.join(citation)
 
             cs = doc_el.createElement('source')
