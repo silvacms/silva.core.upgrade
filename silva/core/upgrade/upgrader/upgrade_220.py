@@ -84,6 +84,10 @@ class RootUpgrader(BaseUpgrader):
             reg.unregister('add', 'Silva Layout Configuration')
             if hasattr(obj.service_views, 'SilvaLayout'):
                 obj.service_views.manage_delObjects(['SilvaLayout'])
+            #update the views (in service_view_registry) to ensure
+            # that SilvaLayout is removed from it's internal list
+            # of root view directories
+            obj.service_extensions._update_views(obj)
 
         # Update service_files settings
         service_files = obj.service_files
@@ -249,10 +253,12 @@ class SilvaXMLUpgrader(BaseUpgrader):
             p.setAttribute('key','css_class')
             cs.appendChild(p)
 
+            # make sure the sort order is the old default, of 
+            # "silva folder order"
             p = doc_el.createElement('parameter')
             p.setAttribute('type','string')
             p.setAttribute('key','sort_on')
-            p.appendChild(doc_el.createTextNode('alpha'))
+            p.appendChild(doc_el.createTextNode('silva'))
             cs.appendChild(p)
 
             p = doc_el.createElement('parameter')
