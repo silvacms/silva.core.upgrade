@@ -1,8 +1,8 @@
 Changelog
 =========
 
-2.2 (2010-02-01)
-----------------
+2.2b1 (2010-02-01)
+------------------
 
 * Initial release after spliting from Silva.
 
