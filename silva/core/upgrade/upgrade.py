@@ -15,7 +15,7 @@ from zope.interface import implements
 import transaction
 
 # Silva
-from silva.core.interfaces import IUpgrader, IUpgradeRegistry, IRoot
+from silva.core.interfaces import IUpgrader, IUpgradeRegistry
 
 threshold = 50
 

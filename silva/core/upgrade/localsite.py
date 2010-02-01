@@ -12,7 +12,6 @@ from zope.app.intid.interfaces import IIntIds
 from zope.app.component.interfaces import ISite
 from zope.app.component.hooks import setSite
 from zope.component import queryUtility
-from zope.interface import alsoProvides
 
 from silva.core.services.base import IntIdService
 from five.localsitemanager import make_objectmanager_site

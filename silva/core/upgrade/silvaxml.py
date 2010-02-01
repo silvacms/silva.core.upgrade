@@ -2,7 +2,6 @@
 # See also LICENSE.txt
 # $Id$
 
-import sys
 import cStringIO
 
 NAMESPACES_CHANGES = {

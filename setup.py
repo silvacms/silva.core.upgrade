@@ -28,8 +28,12 @@ setup(name='silva.core.upgrade',
           'martian',
           'five.grok',
           'five.localsitemanager',
+          'grokcore.site',
           'silva.core.interfaces',
           'silva.core.services',
+          'zope.annotation',
+          'zope.interface',
+          'zope.component',
           ],
       entry_points = """
       [zodbupdate]
