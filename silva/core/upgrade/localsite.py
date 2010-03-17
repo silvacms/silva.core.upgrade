@@ -9,7 +9,7 @@ except ImportError:
     IFiveSiteManager = None
 
 from zope.app.intid.interfaces import IIntIds
-from zope.app.component.interfaces import ISite
+from zope.location.interfaces import ISite
 from zope.app.component.hooks import setSite
 from zope.component import queryUtility
 

@@ -3,7 +3,7 @@
 # $Id$
 
 # zope
-from zope.app.component.interfaces import ISite
+from zope.location.interfaces import ISite
 from zope.app.component.hooks import setSite
 from zope.annotation.interfaces import IAnnotations
 
