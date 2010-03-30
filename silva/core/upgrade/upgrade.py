@@ -22,6 +22,9 @@ threshold = 50
 # marker for upgraders to be called for any object
 AnyMetaType = object()
 
+def content_path(content):
+    return '/'.join(version.getPhysicalPath())
+
 
 class BaseUpgrader(object):
     """All upgrader should inherit from this upgrader.
@@ -109,12 +112,8 @@ class UpgradeRegistry(object):
     def upgradeObject(self, obj, version):
         mt = obj.meta_type
         for upgrader in self.getUpgraders(version, mt):
-            url = None
-            if getattr(obj, 'absolute_url', None):
-                # Not all objects have an absolute_url ...
-                url = obj.absolute_url()
-            if url is not None:
-                logger.debug('Upgrading %s with %r' % (url, upgrader))
+            path = content_path(obj)
+            logger.debug('Upgrading %s with %r' % (path, upgrader))
 
             # sometimes upgrade methods will replace objects, if so
             # the new object should be returned so that can be used
@@ -125,9 +124,8 @@ class UpgradeRegistry(object):
             try:
                 obj = upgrader.upgrade(obj)
             except ValueError, e:
-                if url is not None:
-                    logger.error('Error while upgrading object %s with %r: %s' %
-                                 (url, upgrader, str(e)))
+                logger.error('Error while upgrading object %s with %r: %s' %
+                             (path, upgrader, str(e)))
             assert obj is not None, "Upgrader %r seems to be broken, " \
                 "this is a bug." % (upgrader, )
         return obj
@@ -209,9 +207,9 @@ class UpgraderTracebackSupplement(object):
 
     def getInfo(self, as_html=0):
         import pprint
-        data = {"object":self.obj,
-                "object_path":'/'.join(self.obj.getPhysicalPath()),
-                "upgrader":self.upgrader}
+        data = {"object": self.obj,
+                "object_path": content_path(self.obj),
+                "upgrader": self.upgrader}
         s = pprint.pformat(data)
         if not as_html:
             return '   - Object Info:\n      %s' % s.replace('\n', '\n      ')
