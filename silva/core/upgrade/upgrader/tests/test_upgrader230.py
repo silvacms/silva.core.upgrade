@@ -29,7 +29,7 @@ class DocumentUpgraderTestCase(SilvaTestCase.SilvaTestCase):
             self.root, 'chocobo', 'Chocobo', file=test_open('chocobo.jpg'))
 
     def test_upgrade_link(self):
-        """Test upgrade of links
+        """Test upgrade of a simple link
         """
         editable = self.root.document.get_editable()
         editable.content = ParsedXML(
@@ -48,6 +48,83 @@ class DocumentUpgraderTestCase(SilvaTestCase.SilvaTestCase):
         link = links[0]
         self.failUnless(link.hasAttribute('reference'))
         self.failIf(link.hasAttribute('url'))
+        self.failIf(link.hasAttribute('anchor'))
+        reference_name = link.getAttribute('reference')
+        reference_service = component.getUtility(IReferenceService)
+        reference = reference_service.get_reference(
+            editable, name=reference_name)
+        self.assertEqual(reference.target, self.root.publication)
+
+    def test_upgrade_link_not_silva_object(self):
+        """Test upgrade of a link that does not point to a Silva
+        object, like for instance to the edit interface.
+        """
+        editable = self.root.document.get_editable()
+        editable.content = ParsedXML(
+            'content',
+            """<?xml version="1.0" encoding="utf-8"?>
+<doc>
+  <p type="normal">
+    <link target="_blank" url="./edit">SMI</link>
+  </p>
+</doc>""")
+        result = DocumentUpgrader.upgrade(self.root.document)
+        self.assertEqual(result, self.root.document)
+        document_dom = editable._get_document_element()
+        links = document_dom.getElementsByTagName('link')
+        self.assertEqual(len(links), 1)
+        link = links[0]
+        self.failIf(link.hasAttribute('reference'))
+        self.failUnless(link.hasAttribute('url'))
+        self.assertEquals(link.getAttribute('url'), './edit')
+        self.failIf(link.hasAttribute('anchor'))
+
+    def test_upgrade_link_only_anchor(self):
+        """Test upgrade of a link that is only to an anchor on the
+        same page
+        """
+        editable = self.root.document.get_editable()
+        editable.content = ParsedXML(
+            'content',
+            """<?xml version="1.0" encoding="utf-8"?>
+<doc>
+  <p type="normal">
+    <link target="_blank" url="#on_me">On me link</link>
+  </p>
+</doc>""")
+        result = DocumentUpgrader.upgrade(self.root.document)
+        self.assertEqual(result, self.root.document)
+        document_dom = editable._get_document_element()
+        links = document_dom.getElementsByTagName('link')
+        self.assertEqual(len(links), 1)
+        link = links[0]
+        self.failIf(link.hasAttribute('reference'))
+        self.failIf(link.hasAttribute('url'))
+        self.failUnless(link.hasAttribute('anchor'))
+        self.assertEqual(link.getAttribute('anchor'), 'on_me')
+
+    def test_upgrade_link_with_anchor(self):
+        """Test upgrade of a simple link to a content with an anchor
+        """
+        editable = self.root.document.get_editable()
+        editable.content = ParsedXML(
+            'content',
+            """<?xml version="1.0" encoding="utf-8"?>
+<doc>
+  <p type="normal">
+    <link target="_blank" url="./publication#on_me">On me link</link>
+  </p>
+</doc>""")
+        result = DocumentUpgrader.upgrade(self.root.document)
+        self.assertEqual(result, self.root.document)
+        document_dom = editable._get_document_element()
+        links = document_dom.getElementsByTagName('link')
+        self.assertEqual(len(links), 1)
+        link = links[0]
+        self.failUnless(link.hasAttribute('reference'))
+        self.failIf(link.hasAttribute('url'))
+        self.failUnless(link.hasAttribute('anchor'))
+        self.assertEqual(link.getAttribute('anchor'), 'on_me')
         reference_name = link.getAttribute('reference')
         reference_service = component.getUtility(IReferenceService)
         reference = reference_service.get_reference(
@@ -63,7 +140,7 @@ class DocumentUpgraderTestCase(SilvaTestCase.SilvaTestCase):
             """<?xml version="1.0" encoding="utf-8"?>
 <doc>
   <p type="normal">
-    <link target="_blank" url="http://infrae.com">Infrae link</link>
+    <link target="_blank" url="http://infrae.com#top">Infrae link</link>
   </p>
 </doc>""")
         result = DocumentUpgrader.upgrade(self.root.document)
@@ -73,9 +150,10 @@ class DocumentUpgraderTestCase(SilvaTestCase.SilvaTestCase):
         self.assertEqual(len(links), 1)
         link = links[0]
         self.failIf(link.hasAttribute('reference'))
+        self.failIf(link.hasAttribute('anchor'))
         self.failUnless(link.hasAttribute('url'))
         url = link.getAttribute('url')
-        self.assertEqual(url, 'http://infrae.com')
+        self.assertEqual(url, 'http://infrae.com#top')
 
     def test_upgrade_link_broken(self):
         """Test upgrade of a link which is an external URL
