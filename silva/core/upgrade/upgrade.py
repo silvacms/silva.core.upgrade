@@ -86,6 +86,7 @@ class UpgradeRegistry(object):
 
     def __init__(self):
         self.__registry = {}
+        self.__in_process = False
 
     def registerUpgrader(self, upgrader, version=None, meta_type=None):
         assert IUpgrader.providedBy(upgrader)
@@ -162,33 +163,47 @@ class UpgradeRegistry(object):
         return stats
 
     def upgrade(self, root, from_version, to_version):
-        logger.info('upgrading from %s to %s.' %
-                    (from_version, to_version))
+        """Upgrade a root object from the from_version to the
+        to_version.
+        """
+        if self.__in_process is True:
+            raise ValueError(u"An upgrade process is already going on")
+        log_stream = StringIO()
+        log_handler = logging.StreamHandler(log_stream)
+        logger.addHandler(log_handler)
+        try:
+            logger.info('upgrading from %s to %s.' %
+                        (from_version, to_version))
 
-        start = datetime.datetime.now()
-        upgrade_chain = get_upgrade_chain(
-            self.__registry.keys(), from_version, to_version)
-        if not upgrade_chain:
-            logger.info('nothing needs to be done.')
+            start = datetime.datetime.now()
+            upgrade_chain = get_upgrade_chain(
+                self.__registry.keys(), from_version, to_version)
+            if not upgrade_chain:
+                logger.info('nothing needs to be done.')
 
-        # First, upgrade Silva Root so Silva services / extensions
-        # will be upgraded
+            # First, upgrade Silva Root so Silva services / extensions
+            # will be upgraded
 
-        for version in upgrade_chain:
-            logger.info('upgrading root to version %s.' % version)
-            self.upgradeObject(root, version)
+            for version in upgrade_chain:
+                logger.info('upgrading root to version %s.' % version)
+                self.upgradeObject(root, version)
 
-        # Now, upgrade site content
-        for version in upgrade_chain:
-            logger.info('upgrading content to version %s.' % version)
-            self.upgradeTree(root, version, blacklist=['Silva Root',])
+            # Now, upgrade site content
+            for version in upgrade_chain:
+                logger.info('upgrading content to version %s.' % version)
+                self.upgradeTree(root, version, blacklist=['Silva Root',])
 
-        # Now, refresh extensions
-        logger.info('refresh extensions.')
-        root.service_extensions.refresh_all()
+            # Now, refresh extensions
+            logger.info('refresh extensions.')
+            root.service_extensions.refresh_all()
 
-        end = datetime.datetime.now()
-        logger.info('upgrade finished in %d seconds.' % (end - start).seconds)
+            end = datetime.datetime.now()
+            logger.info(
+                'upgrade finished in %d seconds.' % (end - start).seconds)
+        finally:
+            logger.removeHandler(log_handler)
+            self.__in_process = False
+        return log_stream.getvalue()
 
 
 registry = UpgradeRegistry()
