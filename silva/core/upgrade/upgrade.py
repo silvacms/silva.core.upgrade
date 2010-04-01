@@ -23,7 +23,7 @@ threshold = 50
 AnyMetaType = object()
 
 def content_path(content):
-    return '/'.join(version.getPhysicalPath())
+    return '/'.join(content.getPhysicalPath())
 
 
 class BaseUpgrader(object):
