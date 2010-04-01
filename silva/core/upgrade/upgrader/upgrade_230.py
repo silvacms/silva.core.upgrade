@@ -51,7 +51,7 @@ class RootUpgrader(BaseUpgrader):
                         'service_table_editor',
                         'service_table_viewer']:
             try:
-                root.managed_delObjects([service])
+                root.manage_delObjects([service])
             except:
                 logger.error("failed to remove %s" % service)
 
