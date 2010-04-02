@@ -3,6 +3,7 @@
 # $Id$
 
 # Python
+from StringIO import StringIO
 from bisect import insort_right
 from pkg_resources import parse_version
 import logging
@@ -15,7 +16,7 @@ from zope.interface import implements
 import transaction
 
 # Silva
-from silva.core.interfaces import IUpgrader, IUpgradeRegistry
+from silva.core.interfaces import IUpgrader, IUpgradeRegistry, IRoot
 
 threshold = 50
 
@@ -193,9 +194,10 @@ class UpgradeRegistry(object):
                 logger.info('upgrading content to version %s.' % version)
                 self.upgradeTree(root, version, blacklist=['Silva Root',])
 
-            # Now, refresh extensions
-            logger.info('refresh extensions.')
-            root.service_extensions.refresh_all()
+            if IRoot.providedBy(root):
+                # Now, refresh extensions
+                logger.info('refresh extensions.')
+                root.service_extensions.refresh_all()
 
             end = datetime.datetime.now()
             logger.info(
