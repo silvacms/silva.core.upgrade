@@ -182,12 +182,12 @@ class UpgradeRegistry(object):
             if not upgrade_chain:
                 logger.info('nothing needs to be done.')
 
-            # First, upgrade Silva Root so Silva services / extensions
-            # will be upgraded
-
-            for version in upgrade_chain:
-                logger.info('upgrading root to version %s.' % version)
-                self.upgradeObject(root, version)
+            if IRoot.providedBy(root):
+                # First, upgrade Silva Root so Silva services /
+                # extensions will be upgraded
+                for version in upgrade_chain:
+                    logger.info('upgrading root to version %s.' % version)
+                    self.upgradeObject(root, version)
 
             # Now, upgrade site content
             for version in upgrade_chain:
