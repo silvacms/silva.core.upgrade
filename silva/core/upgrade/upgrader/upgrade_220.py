@@ -13,7 +13,7 @@ try:
 except ImportError:
     IFiveSiteManager = None
 
-from Products.SilvaLayout.install import resetMetadata # Should be in Silva ?
+from silva.core.layout.install import resetMetadata # Should be in Silva ?
 from Acquisition import aq_base
 import OFS.Image
 
@@ -77,8 +77,8 @@ class RootUpgrader(BaseUpgrader):
 
         # Clean SilvaLayout mess
         if hasattr(obj, "__silva_layout_installed__"):
-            if 'silva-layout-vhost-root' in obj.service_metadata.getCollection().getMetadataSets():
-                resetMetadata(obj, ['silva-layout-vhost-root'])
+            # if 'silva-layout-vhost-root' in obj.service_metadata.getCollection().getMetadataSets():
+            #     resetMetadata(obj, ['silva-layout-vhost-root'])
             reg.unregister('edit', 'Silva Layout Configuration')
             reg.unregister('public', 'Silva Layout Configuration')
             reg.unregister('add', 'Silva Layout Configuration')
