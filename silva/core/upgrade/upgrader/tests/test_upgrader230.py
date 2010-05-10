@@ -8,7 +8,7 @@ from Products.Silva.tests import SilvaTestCase
 from Products.ParsedXML.ParsedXML import ParsedXML
 
 from silva.core.references.interfaces import IReferenceService
-from silva.core.upgrade.upgrader.upgrade_230 import DocumentUpgrader
+from silva.core.upgrade.upgrader.upgrade_230 import document_upgrader
 from zope import component
 
 def test_open(filename, mode='r'):
@@ -40,7 +40,7 @@ class DocumentUpgraderTestCase(SilvaTestCase.SilvaTestCase):
     <link target="_blank" url="./publication">Publication link</link>
   </p>
 </doc>""")
-        result = DocumentUpgrader.upgrade(self.root.document)
+        result = document_upgrader.upgrade(self.root.document)
         self.assertEqual(result, self.root.document)
         document_dom = editable.content.documentElement
         links = document_dom.getElementsByTagName('link')
@@ -68,7 +68,7 @@ class DocumentUpgraderTestCase(SilvaTestCase.SilvaTestCase):
     <link target="_blank" url="./edit">SMI</link>
   </p>
 </doc>""")
-        result = DocumentUpgrader.upgrade(self.root.document)
+        result = document_upgrader.upgrade(self.root.document)
         self.assertEqual(result, self.root.document)
         document_dom = editable.content.documentElement
         links = document_dom.getElementsByTagName('link')
@@ -92,7 +92,7 @@ class DocumentUpgraderTestCase(SilvaTestCase.SilvaTestCase):
     <link target="_blank" url="#on_me">On me link</link>
   </p>
 </doc>""")
-        result = DocumentUpgrader.upgrade(self.root.document)
+        result = document_upgrader.upgrade(self.root.document)
         self.assertEqual(result, self.root.document)
         document_dom = editable.content.documentElement
         links = document_dom.getElementsByTagName('link')
@@ -115,7 +115,7 @@ class DocumentUpgraderTestCase(SilvaTestCase.SilvaTestCase):
     <link target="_blank" url="./publication#on_me">On me link</link>
   </p>
 </doc>""")
-        result = DocumentUpgrader.upgrade(self.root.document)
+        result = document_upgrader.upgrade(self.root.document)
         self.assertEqual(result, self.root.document)
         document_dom = editable.content.documentElement
         links = document_dom.getElementsByTagName('link')
@@ -143,7 +143,7 @@ class DocumentUpgraderTestCase(SilvaTestCase.SilvaTestCase):
     <link target="_blank" url="http://infrae.com#top">Infrae link</link>
   </p>
 </doc>""")
-        result = DocumentUpgrader.upgrade(self.root.document)
+        result = document_upgrader.upgrade(self.root.document)
         self.assertEqual(result, self.root.document)
         document_dom = editable.content.documentElement
         links = document_dom.getElementsByTagName('link')
@@ -167,7 +167,7 @@ class DocumentUpgraderTestCase(SilvaTestCase.SilvaTestCase):
     <link target="_blank" url="inexisting_document">Document link</link>
   </p>
 </doc>""")
-        result = DocumentUpgrader.upgrade(self.root.document)
+        result = document_upgrader.upgrade(self.root.document)
         self.assertEqual(result, self.root.document)
         document_dom = editable.content.documentElement
         links = document_dom.getElementsByTagName('link')
@@ -190,7 +190,7 @@ class DocumentUpgraderTestCase(SilvaTestCase.SilvaTestCase):
     <image alignment="image-left" title="" width="600" image_title="Chocobo" rewritten_path="http://localhost/root/chocobo" target="_self" height="177" path="chocobo" link_to_hires="0" link="" />
   </p>
 </doc>""")
-        result = DocumentUpgrader.upgrade(self.root.document)
+        result = document_upgrader.upgrade(self.root.document)
         self.assertEqual(result, self.root.document)
         document_dom = editable.content.documentElement
         images = document_dom.getElementsByTagName('image')
@@ -224,7 +224,7 @@ class DocumentUpgraderTestCase(SilvaTestCase.SilvaTestCase):
     <image alignment="image-left" title="Big Chocobo" width="600" image_title="Chocobo" rewritten_path="http://localhost/root/chocobo" target="_self" height="177" path="chocobo" link_to_hires="1" link="" />
   </p>
 </doc>""")
-        result = DocumentUpgrader.upgrade(self.root.document)
+        result = document_upgrader.upgrade(self.root.document)
         reference_service = component.getUtility(IReferenceService)
         self.assertEqual(result, self.root.document)
         document_dom = editable.content.documentElement
@@ -280,7 +280,7 @@ class DocumentUpgraderTestCase(SilvaTestCase.SilvaTestCase):
     <image alignment="image-left" title="Pub" width="600" image_title="Chocobo" rewritten_path="http://localhost/root/chocobo" target="_blank" height="177" path="chocobo" link_to_hires="0" link="../publication" />
   </p>
 </doc>""")
-        result = DocumentUpgrader.upgrade(self.root.document)
+        result = document_upgrader.upgrade(self.root.document)
         reference_service = component.getUtility(IReferenceService)
         self.assertEqual(result, self.root.document)
         document_dom = editable.content.documentElement
@@ -336,7 +336,7 @@ class DocumentUpgraderTestCase(SilvaTestCase.SilvaTestCase):
     <image alignment="image-left" title="Pub" width="600" image_title="Nothing" rewritten_path="http://localhost/root/nothing" target="_blank" height="177" path="nothing" link_to_hires="0" link="../publication" />
   </p>
 </doc>""")
-        result = DocumentUpgrader.upgrade(self.root.document)
+        result = document_upgrader.upgrade(self.root.document)
         reference_service = component.getUtility(IReferenceService)
         self.assertEqual(result, self.root.document)
         document_dom = editable.content.documentElement
@@ -393,7 +393,7 @@ class DocumentUpgraderTestCase(SilvaTestCase.SilvaTestCase):
     <image alignment="image-left" title="Pub" width="600" image_title="Chocobo" rewritten_path="http://localhost/root/chocobo" target="_blank" height="177" path="chocobo" link_to_hires="0" link="foo_bar" />
   </p>
 </doc>""")
-        result = DocumentUpgrader.upgrade(self.root.document)
+        result = document_upgrader.upgrade(self.root.document)
         reference_service = component.getUtility(IReferenceService)
         self.assertEqual(result, self.root.document)
         document_dom = editable.content.documentElement
