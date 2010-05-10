@@ -56,7 +56,7 @@ class RootUpgrader(BaseUpgrader):
         return root
 
 
-RootUpgrader = RootUpgrader(VERSION_A1, 'Silva Root')
+root_upgrader = RootUpgrader(VERSION_A1, 'Silva Root')
 
 
 def split_path(path):
@@ -108,7 +108,7 @@ class DocumentUpgrader(BaseUpgrader):
         for version in obj.objectValues():
             if IDocumentVersion.providedBy(version):
                 context = Context(version, None)
-                dom = version._get_document_element()
+                dom = version.content.documentElement
                 self.__upgrade_links(version, context, dom)
                 self.__upgrade_images(version, context, dom)
         return obj
@@ -208,5 +208,5 @@ class DocumentUpgrader(BaseUpgrader):
                 image.setAttribute('title', title)
 
 
+document_upgrader = DocumentUpgrader(VERSION_A1, 'Silva Document')
 
-DocumentUpgrader = DocumentUpgrader(VERSION_A1, 'Silva Document')

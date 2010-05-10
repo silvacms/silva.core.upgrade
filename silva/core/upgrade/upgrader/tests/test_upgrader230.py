@@ -42,7 +42,7 @@ class DocumentUpgraderTestCase(SilvaTestCase.SilvaTestCase):
 </doc>""")
         result = DocumentUpgrader.upgrade(self.root.document)
         self.assertEqual(result, self.root.document)
-        document_dom = editable._get_document_element()
+        document_dom = editable.content.documentElement
         links = document_dom.getElementsByTagName('link')
         self.assertEqual(len(links), 1)
         link = links[0]
@@ -70,7 +70,7 @@ class DocumentUpgraderTestCase(SilvaTestCase.SilvaTestCase):
 </doc>""")
         result = DocumentUpgrader.upgrade(self.root.document)
         self.assertEqual(result, self.root.document)
-        document_dom = editable._get_document_element()
+        document_dom = editable.content.documentElement
         links = document_dom.getElementsByTagName('link')
         self.assertEqual(len(links), 1)
         link = links[0]
@@ -94,7 +94,7 @@ class DocumentUpgraderTestCase(SilvaTestCase.SilvaTestCase):
 </doc>""")
         result = DocumentUpgrader.upgrade(self.root.document)
         self.assertEqual(result, self.root.document)
-        document_dom = editable._get_document_element()
+        document_dom = editable.content.documentElement
         links = document_dom.getElementsByTagName('link')
         self.assertEqual(len(links), 1)
         link = links[0]
@@ -117,7 +117,7 @@ class DocumentUpgraderTestCase(SilvaTestCase.SilvaTestCase):
 </doc>""")
         result = DocumentUpgrader.upgrade(self.root.document)
         self.assertEqual(result, self.root.document)
-        document_dom = editable._get_document_element()
+        document_dom = editable.content.documentElement
         links = document_dom.getElementsByTagName('link')
         self.assertEqual(len(links), 1)
         link = links[0]
@@ -145,7 +145,7 @@ class DocumentUpgraderTestCase(SilvaTestCase.SilvaTestCase):
 </doc>""")
         result = DocumentUpgrader.upgrade(self.root.document)
         self.assertEqual(result, self.root.document)
-        document_dom = editable._get_document_element()
+        document_dom = editable.content.documentElement
         links = document_dom.getElementsByTagName('link')
         self.assertEqual(len(links), 1)
         link = links[0]
@@ -169,7 +169,7 @@ class DocumentUpgraderTestCase(SilvaTestCase.SilvaTestCase):
 </doc>""")
         result = DocumentUpgrader.upgrade(self.root.document)
         self.assertEqual(result, self.root.document)
-        document_dom = editable._get_document_element()
+        document_dom = editable.content.documentElement
         links = document_dom.getElementsByTagName('link')
         self.assertEqual(len(links), 1)
         link = links[0]
@@ -192,7 +192,7 @@ class DocumentUpgraderTestCase(SilvaTestCase.SilvaTestCase):
 </doc>""")
         result = DocumentUpgrader.upgrade(self.root.document)
         self.assertEqual(result, self.root.document)
-        document_dom = editable._get_document_element()
+        document_dom = editable.content.documentElement
         images = document_dom.getElementsByTagName('image')
         self.assertEqual(len(images), 1)
         image = images[0]
@@ -227,7 +227,7 @@ class DocumentUpgraderTestCase(SilvaTestCase.SilvaTestCase):
         result = DocumentUpgrader.upgrade(self.root.document)
         reference_service = component.getUtility(IReferenceService)
         self.assertEqual(result, self.root.document)
-        document_dom = editable._get_document_element()
+        document_dom = editable.content.documentElement
 
         # The converter added a link to the hires chocobo
         links = document_dom.getElementsByTagName('link')
@@ -283,7 +283,7 @@ class DocumentUpgraderTestCase(SilvaTestCase.SilvaTestCase):
         result = DocumentUpgrader.upgrade(self.root.document)
         reference_service = component.getUtility(IReferenceService)
         self.assertEqual(result, self.root.document)
-        document_dom = editable._get_document_element()
+        document_dom = editable.content.documentElement
 
         # The converter added a link to the publication
         links = document_dom.getElementsByTagName('link')
@@ -339,7 +339,7 @@ class DocumentUpgraderTestCase(SilvaTestCase.SilvaTestCase):
         result = DocumentUpgrader.upgrade(self.root.document)
         reference_service = component.getUtility(IReferenceService)
         self.assertEqual(result, self.root.document)
-        document_dom = editable._get_document_element()
+        document_dom = editable.content.documentElement
 
         # The converter added a link to the publication
         links = document_dom.getElementsByTagName('link')
@@ -396,7 +396,7 @@ class DocumentUpgraderTestCase(SilvaTestCase.SilvaTestCase):
         result = DocumentUpgrader.upgrade(self.root.document)
         reference_service = component.getUtility(IReferenceService)
         self.assertEqual(result, self.root.document)
-        document_dom = editable._get_document_element()
+        document_dom = editable.content.documentElement
 
         # The converter added a link to the foo_bar URL.
         links = document_dom.getElementsByTagName('link')
