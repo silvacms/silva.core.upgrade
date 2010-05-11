@@ -13,5 +13,7 @@ CLASS_CHANGES = {
     'Products.SilvaMetadata.interfaces ICatalogService':
         'silva.core.services.interfaces ICatalogService',
     'Products.SilvaMetadata.CatalogTool CatalogService':
-        'silva.core.services.catalog CatalogService'
+        'silva.core.services.catalog CatalogService',
+    'Products.XMLWidgets.WidgetRegistry WidgetRegistry':
+        'OFS.SimpleItem SimpleItem',
     }

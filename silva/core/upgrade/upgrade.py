@@ -156,7 +156,7 @@ class UpgradeRegistry(object):
             stats['total'] += 1
             stats['threshold'] += 1
             if stats['threshold'] > threshold:
-                transaction.get().commit()
+                transaction.commit()
                 if hasattr(obj, '_p_jar') and obj._p_jar is not None:
                     obj._p_jar.cacheGC()
                 stats['threshold'] = 0

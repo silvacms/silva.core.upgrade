@@ -110,6 +110,8 @@ class DocumentUpgrader(BaseUpgrader):
     def upgrade(self, obj):
         for version in obj.objectValues():
             if IDocumentVersion.providedBy(version):
+                logger.info('will upgrade content on version %s' % 
+                    "/".join(version.getPhysicalPath()))
                 context = Context(version, None)
                 dom = version.content.documentElement
                 self.__upgrade_links(version, context, dom)
@@ -211,5 +213,27 @@ class DocumentUpgrader(BaseUpgrader):
                 image.setAttribute('title', title)
 
 
+class ArticleUpgrader(BaseUpgrader):
+
+    def upgrade(self, obj):
+        for version in obj.objectValues():
+            if IDocumentVersion.providedBy(version):
+                logger.info('upgrade xmlattribute for %s' %
+                    "/".join(version.getPhysicalPath()))
+                parsed_xml = version.content._content
+                version.content = parsed_xml
+        return obj
+
+
 document_upgrader = DocumentUpgrader(VERSION_A1, 'Silva Document')
+
+article_upgrader_agenda = \
+    ArticleUpgrader(VERSION_A1, 'Silva Agenda Item', 100)
+article_upgrader_article = \
+    ArticleUpgrader(VERSION_A1, 'Silva Article', 100)
+
+document_upgrader_agenda = \
+    DocumentUpgrader(VERSION_A1, "Silva Agenda Item", 101)
+document_upgrader_article = \
+    DocumentUpgrader(VERSION_A1, "Silva Article", 101)
 
