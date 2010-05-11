@@ -11,6 +11,7 @@ from silva.core.upgrade.upgrade import BaseUpgrader, AnyMetaType, content_path
 
 from urlparse import urlparse
 import logging
+import transaction
 
 logger = logging.getLogger('silva.core.upgrade')
 
@@ -43,16 +44,18 @@ class RootUpgrader(BaseUpgrader):
                         'service_field_viewer',
                         'service_nlist_editor',
                         'service_nlist_viewer',
+                        'service_widgets',
                         'service_sub_editor',
                         'service_sub_viewer',
                         'service_news_sub_viewer',
+                        'service_news_sub_editor',
                         'service_table_editor',
                         'service_table_viewer']:
             try:
                 root.manage_delObjects([service])
             except:
                 logger.error("failed to remove %s" % service)
-
+        transaction.commit()
         return root
 
 
