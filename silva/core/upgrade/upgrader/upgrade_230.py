@@ -30,8 +30,7 @@ class RootUpgrader(BaseUpgrader):
         # add service_references
         factory = root.manage_addProduct['silva.core.references']
         if 'service_references' not in installed_ids:
-            factory.manage_addReferenceService(
-                'service_references', 'Silva References')
+            factory.manage_addReferenceService('service_references')
 
         # remove un-needed Silva Document services
         for service in ['service_editor',
