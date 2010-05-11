@@ -45,6 +45,7 @@ class RootUpgrader(BaseUpgrader):
                         'service_nlist_viewer',
                         'service_sub_editor',
                         'service_sub_viewer',
+                        'service_news_sub_viewer',
                         'service_table_editor',
                         'service_table_viewer']:
             try:
