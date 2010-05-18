@@ -33,6 +33,11 @@ class RootUpgrader(BaseUpgrader):
         if 'service_references' not in installed_ids:
             factory.manage_addReferenceService('service_references')
 
+        reg = obj.service_view_registry
+        reg.unregister('public', 'Silva Ghost')
+        reg.unregister('public', 'Silva Ghost Version')
+        reg.unregister('preview', 'Silva Ghost Version')
+
         # remove un-needed Silva Document services
         for service in ['service_editor',
                         'service_editorsupport',
