@@ -230,6 +230,21 @@ class ArticleUpgrader(BaseUpgrader):
         return obj
 
 
+class GhostUpgrader(BaseUpgrader):
+
+    def upgrade(self, obj):
+        if hasattr(obj, '_content_path'):
+            target_path = obj._content_path
+            if target_path:
+                target = obj.get_root().unrestrictedTraverse(
+                    target_path, None)
+                if target:
+                    logger.info('upgrade reference object for Ghost @%s' %
+                        "/".join(obj.getPhysicalPath))
+                    obj.set_haunted(target)
+            del obj._content_path
+
+
 document_upgrader = DocumentUpgrader(VERSION_A1, 'Silva Document')
 
 article_upgrader_agenda = \
@@ -241,4 +256,7 @@ document_upgrader_agenda = \
     DocumentUpgrader(VERSION_A1, "Silva Agenda Item", 101)
 document_upgrader_article = \
     DocumentUpgrader(VERSION_A1, "Silva Article", 101)
+
+ghost_upgrader = GhostUpgrader(VERSION_A1, ["Ghost Version", "Ghost Folder"])
+
 
