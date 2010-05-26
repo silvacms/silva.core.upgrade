@@ -242,6 +242,11 @@ class GhostUpgrader(BaseUpgrader):
                     logger.info('upgrade reference object for Ghost @%s' %
                         "/".join(obj.getPhysicalPath))
                     obj.set_haunted(target)
+                else:
+                    logger.warn(
+                        'Ghost at %s point to a non existing object at %s' %
+                        "/".join(obj.getPhysicalPath()),
+                        "/".join(target_path))
             del obj._content_path
 
 
