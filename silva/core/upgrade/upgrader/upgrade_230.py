@@ -250,6 +250,12 @@ class GhostUpgrader(BaseUpgrader):
             del obj._content_path
 
 
+class IndexerUpgrader(BaseUpgrader):
+
+    def update(self, ob):
+        ob.update()
+
+
 document_upgrader = DocumentUpgrader(VERSION_A1, 'Silva Document')
 
 article_upgrader_agenda = \
@@ -262,6 +268,6 @@ document_upgrader_agenda = \
 document_upgrader_article = \
     DocumentUpgrader(VERSION_A1, "Silva Article", 101)
 
-ghost_upgrader = GhostUpgrader(VERSION_A1, ["Ghost Version", "Ghost Folder"])
-
+ghost_upgrader = GhostUpgrader(VERSION_A1, ["Silva Ghost", "Silva Ghost Folder"])
+indexer_upgrader = IndexerUpgrader(VERSION_A1, "Silva Indexer")
 
