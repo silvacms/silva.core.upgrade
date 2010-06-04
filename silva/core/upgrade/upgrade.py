@@ -33,6 +33,11 @@ class BaseUpgrader(object):
     implements(IUpgrader)
 
     def __init__(self, version, meta_type, priority=0):
+        """Create an instance of this upgrader for the given meta_type
+        to upgrade to the given version. If more than one upgrader is
+        defined for the same meta_type to the same version, the one
+        with the smallest priority would be run first.
+        """
         self.version = version
         self.meta_type = meta_type
         self.priority = priority
