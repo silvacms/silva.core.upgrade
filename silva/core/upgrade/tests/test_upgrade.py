@@ -2,17 +2,15 @@
 # See also LICENSE.txt
 # $Id$
 
-from unittest import TestCase
+import unittest
 
-# Zope
-from zope.interface.verify import verifyObject
-
-# Silva
+from infrae.testing import TestCase
 from silva.core.interfaces import IUpgradeRegistry
 from silva.core.upgrade import upgrade
+from zope.interface.verify import verifyObject
 
 
-class UpgradeUtilitiesTestCase(TestCase):
+class UpgradeUtilitiesTestCase(unittest.TestCase):
     """Test utilities which determines which version step should be
     run.
     """
@@ -59,16 +57,42 @@ class UpgradeUtilitiesTestCase(TestCase):
             ['2.3',])
 
 
+class TestUpgraderA(upgrade.BaseUpgrader):
+    pass
+
+class TestUpgraderB(upgrade.BaseUpgrader):
+    pass
+
+class TestUpgraderC(upgrade.BaseUpgrader):
+    pass
+
+
 class UpgradeTestCase(TestCase):
     """Test for the upgrade machinery.
     """
 
-    def test_upgrade_registry(self):
+    def test_registry(self):
         verifyObject(IUpgradeRegistry, upgrade.registry)
 
+    def test_registration_priority(self):
+        """Create a registry and register upgrader manually to
+        it. Check how they are sorted according to their priority.
+        """
+        registry = upgrade.UpgradeRegistry()
+
+        upgraderA = TestUpgraderA(1.0, 'Silva Root', 10)
+        upgraderB = TestUpgraderB(1.0, 'Silva Root', 100)
+        upgraderC = TestUpgraderC(1.0, 'Silva Root', 50)
+
+        registry.registerUpgrader(upgraderB)
+        registry.registerUpgrader(upgraderA)
+        registry.registerUpgrader(upgraderC)
+        self.assertListEqual(
+            registry.getUpgraders(1.0, 'Silva Root'),
+            [upgraderA, upgraderB, upgraderC])
 
 
-import unittest
+
 def test_suite():
     suite = unittest.TestSuite()
     suite.addTest(unittest.makeSuite(UpgradeUtilitiesTestCase))

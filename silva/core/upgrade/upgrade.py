@@ -30,7 +30,6 @@ def content_path(content):
 class BaseUpgrader(object):
     """All upgrader should inherit from this upgrader.
     """
-
     implements(IUpgrader)
 
     def __init__(self, version, meta_type, priority=0):

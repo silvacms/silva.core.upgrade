@@ -59,14 +59,14 @@ class RootUpgrader(BaseUpgrader):
             ism.makeSite()
             setSite(obj)
 
-        reg = obj.service_view_registry
-
         # Delete unused Silva Document service
         for s in ['service_doc_previewer',
                   'service_nlist_previewer',
                   'service_sub_previewer',]:
             if hasattr(obj, s):
                 obj.manage_delObjects([s,])
+
+        reg = obj.service_view_registry
         reg.unregister('public', 'Silva Document Version')
         reg.unregister('add', 'Silva Document')
         reg.unregister('preview', 'Silva Document Version')
