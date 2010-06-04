@@ -57,8 +57,8 @@ class RootUpgrader(BaseUpgrader):
         ism = interfaces.ISiteManager(obj)
         if not ism.isSite():
             ism.makeSite()
-            setSite(obj)
-            setHooks()
+        setSite(obj)
+        setHooks()
 
         # Delete unused Silva Document service
         for s in ['service_doc_previewer',
