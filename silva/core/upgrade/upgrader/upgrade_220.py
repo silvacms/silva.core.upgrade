@@ -4,7 +4,7 @@
 
 # zope
 from zope.location.interfaces import ISite
-from zope.app.component.hooks import setSite
+from zope.app.component.hooks import setSite, setHooks
 from zope.annotation.interfaces import IAnnotations
 
 try:
@@ -58,6 +58,7 @@ class RootUpgrader(BaseUpgrader):
         if not ism.isSite():
             ism.makeSite()
             setSite(obj)
+            setHooks()
 
         # Delete unused Silva Document service
         for s in ['service_doc_previewer',
