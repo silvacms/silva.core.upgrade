@@ -7,7 +7,7 @@ CLASS_CHANGES = {
     'Products.Annotations.AnnotationTool Annotations':
         'persistent.mapping PersistentMapping',
     'Products.Five.site.localsite FiveSiteManager':
-        'Persistence._Persistence Persistent',
+        'persistent Persistent',
     'Products.Silva.interfaces IInvisibleService':
         'silva.core.interfaces.service IInvisibleService',
     'Products.Silva.interfaces.service IInvisibleService':
