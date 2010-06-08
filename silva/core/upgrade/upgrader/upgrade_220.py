@@ -30,6 +30,7 @@ from silva.core.upgrade.localsite import setup_intid
 
 from Products.Silva.adapters import version_management
 from Products.Silva.File import FileSystemFile
+from Products.Silva.magic import MagicGuess
 from Products.SilvaExternalSources.interfaces import ICodeSourceService
 from Products.SilvaMetadata.interfaces import IMetadataService
 from silva.core.services.interfaces import ICatalogService
@@ -103,7 +104,10 @@ class RootUpgrader(BaseUpgrader):
 RootUpgrader = RootUpgrader(VERSION_A1, 'Silva Root')
 
 
+
 class ImagesUpgrader(BaseUpgrader):
+
+    magic_guess = MagicGuess()
 
     def upgrade(self, obj):
         # Add stuff here
@@ -127,9 +131,10 @@ class ImagesUpgrader(BaseUpgrader):
             return obj
         else:
             raise ValueError, "Unknown mimetype"
+        data.seek(0)
         full_data = data.read()
         data.seek(0)
-        ct, _, _ = OFS.Image.getImageInfo(full_data)
+        ct = self.magic_guess.buffer(full_data)
         if not ct:
             raise ValueError, "Impossible to detect mimetype"
         obj._image_factory('hires_image', data, ct)
@@ -389,6 +394,11 @@ class SecondRootUpgrader(BaseUpgrader):
                 if ('doc_attr' in melt.index_constructor_args and
                     melt.index_constructor_args['doc_attr'] == 'proxy_value'):
                     del melt.index_constructor_args['doc_attr']
+                if melt.index_type == 'TextIndex':
+                    melt.index_type = 'ZCTextIndex'
+                    melt.index_constructor_args.update(
+                        {'index_type': 'Cosine Measure',
+                         'lexicon_id': 'silva_lexicon'})
             mset.initialized = 0
             mset.initialize()
 
@@ -416,7 +426,13 @@ class SecondRootUpgrader(BaseUpgrader):
             obj.manage_pasteObjects(cit)
         # Setup SilvaLayout
         if not service_ext.is_installed('SilvaLayout'):
-            service_ext.install('SilvaLayout')
+            try:
+                import Products.SilvaLayout
+            except ImportError:
+                logger.info('Products.SilvaLayout is not installed, '
+                            'skipping installation of extension')
+            else:
+              service_ext.install('SilvaLayout')
 
         return obj
 

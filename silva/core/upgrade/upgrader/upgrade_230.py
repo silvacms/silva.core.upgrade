@@ -26,12 +26,20 @@ VERSION_A1='2.3a1'
 class RootUpgrader(BaseUpgrader):
 
     def upgrade(self, root):
+        from silva.core.references.interfaces import IReferenceService
         installed_ids = root.objectIds()
 
         # add service_references
         factory = root.manage_addProduct['silva.core.references']
-        if 'service_references' not in installed_ids:
+
+        def install_ref_service():
             factory.manage_addReferenceService('service_references')
+
+        if 'service_references' not in installed_ids:
+            install_ref_service()
+        elif not IReferenceService.providedBy(root.service_references):
+            root.manage_delObjects(['service_references'])
+            install_ref_service()
 
         reg = root.service_view_registry
         reg.unregister('public', 'Silva Ghost')
@@ -59,7 +67,7 @@ class RootUpgrader(BaseUpgrader):
             try:
                 root.manage_delObjects([service])
             except:
-                logger.error("failed to remove %s" % service)
+                logger.warn("failed to remove %s" % service)
         transaction.commit()
         return root
 
@@ -270,4 +278,3 @@ document_upgrader_article = \
 
 ghost_upgrader = GhostUpgrader(VERSION_A1, ["Silva Ghost", "Silva Ghost Folder"])
 indexer_upgrader = IndexerUpgrader(VERSION_A1, "Silva Indexer")
-
