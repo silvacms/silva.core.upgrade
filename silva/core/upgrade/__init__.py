@@ -16,4 +16,11 @@ CLASS_CHANGES = {
         'silva.core.services.catalog CatalogService',
     'Products.XMLWidgets.WidgetRegistry WidgetRegistry':
         'OFS.SimpleItem SimpleItem',
+    'Products.SilvaReferenceCheckerSupport.install IExtension':
+        'zope.interface Interface',
+    'silva.core.layout IExtension':
+        'zope.interface Interface',
+    'silva.core.upgrade.localsite IntIds':
+        'silva.core.services.base IntIdService',
     }
+
