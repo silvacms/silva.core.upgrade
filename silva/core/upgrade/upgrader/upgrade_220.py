@@ -137,6 +137,9 @@ class ImagesUpgrader(BaseUpgrader):
         ct = self.magic_guess.buffer(full_data)
         if not ct:
             raise ValueError, "Impossible to detect mimetype"
+        # fix some bug in old Images that could be BMP
+        if obj.web_format not in obj.web_formats:
+            obj.web_format = 'JPEG'
         obj._image_factory('hires_image', data, ct)
         obj._createDerivedImages()
         data.close()
@@ -319,15 +322,18 @@ class SilvaXMLUpgrader(BaseUpgrader):
 
 SilvaXMLUpgrader = SilvaXMLUpgrader(VERSION_A2, AnyMetaType)
 
+
 class AllowedAddablesUpgrader(BaseUpgrader):
 
     def upgrade(self, obj):
         if interfaces.IContainer.providedBy(obj):
-            if hasattr(obj.aq_explicit,'_addables_allowed_in_publication'):
-                obj._addables_allowed_in_container = obj._addables_allowed_in_publication
-                del obj._addables_allowed_in_publication
-            elif not hasattr(obj.aq_explicit, '_addables_allowed_in_container'):
-                obj._addables_allowed_in_container = None
+            clean_obj = obj.aq_base
+            if hasattr(clean_obj,'_addables_allowed_in_publication'):
+                clean_obj._addables_allowed_in_container = \
+                    clean_obj._addables_allowed_in_publication
+                del clean_obj._addables_allowed_in_publication
+            elif not hasattr(clean_obj, '_addables_allowed_in_container'):
+                clean_obj._addables_allowed_in_container = None
         return obj
 
 
