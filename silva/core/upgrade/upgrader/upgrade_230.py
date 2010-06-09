@@ -175,7 +175,7 @@ class DocumentUpgrader(BaseUpgrader):
             image as child of the link.
             """
             link = dom.createElement('link')
-            if not isinstance(target, unicode):
+            if not isinstance(target, basestring):
                 build_reference(context, target, link)
             else:
                 link.setAttribute('url', target)
