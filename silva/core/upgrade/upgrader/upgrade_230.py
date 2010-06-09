@@ -249,7 +249,7 @@ class GhostUpgrader(BaseUpgrader):
                     target_path, None)
                 if target:
                     logger.info('upgrade reference object for Ghost @%s' %
-                        "/".join(obj.getPhysicalPath))
+                        "/".join(obj.getPhysicalPath()))
                     obj.set_haunted(target)
                 else:
                     logger.warn(
