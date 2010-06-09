@@ -4,6 +4,7 @@
 
 from Products.SilvaDocument.interfaces import IDocumentVersion
 from Products.SilvaDocument.transform.base import Context
+from Products.ParsedXML.ParsedXML import ParsedXML
 from zExceptions import NotFound
 from five.intid.site import aq_iter
 
@@ -254,10 +255,11 @@ class ArticleUpgrader(BaseUpgrader):
     def upgrade(self, obj):
         for version in obj.objectValues():
             if IDocumentVersion.providedBy(version):
-                logger.info('upgrade xmlattribute for %s' %
-                    "/".join(version.getPhysicalPath()))
-                parsed_xml = version.content._content
-                version.content = parsed_xml
+                if not isinstance(version.content, ParsedXML):
+                    logger.info('upgrade xmlattribute for %s' %
+                                "/".join(version.getPhysicalPath()))
+                    parsed_xml = version.content._content
+                    version.content = parsed_xml
         return obj
 
 
@@ -283,15 +285,17 @@ class GhostUpgrader(BaseUpgrader):
 
 document_upgrader = DocumentUpgrader(VERSION_A1, 'Silva Document')
 
-article_upgrader_agenda = \
-    ArticleUpgrader(VERSION_A1, 'Silva Agenda Item', 100)
-article_upgrader_article = \
-    ArticleUpgrader(VERSION_A1, 'Silva Article', 100)
+article_upgrader_agenda = ArticleUpgrader(
+    VERSION_A1, 'Silva Agenda Item', 100)
+article_upgrader_article = ArticleUpgrader(
+    VERSION_A1, 'Silva Article', 100)
 
-document_upgrader_agenda = \
-    DocumentUpgrader(VERSION_A1, "Silva Agenda Item", 101)
-document_upgrader_article = \
-    DocumentUpgrader(VERSION_A1, "Silva Article", 101)
+document_upgrader_agenda = DocumentUpgrader(
+    VERSION_A1, "Silva Agenda Item", 101)
+document_upgrader_article = DocumentUpgrader(
+    VERSION_A1, "Silva Article", 101)
 
-ghost_upgrader = GhostUpgrader(VERSION_A1, ["Silva Ghost", "Silva Ghost Folder"])
-indexer_upgrader = UpdateIndexerUpgrader(VERSION_A1, "Silva Indexer")
+ghost_upgrader = GhostUpgrader(
+    VERSION_A1, ["Silva Ghost", "Silva Ghost Folder"])
+indexer_upgrader = UpdateIndexerUpgrader(
+    VERSION_A1, "Silva Indexer")
