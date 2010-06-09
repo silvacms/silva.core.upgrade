@@ -128,7 +128,8 @@ class UpgradeRegistry(object):
             __traceback_supplement__ = (
                 UpgraderTracebackSupplement, self, obj, upgrader)
             try:
-                obj = upgrader.upgrade(obj)
+                if not hasattr(upgrader, 'validate') or upgrader.validate(obj):
+                    obj = upgrader.upgrade(obj)
             except ValueError, e:
                 logger.error('Error while upgrading object %s with %r: %s' %
                              (path, upgrader, str(e)))
