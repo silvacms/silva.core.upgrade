@@ -358,7 +358,7 @@ class UpdateIndexerUpgrader(BaseUpgrader):
         return obj
 
 
-UpdateIndexerUpgrader = UpdateIndexerUpgrader(VERSION_B1, 'Silva Indexer')
+update_indexer_upgrader = UpdateIndexerUpgrader(VERSION_B1, 'Silva Indexer')
 
 
 class SecondRootUpgrader(BaseUpgrader):
