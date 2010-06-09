@@ -8,7 +8,7 @@ from zExceptions import NotFound
 
 from silva.core.interfaces import ISilvaObject
 from silva.core.upgrade.upgrade import BaseUpgrader, AnyMetaType, content_path
-from silva.core.upgrade.updager.update_220 import UpdateIndexerUpgrader
+from silva.core.upgrade.upgrader.update_220 import UpdateIndexerUpgrader
 
 from urlparse import urlparse
 import logging
