@@ -5,6 +5,7 @@
 from Products.SilvaDocument.interfaces import IDocumentVersion
 from Products.SilvaDocument.transform.base import Context
 from zExceptions import NotFound
+from five.intid.site import aq_iter
 
 from silva.core.interfaces import ISilvaObject
 from silva.core.upgrade.upgrade import BaseUpgrader, AnyMetaType, content_path
@@ -124,23 +125,37 @@ class DocumentUpgrader(BaseUpgrader):
     def upgrade(self, obj):
         for version in obj.objectValues():
             if IDocumentVersion.providedBy(version):
-                logger.info('will upgrade content on version %s' %
-                    "/".join(version.getPhysicalPath()))
+                logger.info(u'will upgrade content on version %s' %
+                            "/".join(version.getPhysicalPath()))
                 context = Context(version, None)
                 dom = version.content.documentElement
                 self.__upgrade_links(version, context, dom)
                 self.__upgrade_images(version, context, dom)
         return obj
 
+    def __verify_target(self, target):
+        # Detect circular containment that disable IntIds
+        if target is None:
+            return True
+        try:
+            [o for o in aq_iter(target, error=RuntimeError)]
+            return True
+        except RuntimeError:
+            return False
+
     def __upgrade_links(self, version, context, dom):
         links = dom.getElementsByTagName('link')
         version_path = content_path(version)
         if links:
-            logger.info('upgrading links in: %s', version_path)
+            logger.info(u'upgrading links in: %s', version_path)
         for link in links:
             path = link.getAttribute('url')
             # Look for object
             target, fragment = resolve_path(path, version_path, context)
+            if not self.__verify_target(target):
+                logger.error(u'invalid target link %s in %s' %(
+                        path, version_path))
+                continue
             if fragment:
                 link.setAttribute('anchor', fragment)
                 link.removeAttribute('url')
@@ -180,6 +195,10 @@ class DocumentUpgrader(BaseUpgrader):
             path = image.getAttribute('path')
             target, fragment = resolve_path(
                 path, version_path, context, 'image')
+            if not self.__verify_target(target):
+                logger.error(u'invalid target image %s in %s' %(
+                        path, version_path))
+                continue
             if target is not None:
                 # If the image target is found it is changed to a
                 # reference. However if it is not, we still want to
@@ -204,7 +223,10 @@ class DocumentUpgrader(BaseUpgrader):
                 if link:
                     link_target, fragment = resolve_path(
                         link, version_path, context)
-                    if link_target is not None:
+                    if not self.__verify_target(target):
+                        logger.error(u'invalid target image link %s in %s' %(
+                                link, version_path))
+                    elif link_target is not None:
                         make_link(
                             image, link_target, title, window_target, fragment)
                     elif fragment:
