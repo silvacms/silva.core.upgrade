@@ -265,21 +265,23 @@ class ArticleUpgrader(BaseUpgrader):
 
 class GhostUpgrader(BaseUpgrader):
 
+    def validate(self, obj):
+        return hasattr(obj, '_content_path')
+
     def upgrade(self, obj):
-        if hasattr(obj, '_content_path'):
-            target_path = obj._content_path
-            if target_path:
-                target = obj.get_root().unrestrictedTraverse(
-                    target_path, None)
-                if target:
-                    logger.info('upgrade reference object for Ghost @%s' %
-                        "/".join(obj.getPhysicalPath()))
-                    obj.set_haunted(target)
-                else:
-                    logger.warn(
-                        'Ghost at %s point to a non existing object at %s' %
-                        "/".join(obj.getPhysicalPath()),
-                        "/".join(target_path))
+        target_path = obj._content_path
+        if target_path:
+            target = obj.get_root().unrestrictedTraverse(
+                target_path, None)
+            if target:
+                logger.info('upgrade reference object for Ghost @%s' %
+                            "/".join(obj.getPhysicalPath()))
+                obj.set_haunted(target)
+            else:
+                logger.warn(
+                    'Ghost at %s point to a non existing object at %s' %
+                    "/".join(obj.getPhysicalPath()),
+                    "/".join(target_path))
             del obj._content_path
         return obj
 
