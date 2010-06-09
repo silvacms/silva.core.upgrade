@@ -281,6 +281,7 @@ class GhostUpgrader(BaseUpgrader):
                         "/".join(obj.getPhysicalPath()),
                         "/".join(target_path))
             del obj._content_path
+        return obj
 
 
 document_upgrader = DocumentUpgrader(VERSION_A1, 'Silva Document')
