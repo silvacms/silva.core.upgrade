@@ -462,8 +462,67 @@ class DocumentUpgraderTestCase(unittest.TestCase):
         self.assertEqual(image, images[0])
 
 
+from silva.core.upgrade.upgrader.upgrade_230 import LinkVersionUpgrader
+
+class LinkVersionUpgraderTestCase(unittest.TestCase):
+    """Test upgrader relative links to references
+    """
+    layer = FunctionalLayer
+
+    def setUp(self):
+        self.root = self.layer.get_application()
+        factory = self.root.manage_addProduct['Silva']
+        factory.manage_addLink('link', 'Link', url="http://www.google.com")
+        self.link = self.root.link
+        self.version = getattr(self.root.link, '0')
+        self.upgrader = LinkVersionUpgrader('2.3', 'Link Version')
+
+        factory.manage_addPublication('pub', 'Pub')
+        self.pub = self.root.pub
+        factory = self.pub.manage_addProduct['Silva']
+        factory.manage_addFile('file', 'File')
+
+    def test_not_validate_absolute_link(self):
+        self.version._url = 'http://www.google.com/'
+        self.assertFalse(self.upgrader.validate(self.version))
+
+    def test_not_validate_relative_set(self):
+        self.version._relative = False
+        self.assertFalse(self.upgrader.validate(self.version))
+
+    def test_validate_when_relative(self):
+        self.version._url = '/root/pub/file'
+        self.assertTrue(self.upgrader.validate(self.version))
+        self.version._url = 'pub/file'
+        self.assertTrue(self.upgrader.validate(self.version))
+
+    def test_root_link(self):
+        self.version._url = '/root/pub/file'
+        self.upgrader.upgrade(self.version)
+        self.assertEquals(self.pub.file, self.version._target)
+
+    def test_root_link_without_root(self):
+        """ A common case when the root is remove with rewrite rules
+        in apache.
+        """
+        self.version._url = '/pub/file'
+        self.upgrader.upgrade(self.version)
+        self.assertEquals(self.pub.file, self.version._target)
+
+    def test_relative_to_self(self):
+        self.version._url = '../root/pub/file'
+        self.upgrader.upgrade(self.version)
+        self.assertEquals(self.pub.file, self.version._target)
+
+    def test_relative_to_not_exists(self):
+        self.version._url = '/root/doesnotexists'
+        self.upgrader.upgrade(self.version)
+        self.assertEquals(None, self.version._target)
+
+
 def test_suite():
     suite = unittest.TestSuite()
     suite.addTest(unittest.makeSuite(DocumentUpgraderTestCase))
+    suite.addTest(unittest.makeSuite(LinkVersionUpgraderTestCase))
     return suite
 
