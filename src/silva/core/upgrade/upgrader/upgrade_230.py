@@ -18,6 +18,7 @@ from urlparse import urlparse
 import logging
 import transaction
 
+
 logger = logging.getLogger('silva.core.upgrade')
 
 
@@ -280,8 +281,7 @@ class GhostUpgrader(BaseUpgrader):
             else:
                 logger.warn(
                     'Ghost at %s point to a non existing object at %s' %
-                    "/".join(obj.getPhysicalPath()),
-                    "/".join(target_path))
+                    ("/".join(obj.getPhysicalPath()), target_path,))
             del obj._content_path
         return obj
 
@@ -298,6 +298,42 @@ class VersionedContentUpgrader(BaseUpgrader):
                 del obj._cached_data
         return obj
 
+
+class LinkVersionUpgrader(BaseUpgrader):
+    """ replace relative links with references
+    """
+
+    def validate(self, link_version):
+        return not link_version.__dict__.has_key('_relative') and \
+            not self.__is_absolute_url(link_version._url)
+
+    def upgrade(self, link_version):
+
+        if link_version._url.startswith('/'):
+            traverse_base = link_version.get_root()
+        else:
+            traverse_base = link_version.get_content().get_container()
+
+        target = traverse_base.unrestrictedTraverse(
+            link_version._url, None)
+
+        if target:
+            logger.info('upgrade link %s' % 
+                        "/".join(link_version.getPhysicalPath()))
+            link_version.set_relative(True)
+            link_version.set_target(target)
+        else:
+            logger.warn('cannot find target for link %s to %s' %
+                        ("/".join(link_version.getPhysicalPath()),
+                         link_version._url,))
+        return link_version
+
+    def __is_absolute_url(self, url):
+        purl = urlparse(url)
+        return bool(purl.netloc)
+
+
+link_upgrader = LinkVersionUpgrader(VERSION_A1, 'Silva Link Version')
 
 document_upgrader = DocumentUpgrader(VERSION_A1, 'Silva Document')
 document_cache_upgrader = VersionedContentUpgrader(
