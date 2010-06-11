@@ -14,7 +14,6 @@ except ImportError:
     IFiveSiteManager = None
 
 from Acquisition import aq_base
-import OFS.Image
 
 # python
 from cStringIO import StringIO

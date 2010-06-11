@@ -10,7 +10,7 @@ from five.intid.site import aq_iter
 
 from silva.core.interfaces import ISilvaObject
 from silva.core.references.interfaces import IReferenceService
-from silva.core.upgrade.upgrade import BaseUpgrader, AnyMetaType, content_path
+from silva.core.upgrade.upgrade import BaseUpgrader, content_path
 from silva.core.upgrade.upgrader.upgrade_220 import UpdateIndexerUpgrader
 
 from urlparse import urlparse
