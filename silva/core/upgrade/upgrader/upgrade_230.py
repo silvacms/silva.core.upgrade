@@ -9,6 +9,7 @@ from zExceptions import NotFound
 from five.intid.site import aq_iter
 
 from silva.core.interfaces import ISilvaObject
+from silva.core.references.interfaces import IReferenceService
 from silva.core.upgrade.upgrade import BaseUpgrader, AnyMetaType, content_path
 from silva.core.upgrade.upgrader.upgrade_220 import UpdateIndexerUpgrader
 
@@ -29,7 +30,6 @@ VERSION_A1='2.3a1'
 class RootUpgrader(BaseUpgrader):
 
     def upgrade(self, root):
-        from silva.core.references.interfaces import IReferenceService
         installed_ids = root.objectIds()
 
         # add service_references
@@ -78,10 +78,23 @@ class RootUpgrader(BaseUpgrader):
 root_upgrader = RootUpgrader(VERSION_A1, 'Silva Root')
 
 
-def split_path(path):
+def split_path(path, context):
+    """Split path, remove . components, be sure there is enough parts
+    in the context path to get all .. working.
+    """
+    context_parts = context.getPhysicalPath()
     parts = path.split('/')
-    while parts and parts[0] == '.':
-        parts = parts[1:]
+    while parts:
+        if parts[0] == '.':
+            parts = parts[1:]
+        elif parts[0] == '..':
+            if len(context_parts) > 1:
+                context_parts = context_parts[:-1]
+                parts = parts[1:]
+            else:
+                raise KeyError(path)
+        else:
+            break
     return parts
 
 
@@ -106,7 +119,8 @@ def resolve_path(url, version_path, context, obj_type=u'link'):
         # This is to an anchor in the document, nothing else
         return None, fragment
     try:
-        target = context.model.unrestrictedTraverse(split_path(path))
+        target = context.model.unrestrictedTraverse(
+            split_path(path, context.model))
     except (AttributeError, KeyError, NotFound):
         logger.error(u'broken %s %s in %s' % (obj_type, url, version_path))
         return None, fragment
@@ -115,7 +129,13 @@ def resolve_path(url, version_path, context, obj_type=u'link'):
             u'link %s did not resolve to a Silva content in %s' % (
                 path, version_path))
         return None, fragment
-    return target, fragment
+    try:
+        [o for o in aq_iter(target, error=RuntimeError)]
+        return target, fragment
+    except RuntimeError:
+        logger.error(u'invalid target link %s in %s' %(
+                path, version_path))
+        return None, fragment
 
 
 class DocumentUpgrader(BaseUpgrader):
@@ -134,16 +154,6 @@ class DocumentUpgrader(BaseUpgrader):
                 self.__upgrade_images(version, context, dom)
         return obj
 
-    def __verify_target(self, target):
-        # Detect circular containment that disable IntIds
-        if target is None:
-            return True
-        try:
-            [o for o in aq_iter(target, error=RuntimeError)]
-            return True
-        except RuntimeError:
-            return False
-
     def __upgrade_links(self, version, context, dom):
         links = dom.getElementsByTagName('link')
         version_path = content_path(version)
@@ -153,10 +163,6 @@ class DocumentUpgrader(BaseUpgrader):
             path = link.getAttribute('url')
             # Look for object
             target, fragment = resolve_path(path, version_path, context)
-            if not self.__verify_target(target):
-                logger.error(u'invalid target link %s in %s' %(
-                        path, version_path))
-                continue
             if fragment:
                 link.setAttribute('anchor', fragment)
                 link.removeAttribute('url')
@@ -196,10 +202,6 @@ class DocumentUpgrader(BaseUpgrader):
             path = image.getAttribute('path')
             target, fragment = resolve_path(
                 path, version_path, context, 'image')
-            if not self.__verify_target(target):
-                logger.error(u'invalid target image %s in %s' %(
-                        path, version_path))
-                continue
             if target is not None:
                 # If the image target is found it is changed to a
                 # reference. However if it is not, we still want to
@@ -224,10 +226,7 @@ class DocumentUpgrader(BaseUpgrader):
                 if link:
                     link_target, fragment = resolve_path(
                         link, version_path, context)
-                    if not self.__verify_target(target):
-                        logger.error(u'invalid target image link %s in %s' %(
-                                link, version_path))
-                    elif link_target is not None:
+                    if link_target is not None:
                         make_link(
                             image, link_target, title, window_target, fragment)
                     elif fragment:

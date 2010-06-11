@@ -2,31 +2,34 @@
 # See also LICENSE.txt
 # $Id$
 
-import os
+import unittest
 
-from Products.Silva.tests import SilvaTestCase
+from Products.Silva.testing import FunctionalLayer
+from Products.Silva.tests.helpers import open_test_file
 from Products.ParsedXML.ParsedXML import ParsedXML
 
 from silva.core.references.interfaces import IReferenceService
 from silva.core.upgrade.upgrader.upgrade_230 import document_upgrader
 from zope import component
 
-def test_open(filename, mode='r'):
-    directory = os.path.dirname(__file__)
-    return open(os.path.join(directory, 'data', filename), mode)
 
 
-class DocumentUpgraderTestCase(SilvaTestCase.SilvaTestCase):
+class DocumentUpgraderTestCase(unittest.TestCase):
     """Test upgrader which rewrites links and images to use
     references.
     """
+    layer = FunctionalLayer
 
-    def afterSetUp(self):
-        self.add_document(self.root, 'document', 'Document')
-        self.add_folder(self.root, 'folder', 'Folder')
-        self.add_publication(self.root, 'publication', 'Publication')
-        self.add_image(
-            self.root, 'chocobo', 'Chocobo', file=test_open('chocobo.jpg'))
+    def setUp(self):
+        self.root = self.layer.get_application()
+        self.layer.login('editor')
+        factory = self.root.manage_addProduct['Silva']
+        factory.manage_addFolder('folder', 'Folder')
+        factory.manage_addPublication('publication', 'Publication')
+        factory.manage_addImage('chocobo', 'Chocobo', file=open_test_file(
+                'chocobo.jpg', globals()))
+        factory = self.root.manage_addProduct['SilvaDocument']
+        factory.manage_addDocument('document', 'Document')
 
     def test_upgrade_link(self):
         """Test upgrade of a simple link
@@ -77,6 +80,30 @@ class DocumentUpgraderTestCase(SilvaTestCase.SilvaTestCase):
         self.failIf(link.hasAttribute('reference'))
         self.failUnless(link.hasAttribute('url'))
         self.assertEquals(link.getAttribute('url'), './edit')
+        self.failIf(link.hasAttribute('anchor'))
+
+    def test_upgrade_link_too_high(self):
+        """Test upgrade of a link that have an invalid relative path
+        to something not possible (like too many ..).
+        """
+        editable = self.root.document.get_editable()
+        editable.content = ParsedXML(
+            'content',
+            """<?xml version="1.0" encoding="utf-8"?>
+<doc>
+  <p type="normal">
+    <link target="_blank" url="./../../../MANAGE">ME HACKER</link>
+  </p>
+</doc>""")
+        result = document_upgrader.upgrade(self.root.document)
+        self.assertEqual(result, self.root.document)
+        document_dom = editable.content.documentElement
+        links = document_dom.getElementsByTagName('link')
+        self.assertEqual(len(links), 1)
+        link = links[0]
+        self.failIf(link.hasAttribute('reference'))
+        self.failUnless(link.hasAttribute('url'))
+        self.assertEquals(link.getAttribute('url'), './../../../MANAGE')
         self.failIf(link.hasAttribute('anchor'))
 
     def test_upgrade_link_only_anchor(self):
@@ -435,8 +462,6 @@ class DocumentUpgraderTestCase(SilvaTestCase.SilvaTestCase):
         self.assertEqual(image, images[0])
 
 
-
-import unittest
 def test_suite():
     suite = unittest.TestSuite()
     suite.addTest(unittest.makeSuite(DocumentUpgraderTestCase))
