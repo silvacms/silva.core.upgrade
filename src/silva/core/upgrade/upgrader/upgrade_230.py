@@ -290,12 +290,14 @@ class VersionedContentUpgrader(BaseUpgrader):
     """Remove cache_data from versioned content as this is not used anymore.
     """
 
+    def validate(self, obj):
+        return IVersionedContent.providedBy(obj)
+
     def upgrade(self, obj):
-        if IVersionedContent.providedBy(obj):
-            if hasattr(aq_base(obj), '_cached_checked'):
-                del obj._cached_checked
-            if hasattr(aq_base(obj), '_cached_data'):
-                del obj._cached_data
+        if hasattr(aq_base(obj), '_cached_checked'):
+            del obj._cached_checked
+        if hasattr(aq_base(obj), '_cached_data'):
+            del obj._cached_data
         return obj
 
 
@@ -304,21 +306,27 @@ class LinkVersionUpgrader(BaseUpgrader):
     """
 
     def validate(self, link_version):
-        return not link_version.__dict__.has_key('_relative') and \
-            not self.__is_absolute_url(link_version._url)
+        return (not link_version.__dict__.has_key('_relative') and
+                not self.__is_absolute_url(link_version._url))
 
     def upgrade(self, link_version):
 
-        if link_version._url.startswith('/'):
+        root = link_version.get_root()
+        root_start = '%s/' % "/".join(root.getPhysicalPath())
+        path = link_version._url.split('/')
+
+        if link_version._url.startswith(root_start):
             traverse_base = link_version.get_root()
+        elif link_version._url.startswith('/'):
+            traverse_base = link_version.get_root()
+            path = path[1:]
         else:
             traverse_base = link_version.get_content().get_container()
 
-        target = traverse_base.unrestrictedTraverse(
-            link_version._url, None)
+        target = traverse_base.unrestrictedTraverse(path, None)
 
         if target:
-            logger.info('upgrade link %s' % 
+            logger.info('upgrade link %s' %
                         "/".join(link_version.getPhysicalPath()))
             link_version.set_relative(True)
             link_version.set_target(target)
