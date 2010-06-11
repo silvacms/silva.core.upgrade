@@ -2,13 +2,14 @@
 # See also LICENSE.txt
 # $Id$
 
+from Acquisition import aq_base
 from Products.SilvaDocument.interfaces import IDocumentVersion
 from Products.SilvaDocument.transform.base import Context
 from Products.ParsedXML.ParsedXML import ParsedXML
 from zExceptions import NotFound
 from five.intid.site import aq_iter
 
-from silva.core.interfaces import ISilvaObject
+from silva.core.interfaces import ISilvaObject, IVersionedContent
 from silva.core.references.interfaces import IReferenceService
 from silva.core.upgrade.upgrade import BaseUpgrader, content_path
 from silva.core.upgrade.upgrader.upgrade_220 import UpdateIndexerUpgrader
@@ -285,12 +286,31 @@ class GhostUpgrader(BaseUpgrader):
         return obj
 
 
+class VersionedContentUpgrader(BaseUpgrader):
+    """Remove cache_data from versioned content as this is not used anymore.
+    """
+
+    def upgrade(self, obj):
+        if IVersionedContent.providedBy(obj):
+            if hasattr(aq_base(obj), '_cached_checked'):
+                del obj._cached_checked
+            if hasattr(aq_base(obj), '_cached_data'):
+                del obj._cached_data
+        return obj
+
+
 document_upgrader = DocumentUpgrader(VERSION_A1, 'Silva Document')
+document_cache_upgrader = VersionedContentUpgrader(
+    VERSION_A1, 'Silva Document')
 
 article_upgrader_agenda = ArticleUpgrader(
     VERSION_A1, 'Silva Agenda Item', 100)
 article_upgrader_article = ArticleUpgrader(
     VERSION_A1, 'Silva Article', 100)
+article_cache_upgrader = VersionedContentUpgrader(
+    VERSION_A1, 'Silva Article')
+agenda_cache_upgrader = VersionedContentUpgrader(
+    VERSION_A1, 'Silva Agenda Item')
 
 document_upgrader_agenda = DocumentUpgrader(
     VERSION_A1, "Silva Agenda Item", 101)
@@ -299,5 +319,9 @@ document_upgrader_article = DocumentUpgrader(
 
 ghost_upgrader = GhostUpgrader(
     VERSION_A1, ["Silva Ghost", "Silva Ghost Folder"])
+ghost_cache_upgrader = VersionedContentUpgrader(
+    VERSION_A1, 'Silva Ghost')
+link_cache_upgrader = VersionedContentUpgrader(
+    VERSION_A1, 'Silva Link')
 indexer_upgrader = UpdateIndexerUpgrader(
     VERSION_A1, "Silva Indexer")
