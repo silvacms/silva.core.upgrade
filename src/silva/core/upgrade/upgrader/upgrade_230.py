@@ -310,15 +310,14 @@ class LinkVersionUpgrader(BaseUpgrader):
                 not self.__is_absolute_url(link_version._url))
 
     def upgrade(self, link_version):
-
         root = link_version.get_root()
         root_start = '%s/' % "/".join(root.getPhysicalPath())
         path = link_version._url.split('/')
 
         if link_version._url.startswith(root_start):
-            traverse_base = link_version.get_root()
+            traverse_base = root
         elif link_version._url.startswith('/'):
-            traverse_base = link_version.get_root()
+            traverse_base = root
             path = path[1:]
         else:
             traverse_base = link_version.get_content().get_container()
