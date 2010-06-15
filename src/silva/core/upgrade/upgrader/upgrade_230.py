@@ -85,7 +85,7 @@ def split_path(path, context):
     in the context path to get all .. working.
     """
     context_parts = context.getPhysicalPath()
-    parts = path.split('/')
+    parts = filter(lambda x: x != '', path.split('/'))
     while parts:
         if parts[0] == '.':
             parts = parts[1:]
@@ -123,7 +123,7 @@ def resolve_path(url, version_path, context, obj_type=u'link'):
     try:
         target = context.model.unrestrictedTraverse(
             split_path(path, context.model))
-    except (AttributeError, KeyError, NotFound):
+    except (AttributeError, KeyError, NotFound, TypeError,):
         logger.error(u'broken %s %s in %s' % (obj_type, url, version_path))
         return None, fragment
     if not ISilvaObject.providedBy(target):
