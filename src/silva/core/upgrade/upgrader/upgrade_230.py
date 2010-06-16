@@ -217,6 +217,9 @@ class DocumentUpgrader(BaseUpgrader):
             if image.hasAttribute('title'):
                 title = image.getAttribute('title')
                 image.removeAttribute('title')
+            elif image.hasAttribute('image_title')
+                title = image.getAttribute('image_title')
+                image.removeAttribute('image_title')
             window_target = ''
             if image.hasAttribute('target'):
                 window_target = image.getAttribute('target')
