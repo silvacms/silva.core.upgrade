@@ -6,6 +6,10 @@
 from zope.location.interfaces import ISite
 from zope.app.component.hooks import setSite, setHooks
 from zope.annotation.interfaces import IAnnotations
+import ZODB.broken
+import zope.interface
+from ZPublisher.BeforeTraverse import unregisterBeforeTraverse
+
 
 try:
     # Old FiveSiteManager. This have been removed in Zope 2.12.
@@ -46,12 +50,21 @@ VERSION_A1='2.2a1'
 class RootUpgrader(BaseUpgrader):
 
     def upgrade(self, obj):
-        # If it's a Five site manager disable it first.
+        # If it's a Five site manager disable it first. The annoying
+        # part might be that the code might already have been removed
+        # from Zope ...
         if ISite.providedBy(obj):
             sm = obj.getSiteManager()
-            if IFiveSiteManager is not None and IFiveSiteManager.providedBy(sm):
-                from Products.Five.site.localsite import disableLocalSiteHook
-                disableLocalSiteHook(obj)
+            if ((IFiveSiteManager is not None and
+                 IFiveSiteManager.providedBy(sm)) or
+                isinstance(sm, ZODB.broken.Broken)):
+                setSite(None)
+                setHooks()
+                unregisterBeforeTraverse(aq_base(obj), '__local_site_hook__')
+                if hasattr(aq_base(obj), '__local_site_hook__'):
+                    delattr(aq_base(obj), '__local_site_hook__')
+                zope.interface.noLongerProvides(obj, ISite)
+                obj.setSiteManager(None)
 
         # Activate local site, add an intid service.
         ism = interfaces.ISiteManager(obj)
