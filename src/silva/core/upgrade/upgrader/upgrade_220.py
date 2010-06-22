@@ -30,7 +30,7 @@ from silva.core.upgrade.silvaxml import NAMESPACES_CHANGES
 from silva.core.upgrade.upgrade import BaseUpgrader, AnyMetaType
 
 from Products.Silva.adapters import version_management
-from Products.Silva.File import FileSystemFile
+from Products.Silva.File import BlobFile
 from Products.Silva.magic import MagicGuess
 from Products.SilvaExternalSources.interfaces import ICodeSourceService
 from Products.SilvaMetadata.interfaces import IMetadataService
@@ -103,7 +103,7 @@ class RootUpgrader(BaseUpgrader):
         service_files = obj.service_files
         if hasattr(service_files, '_filesystem_storage_enabled'):
             if service_files._filesystem_storage_enabled:
-                service_files.storage = FileSystemFile
+                service_files.storage = BlobFile
             delattr(service_files , '_filesystem_storage_enabled')
 
         return obj
