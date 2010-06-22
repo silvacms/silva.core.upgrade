@@ -117,8 +117,8 @@ class UpgradeRegistry(object):
         return upgraders
 
     def upgradeObject(self, obj, version):
-        mt = obj.meta_type
-        for upgrader in self.getUpgraders(version, mt):
+        changed = False
+        for upgrader in self.getUpgraders(version, obj.meta_type):
             path = content_path(obj)
             logger.debug('Upgrading %s with %r' % (path, upgrader))
 
@@ -131,12 +131,13 @@ class UpgradeRegistry(object):
             try:
                 if not hasattr(upgrader, 'validate') or upgrader.validate(obj):
                     obj = upgrader.upgrade(obj)
+                    changed = True
             except ValueError, e:
                 logger.error('Error while upgrading object %s with %r: %s' %
                              (path, upgrader, str(e)))
             assert obj is not None, "Upgrader %r seems to be broken, " \
                 "this is a bug." % (upgrader, )
-        return obj
+        return obj, changed
 
     def upgradeTree(self, root, version, blacklist=[]):
         stats = {
@@ -147,10 +148,11 @@ class UpgradeRegistry(object):
 
         object_list = [root]
         while object_list:
+            changed = False
             obj = object_list.pop()
 
             if not (obj.meta_type in blacklist):
-                obj = self.upgradeObject(obj, version)
+                obj, changed = self.upgradeObject(obj, version)
 
             if (hasattr(obj.aq_base, 'objectValues') and
                 obj.meta_type != "Parsed XML"):
@@ -159,8 +161,10 @@ class UpgradeRegistry(object):
                 stats['maxqueue'] = max(
                     stats['maxqueue'], len(object_list))
 
-            stats['total'] += 1
-            stats['threshold'] += 1
+            if changed:
+                stats['total'] += 1
+                stats['threshold'] += 1
+
             if stats['threshold'] > THRESHOLD:
                 transaction.commit()
                 if hasattr(obj, '_p_jar') and obj._p_jar is not None:
