@@ -84,8 +84,11 @@ def split_path(path, context):
     """Split path, remove . components, be sure there is enough parts
     in the context path to get all .. working.
     """
+    parts = path.split('/')
+    if len(parts) and not parts[0]:
+        context = context.getPhysicalRoot()
+    parts = filter(lambda x: x != '', parts)
     context_parts = context.getPhysicalPath()
-    parts = filter(lambda x: x != '', path.split('/'))
     while parts:
         if parts[0] == '.':
             parts = parts[1:]
@@ -97,7 +100,7 @@ def split_path(path, context):
                 raise KeyError(path)
         else:
             break
-    return parts
+    return parts, context
 
 
 def build_reference(context, target, node):
@@ -121,8 +124,8 @@ def resolve_path(url, version_path, context, obj_type=u'link'):
         # This is to an anchor in the document, nothing else
         return None, fragment
     try:
-        target = context.model.unrestrictedTraverse(
-            split_path(path, context.model))
+        cleaned_path, path_root = split_path(path, context)
+        target = path_root.unrestrictedTraverse(cleaned_path)
     except (AttributeError, KeyError, NotFound, TypeError,):
         logger.error(u'broken %s %s in %s' % (obj_type, url, version_path))
         return None, fragment
@@ -164,7 +167,7 @@ class DocumentUpgrader(BaseUpgrader):
         for link in links:
             path = link.getAttribute('url')
             # Look for object
-            target, fragment = resolve_path(path, version_path, context)
+            target, fragment = resolve_path(path, version_path, context.model)
             if fragment:
                 link.setAttribute('anchor', fragment)
                 link.removeAttribute('url')
@@ -203,7 +206,7 @@ class DocumentUpgrader(BaseUpgrader):
         for image in images:
             path = image.getAttribute('path')
             target, fragment = resolve_path(
-                path, version_path, context, 'image')
+                path, version_path, context.model, 'image')
             if target is not None:
                 # If the image target is found it is changed to a
                 # reference. However if it is not, we still want to
@@ -227,7 +230,7 @@ class DocumentUpgrader(BaseUpgrader):
                 link = image.getAttribute('link')
                 if link:
                     link_target, fragment = resolve_path(
-                        link, version_path, context)
+                        link, version_path, context.model)
                     if link_target is not None:
                         make_link(
                             image, link_target, title, window_target, fragment)

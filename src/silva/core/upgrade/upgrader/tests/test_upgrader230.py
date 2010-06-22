@@ -58,6 +58,34 @@ class DocumentUpgraderTestCase(unittest.TestCase):
             editable, name=reference_name)
         self.assertEqual(reference.target, self.root.publication)
 
+    def test_upgrade_link_absolute_path(self):
+        """Test upgrade of a simple link
+        """
+        editable = self.root.document.get_editable()
+        editable.content = ParsedXML(
+            'content',
+            """<?xml version="1.0" encoding="utf-8"?>
+<doc>
+  <p type="normal">
+    <link target="_blank" url="/root/publication">Publication link</link>
+  </p>
+</doc>""")
+        result = document_upgrader.upgrade(self.root.document)
+        self.assertEqual(result, self.root.document)
+        document_dom = editable.content.documentElement
+        links = document_dom.getElementsByTagName('link')
+        self.assertEqual(len(links), 1)
+        link = links[0]
+        self.failUnless(link.hasAttribute('reference'))
+        self.failIf(link.hasAttribute('url'))
+        self.failIf(link.hasAttribute('anchor'))
+        reference_name = link.getAttribute('reference')
+        reference_service = component.getUtility(IReferenceService)
+        reference = reference_service.get_reference(
+            editable, name=reference_name)
+        self.assertEqual(reference.target, self.root.publication)
+
+
     def test_upgrade_link_not_silva_object(self):
         """Test upgrade of a link that does not point to a Silva
         object, like for instance to the edit interface.

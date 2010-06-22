@@ -2,14 +2,17 @@
 # See also LICENSE.txt
 # $Id$
 
-# zope
-from zope.location.interfaces import ISite
-from zope.app.component.hooks import setSite, setHooks
+from cStringIO import StringIO
+import logging
+
+logger = logging.getLogger('silva.core.upgrade')
+
+from ZPublisher.BeforeTraverse import unregisterBeforeTraverse
 from zope.annotation.interfaces import IAnnotations
+from zope.app.component.hooks import setSite, setHooks
+from zope.location.interfaces import ISite
 import ZODB.broken
 import zope.interface
-from ZPublisher.BeforeTraverse import unregisterBeforeTraverse
-
 
 try:
     # Old FiveSiteManager. This have been removed in Zope 2.12.
@@ -19,25 +22,18 @@ except ImportError:
 
 from Acquisition import aq_base
 
-# python
-from cStringIO import StringIO
-import logging
-
-logger = logging.getLogger('silva.core.upgrade')
-
-# silva imports
 from silva.core import interfaces
-from silva.core.upgrade.upgrade import BaseUpgrader, AnyMetaType
-from silva.core.upgrade.silvaxml import NAMESPACES_CHANGES
+from silva.core.services.catalog import CatalogService
+from silva.core.services.interfaces import ICatalogService
 from silva.core.upgrade.localsite import setup_intid
+from silva.core.upgrade.silvaxml import NAMESPACES_CHANGES
+from silva.core.upgrade.upgrade import BaseUpgrader, AnyMetaType
 
 from Products.Silva.adapters import version_management
 from Products.Silva.File import FileSystemFile
 from Products.Silva.magic import MagicGuess
 from Products.SilvaExternalSources.interfaces import ICodeSourceService
 from Products.SilvaMetadata.interfaces import IMetadataService
-from silva.core.services.interfaces import ICatalogService
-from silva.core.services.catalog import CatalogService
 
 
 #-----------------------------------------------------------------------------
@@ -98,7 +94,7 @@ class RootUpgrader(BaseUpgrader):
             reg.unregister('add', 'Silva Layout Configuration')
             if hasattr(obj.service_views, 'SilvaLayout'):
                 obj.service_views.manage_delObjects(['SilvaLayout'])
-            #update the views (in service_view_registry) to ensure
+            # update the views (in service_view_registry) to ensure
             # that SilvaLayout is removed from it's internal list
             # of root view directories
             obj.service_extensions._update_views(obj)
@@ -339,7 +335,7 @@ class AllowedAddablesUpgrader(BaseUpgrader):
 
     def upgrade(self, obj):
         if interfaces.IContainer.providedBy(obj):
-            clean_obj = obj.aq_base
+            clean_obj = aq_base(obj)
             if hasattr(clean_obj,'_addables_allowed_in_publication'):
                 clean_obj._addables_allowed_in_container = \
                     clean_obj._addables_allowed_in_publication

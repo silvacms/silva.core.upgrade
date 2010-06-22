@@ -8,10 +8,11 @@ try:
 except ImportError:
     IFiveSiteManager = None
 
-from zope.app.intid.interfaces import IIntIds
-from zope.location.interfaces import ISite
-from zope.app.component.hooks import setSite
 from zope.component import queryUtility
+from zope.intid.interfaces import IIntIds
+from zope.location.interfaces import ISite
+from zope.site.hooks import setSite
+from ZODB.broken import Broken
 
 from silva.core.services.base import IntIdService
 from five.localsitemanager import make_objectmanager_site
