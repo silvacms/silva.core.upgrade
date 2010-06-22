@@ -151,8 +151,6 @@ class DocumentUpgrader(BaseUpgrader):
     def upgrade(self, obj):
         for version in obj.objectValues():
             if IDocumentVersion.providedBy(version):
-                logger.info(u'will upgrade content on version %s' %
-                            "/".join(version.getPhysicalPath()))
                 context = Context(version, None)
                 dom = version.content.documentElement
                 self.__upgrade_links(version, context, dom)
