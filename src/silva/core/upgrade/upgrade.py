@@ -19,7 +19,7 @@ import transaction
 # Silva
 from silva.core.interfaces import IUpgrader, IUpgradeRegistry, IRoot
 
-THRESHOLD = 1000
+THRESHOLD = 750
 
 # marker for upgraders to be called for any object
 AnyMetaType = object()
