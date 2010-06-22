@@ -8,6 +8,7 @@ from bisect import insort_right
 from pkg_resources import parse_version
 import logging
 import datetime
+import gc
 
 logger = logging.getLogger('silva.core.upgrade')
 
@@ -18,7 +19,7 @@ import transaction
 # Silva
 from silva.core.interfaces import IUpgrader, IUpgradeRegistry, IRoot
 
-threshold = 50
+THRESHOLD = 1000
 
 # marker for upgraders to be called for any object
 AnyMetaType = object()
@@ -160,10 +161,11 @@ class UpgradeRegistry(object):
 
             stats['total'] += 1
             stats['threshold'] += 1
-            if stats['threshold'] > threshold:
+            if stats['threshold'] > THRESHOLD:
                 transaction.commit()
                 if hasattr(obj, '_p_jar') and obj._p_jar is not None:
-                    obj._p_jar.cacheGC()
+                    obj._p_jar._cache.minimize()
+                gc.collect()
                 stats['threshold'] = 0
 
         return stats
@@ -174,6 +176,8 @@ class UpgradeRegistry(object):
         """
         if self.__in_process is True:
             raise ValueError(u"An upgrade process is already going on")
+        gc_original_flags = gc.get_debug()
+        gc.set_debug(gc.DEBUG_INSTANCES)
         log_stream = StringIO()
         log_handler = logging.StreamHandler(log_stream)
         logger.addHandler(log_handler)
@@ -209,6 +213,7 @@ class UpgradeRegistry(object):
                 'upgrade finished in %d seconds.' % (end - start).seconds)
         finally:
             logger.removeHandler(log_handler)
+            gc.set_debug(gc_original_flags)
             self.__in_process = False
         return log_stream.getvalue()
 
