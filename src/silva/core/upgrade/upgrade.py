@@ -168,7 +168,16 @@ class UpgradeRegistry(object):
             if stats['threshold'] > THRESHOLD:
                 transaction.commit()
                 if hasattr(obj, '_p_jar') and obj._p_jar is not None:
-                    obj._p_jar._cache.minimize()
+                    # The ZODB goes a bit crazy if your doing lot of
+                    # things in one request. Since we just did commit,
+                    # we can do abort to clear all tracking of objects
+                    # that keep them in memory (commit doesn't clear
+                    # that cache).
+                    # Cache minimize kill the ZODB cache
+                    # that is just resized at the end of the request
+                    # normally as well.
+                    obj._p_jar.abort()
+                    obj._p_jar.cacheMinimize()
                 gc.collect()
                 stats['threshold'] = 0
 
