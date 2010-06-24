@@ -126,7 +126,7 @@ def resolve_path(url, version_path, context, obj_type=u'link'):
     try:
         cleaned_path, path_root = split_path(path, context)
         target = path_root.unrestrictedTraverse(cleaned_path)
-    except (AttributeError, KeyError, NotFound, TypeError,):
+    except (AttributeError, KeyError, NotFound, TypeError):
         logger.error(u'broken %s %s in %s' % (obj_type, url, version_path))
         return None, fragment
     if not ISilvaObject.providedBy(target):
@@ -149,12 +149,11 @@ class DocumentUpgrader(BaseUpgrader):
     """
 
     def upgrade(self, obj):
-        for version in obj.objectValues():
-            if IDocumentVersion.providedBy(version):
-                context = Context(version, None)
-                dom = version.content.documentElement
-                self.__upgrade_links(version, context, dom)
-                self.__upgrade_images(version, context, dom)
+        if IDocumentVersion.providedBy(obj):
+            context = Context(obj, None)
+            dom = obj.content.documentElement
+            self.__upgrade_links(obj, context, dom)
+            self.__upgrade_images(obj, context, dom)
         return obj
 
     def __upgrade_links(self, version, context, dom):
@@ -163,6 +162,9 @@ class DocumentUpgrader(BaseUpgrader):
         if links:
             logger.info(u'upgrading links in: %s', version_path)
         for link in links:
+            if link.hasAttribute('reference'):
+                # Already migrated
+                continue
             path = link.getAttribute('url')
             # Look for object
             target, fragment = resolve_path(path, version_path, context.model)
@@ -202,6 +204,9 @@ class DocumentUpgrader(BaseUpgrader):
         if images:
             logger.info('upgrading images in: %s', version_path)
         for image in images:
+            if image.hasAttribute('reference'):
+                # Already a reference
+                continue
             path = image.getAttribute('path')
             target, fragment = resolve_path(
                 path, version_path, context.model, 'image')
@@ -343,29 +348,19 @@ class LinkVersionUpgrader(BaseUpgrader):
 
 link_upgrader = LinkVersionUpgrader(VERSION_A1, 'Silva Link Version')
 
-document_upgrader = DocumentUpgrader(VERSION_A1, 'Silva Document')
-document_cache_upgrader = VersionedContentUpgrader(
-    VERSION_A1, 'Silva Document')
+document_upgrader = DocumentUpgrader(
+    VERSION_A1, 'Silva Document Version')
+cache_upgrader = VersionedContentUpgrader(
+    VERSION_A1, ['Silva Ghost', 'Silva Link', 'Silva Document'])
 
 article_upgrader_agenda = ArticleUpgrader(
-    VERSION_A1, 'Silva Agenda Item', 100)
-article_upgrader_article = ArticleUpgrader(
-    VERSION_A1, 'Silva Article', 100)
+    VERSION_A1, ['Silva Agenda Item', 'Silva Article'])
 article_cache_upgrader = VersionedContentUpgrader(
-    VERSION_A1, 'Silva Article')
-agenda_cache_upgrader = VersionedContentUpgrader(
-    VERSION_A1, 'Silva Agenda Item')
-
+    VERSION_A1, ['Silva Article', 'Silva Agenda Item'])
 document_upgrader_agenda = DocumentUpgrader(
-    VERSION_A1, "Silva Agenda Item", 101)
-document_upgrader_article = DocumentUpgrader(
-    VERSION_A1, "Silva Article", 101)
+    VERSION_A1, ["Silva Agenda Item Version", "Silva Article Version"], 1000)
 
 ghost_upgrader = GhostUpgrader(
     VERSION_A1, ["Silva Ghost", "Silva Ghost Folder"])
-ghost_cache_upgrader = VersionedContentUpgrader(
-    VERSION_A1, 'Silva Ghost')
-link_cache_upgrader = VersionedContentUpgrader(
-    VERSION_A1, 'Silva Link')
 indexer_upgrader = UpdateIndexerUpgrader(
     VERSION_A1, "Silva Indexer")

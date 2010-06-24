@@ -36,8 +36,11 @@ setup(name='silva.core.upgrade',
           'zope.interface',
           'zope.component',
           ],
+      extras_require = {'script': ['infrae.wsgi',]},
       entry_points = """
       [zodbupdate]
       renames = silva.core.upgrade:CLASS_CHANGES
+      [console_scripts]
+      silvaupdate = silva.core.upgrade.script:upgrade [script]
       """
       )

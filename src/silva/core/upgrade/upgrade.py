@@ -13,13 +13,14 @@ import gc
 logger = logging.getLogger('silva.core.upgrade')
 
 # Zope
+from Acquisition import aq_base
 from zope.interface import implements
 import transaction
 
 # Silva
 from silva.core.interfaces import IUpgrader, IUpgradeRegistry, IRoot
 
-THRESHOLD = 1000
+THRESHOLD = 500
 
 # marker for upgraders to be called for any object
 AnyMetaType = object()
@@ -135,6 +136,7 @@ class UpgradeRegistry(object):
             except ValueError, e:
                 logger.error('Error while upgrading object %s with %r: %s' %
                              (path, upgrader, str(e)))
+                changed = True
             assert obj is not None, "Upgrader %r seems to be broken, " \
                 "this is a bug." % (upgrader, )
         return obj, changed
@@ -167,20 +169,14 @@ class UpgradeRegistry(object):
 
             if stats['threshold'] > THRESHOLD:
                 transaction.commit()
-                if hasattr(obj, '_p_jar') and obj._p_jar is not None:
-                    # The ZODB goes a bit crazy if your doing lot of
-                    # things in one request. Since we just did commit,
-                    # we can do abort to clear all tracking of objects
-                    # that keep them in memory (commit doesn't clear
-                    # that cache).
+                if hasattr(aq_base(obj), '_p_jar') and obj._p_jar is not None:
                     # Cache minimize kill the ZODB cache
                     # that is just resized at the end of the request
                     # normally as well.
-                    obj._p_jar.abort()
+                    gc.collect()
                     obj._p_jar.cacheMinimize()
-                gc.collect()
                 stats['threshold'] = 0
-
+        print stats['maxqueue']
         return stats
 
     def upgrade(self, root, from_version, to_version):

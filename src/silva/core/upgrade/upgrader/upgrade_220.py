@@ -109,8 +109,7 @@ class RootUpgrader(BaseUpgrader):
         return obj
 
 
-RootUpgrader = RootUpgrader(VERSION_A1, 'Silva Root')
-
+root_upgrader = RootUpgrader(VERSION_A1, 'Silva Root')
 
 
 class ImagesUpgrader(BaseUpgrader):
@@ -155,7 +154,7 @@ class ImagesUpgrader(BaseUpgrader):
         return obj
 
 
-ImagesUpgrader = ImagesUpgrader(VERSION_A1, 'Silva Image')
+images_upgrader = ImagesUpgrader(VERSION_A1, 'Silva Image')
 
 
 #-----------------------------------------------------------------------------
@@ -328,7 +327,7 @@ class SilvaXMLUpgrader(BaseUpgrader):
 
             t.parentNode.replaceChild(cs,t)
 
-SilvaXMLUpgrader = SilvaXMLUpgrader(VERSION_A2, AnyMetaType)
+silva_xml_ugrader = SilvaXMLUpgrader(VERSION_A2, AnyMetaType)
 
 
 class AllowedAddablesUpgrader(BaseUpgrader):
@@ -345,7 +344,7 @@ class AllowedAddablesUpgrader(BaseUpgrader):
         return obj
 
 
-AllowedAddablesUpgrader = AllowedAddablesUpgrader(VERSION_A2, AnyMetaType)
+allowed_addables_upgrader = AllowedAddablesUpgrader(VERSION_A2, AnyMetaType)
 
 #-----------------------------------------------------------------------------
 # 2.2.0a2 to 2.2.0b1
@@ -450,7 +449,7 @@ class SecondRootUpgrader(BaseUpgrader):
 
         return obj
 
-SecondRootUpgrader = SecondRootUpgrader(VERSION_B1, 'Silva Root', 50)
+second_root_upgrader = SecondRootUpgrader(VERSION_B1, 'Silva Root', 50)
 
 
 class MetadataSetUpgrader(BaseUpgrader):
@@ -469,7 +468,7 @@ class MetadataSetUpgrader(BaseUpgrader):
         return obj
 
 
-MetadataSetUpgrader = MetadataSetUpgrader(VERSION_B1, 'Silva Root', 40)
+metadata_set_upgrader = MetadataSetUpgrader(VERSION_B1, 'Silva Root', 40)
 
 
 class MetadataUpgrader(BaseUpgrader):
@@ -507,4 +506,4 @@ class MetadataUpgrader(BaseUpgrader):
         return obj
 
 
-MetadataUpgrader = MetadataUpgrader(VERSION_B1, AnyMetaType)
+metadata_upgrader = MetadataUpgrader(VERSION_B1, AnyMetaType)
