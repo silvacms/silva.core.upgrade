@@ -43,8 +43,8 @@ class DocumentUpgraderTestCase(unittest.TestCase):
     <link target="_blank" url="./publication">Publication link</link>
   </p>
 </doc>""")
-        result = document_upgrader.upgrade(self.root.document)
-        self.assertEqual(result, self.root.document)
+        result = document_upgrader.upgrade(editable)
+        self.assertEqual(result, editable)
         document_dom = editable.content.documentElement
         links = document_dom.getElementsByTagName('link')
         self.assertEqual(len(links), 1)
@@ -70,8 +70,8 @@ class DocumentUpgraderTestCase(unittest.TestCase):
     <link target="_blank" url="/root/publication">Publication link</link>
   </p>
 </doc>""")
-        result = document_upgrader.upgrade(self.root.document)
-        self.assertEqual(result, self.root.document)
+        result = document_upgrader.upgrade(editable)
+        self.assertEqual(result, editable)
         document_dom = editable.content.documentElement
         links = document_dom.getElementsByTagName('link')
         self.assertEqual(len(links), 1)
@@ -99,8 +99,8 @@ class DocumentUpgraderTestCase(unittest.TestCase):
     <link target="_blank" url="./edit">SMI</link>
   </p>
 </doc>""")
-        result = document_upgrader.upgrade(self.root.document)
-        self.assertEqual(result, self.root.document)
+        result = document_upgrader.upgrade(editable)
+        self.assertEqual(result, editable)
         document_dom = editable.content.documentElement
         links = document_dom.getElementsByTagName('link')
         self.assertEqual(len(links), 1)
@@ -123,8 +123,8 @@ class DocumentUpgraderTestCase(unittest.TestCase):
     <link target="_blank" url="./../../../MANAGE">ME HACKER</link>
   </p>
 </doc>""")
-        result = document_upgrader.upgrade(self.root.document)
-        self.assertEqual(result, self.root.document)
+        result = document_upgrader.upgrade(editable)
+        self.assertEqual(result, editable)
         document_dom = editable.content.documentElement
         links = document_dom.getElementsByTagName('link')
         self.assertEqual(len(links), 1)
@@ -147,8 +147,8 @@ class DocumentUpgraderTestCase(unittest.TestCase):
     <link target="_blank" url="#on_me">On me link</link>
   </p>
 </doc>""")
-        result = document_upgrader.upgrade(self.root.document)
-        self.assertEqual(result, self.root.document)
+        result = document_upgrader.upgrade(editable)
+        self.assertEqual(result, editable)
         document_dom = editable.content.documentElement
         links = document_dom.getElementsByTagName('link')
         self.assertEqual(len(links), 1)
@@ -170,8 +170,8 @@ class DocumentUpgraderTestCase(unittest.TestCase):
     <link target="_blank" url="./publication#on_me">On me link</link>
   </p>
 </doc>""")
-        result = document_upgrader.upgrade(self.root.document)
-        self.assertEqual(result, self.root.document)
+        result = document_upgrader.upgrade(editable)
+        self.assertEqual(result, editable)
         document_dom = editable.content.documentElement
         links = document_dom.getElementsByTagName('link')
         self.assertEqual(len(links), 1)
@@ -198,8 +198,8 @@ class DocumentUpgraderTestCase(unittest.TestCase):
     <link target="_blank" url="http://infrae.com#top">Infrae link</link>
   </p>
 </doc>""")
-        result = document_upgrader.upgrade(self.root.document)
-        self.assertEqual(result, self.root.document)
+        result = document_upgrader.upgrade(editable)
+        self.assertEqual(result, editable)
         document_dom = editable.content.documentElement
         links = document_dom.getElementsByTagName('link')
         self.assertEqual(len(links), 1)
@@ -222,8 +222,8 @@ class DocumentUpgraderTestCase(unittest.TestCase):
     <link target="_blank" url="inexisting_document">Document link</link>
   </p>
 </doc>""")
-        result = document_upgrader.upgrade(self.root.document)
-        self.assertEqual(result, self.root.document)
+        result = document_upgrader.upgrade(editable)
+        self.assertEqual(result, editable)
         document_dom = editable.content.documentElement
         links = document_dom.getElementsByTagName('link')
         self.assertEqual(len(links), 1)
@@ -245,8 +245,8 @@ class DocumentUpgraderTestCase(unittest.TestCase):
     <image alignment="image-left" title="" width="600" image_title="Chocobo" rewritten_path="http://localhost/root/chocobo" target="_self" height="177" path="chocobo" link_to_hires="0" link="" />
   </p>
 </doc>""")
-        result = document_upgrader.upgrade(self.root.document)
-        self.assertEqual(result, self.root.document)
+        result = document_upgrader.upgrade(editable)
+        self.assertEqual(result, editable)
         document_dom = editable.content.documentElement
         images = document_dom.getElementsByTagName('image')
         self.assertEqual(len(images), 1)
@@ -279,9 +279,9 @@ class DocumentUpgraderTestCase(unittest.TestCase):
     <image alignment="image-left" title="Big Chocobo" width="600" image_title="Chocobo" rewritten_path="http://localhost/root/chocobo" target="_self" height="177" path="chocobo" link_to_hires="1" link="" />
   </p>
 </doc>""")
-        result = document_upgrader.upgrade(self.root.document)
+        result = document_upgrader.upgrade(editable)
         reference_service = component.getUtility(IReferenceService)
-        self.assertEqual(result, self.root.document)
+        self.assertEqual(result, editable)
         document_dom = editable.content.documentElement
 
         # The converter added a link to the hires chocobo
@@ -335,9 +335,9 @@ class DocumentUpgraderTestCase(unittest.TestCase):
     <image alignment="image-left" title="Pub" width="600" image_title="Chocobo" rewritten_path="http://localhost/root/chocobo" target="_blank" height="177" path="chocobo" link_to_hires="0" link="../publication" />
   </p>
 </doc>""")
-        result = document_upgrader.upgrade(self.root.document)
+        result = document_upgrader.upgrade(editable)
         reference_service = component.getUtility(IReferenceService)
-        self.assertEqual(result, self.root.document)
+        self.assertEqual(result, editable)
         document_dom = editable.content.documentElement
 
         # The converter added a link to the publication
@@ -391,9 +391,9 @@ class DocumentUpgraderTestCase(unittest.TestCase):
     <image alignment="image-left" title="Pub" width="600" image_title="Nothing" rewritten_path="http://localhost/root/nothing" target="_blank" height="177" path="nothing" link_to_hires="0" link="../publication" />
   </p>
 </doc>""")
-        result = document_upgrader.upgrade(self.root.document)
+        result = document_upgrader.upgrade(editable)
         reference_service = component.getUtility(IReferenceService)
-        self.assertEqual(result, self.root.document)
+        self.assertEqual(result, editable)
         document_dom = editable.content.documentElement
 
         # The converter added a link to the publication
@@ -448,9 +448,9 @@ class DocumentUpgraderTestCase(unittest.TestCase):
     <image alignment="image-left" title="Pub" width="600" image_title="Chocobo" rewritten_path="http://localhost/root/chocobo" target="_blank" height="177" path="chocobo" link_to_hires="0" link="foo_bar" />
   </p>
 </doc>""")
-        result = document_upgrader.upgrade(self.root.document)
+        result = document_upgrader.upgrade(editable)
         reference_service = component.getUtility(IReferenceService)
-        self.assertEqual(result, self.root.document)
+        self.assertEqual(result, editable)
         document_dom = editable.content.documentElement
 
         # The converter added a link to the foo_bar URL.
