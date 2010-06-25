@@ -176,7 +176,6 @@ class UpgradeRegistry(object):
                     gc.collect()
                     obj._p_jar.cacheMinimize()
                 stats['threshold'] = 0
-        print stats['maxqueue']
         return stats
 
     def upgrade(self, root, from_version, to_version):
