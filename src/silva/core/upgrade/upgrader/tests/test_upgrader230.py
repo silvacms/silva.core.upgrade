@@ -9,7 +9,8 @@ from Products.Silva.tests.helpers import open_test_file
 from Products.ParsedXML.ParsedXML import ParsedXML
 
 from silva.core.references.interfaces import IReferenceService
-from silva.core.upgrade.upgrader.upgrade_230 import document_upgrader
+from silva.core.upgrade.upgrader.upgrade_230 import (
+    document_upgrader, split_path, link_upgrader)
 from zope import component
 
 
@@ -30,6 +31,30 @@ class DocumentUpgraderTestCase(unittest.TestCase):
                 'chocobo.jpg', globals()))
         factory = self.root.manage_addProduct['SilvaDocument']
         factory.manage_addDocument('document', 'Document')
+
+    def test_split_path(self):
+        """Test split path utility.
+        """
+        zope_root = self.root.getPhysicalRoot()
+        self.assertEqual(
+            split_path('publication/document', self.root),
+            (['root', 'publication', 'document'], zope_root))
+        self.assertEqual(
+            split_path('/publication/document', self.root),
+            (['publication', 'document'], zope_root))
+        self.assertEqual(
+            split_path('./../root/publication/document', self.root),
+            (['root', 'publication', 'document'], zope_root))
+        self.assertEqual(
+            split_path('./document', self.root.publication),
+            (['root', 'publication', 'document'], zope_root))
+        self.assertEqual(
+            split_path('.//document', self.root.publication, self.root),
+            (['publication', 'document'], self.root))
+        self.assertEqual(
+            split_path('./.././publication/document',
+                       self.root.publication, self.root),
+            (['publication', 'document'], self.root))
 
     def test_upgrade_link(self):
         """Test upgrade of a simple link
@@ -85,6 +110,32 @@ class DocumentUpgraderTestCase(unittest.TestCase):
             editable, name=reference_name)
         self.assertEqual(reference.target, self.root.publication)
 
+    def test_upgrade_link_absolute_path_from_silva(self):
+        """Test upgrade of a simple link
+        """
+        editable = self.root.document.get_editable()
+        editable.content = ParsedXML(
+            'content',
+            """<?xml version="1.0" encoding="utf-8"?>
+<doc>
+  <p type="normal">
+    <link target="_blank" url="/publication">Publication link</link>
+  </p>
+</doc>""")
+        result = document_upgrader.upgrade(editable)
+        self.assertEqual(result, editable)
+        document_dom = editable.content.documentElement
+        links = document_dom.getElementsByTagName('link')
+        self.assertEqual(len(links), 1)
+        link = links[0]
+        self.failUnless(link.hasAttribute('reference'))
+        self.failIf(link.hasAttribute('url'))
+        self.failIf(link.hasAttribute('anchor'))
+        reference_name = link.getAttribute('reference')
+        reference_service = component.getUtility(IReferenceService)
+        reference = reference_service.get_reference(
+            editable, name=reference_name)
+        self.assertEqual(reference.target, self.root.publication)
 
     def test_upgrade_link_not_silva_object(self):
         """Test upgrade of a link that does not point to a Silva
@@ -219,7 +270,7 @@ class DocumentUpgraderTestCase(unittest.TestCase):
             """<?xml version="1.0" encoding="utf-8"?>
 <doc>
   <p type="normal">
-    <link target="_blank" url="inexisting_document">Document link</link>
+    <link target="_blank" url="./../publication/inexisting_document">Document link</link>
   </p>
 </doc>""")
         result = document_upgrader.upgrade(editable)
@@ -231,7 +282,7 @@ class DocumentUpgraderTestCase(unittest.TestCase):
         self.failIf(link.hasAttribute('reference'))
         self.failUnless(link.hasAttribute('url'))
         url = link.getAttribute('url')
-        self.assertEqual(url, 'inexisting_document')
+        self.assertEqual(url, './../publication/inexisting_document')
 
     def test_upgrade_image(self):
         """Test upgrade of an image, regular without any link
@@ -490,8 +541,6 @@ class DocumentUpgraderTestCase(unittest.TestCase):
         self.assertEqual(image, images[0])
 
 
-from silva.core.upgrade.upgrader.upgrade_230 import LinkVersionUpgrader
-
 class LinkVersionUpgraderTestCase(unittest.TestCase):
     """Test upgrader relative links to references
     """
@@ -499,11 +548,11 @@ class LinkVersionUpgraderTestCase(unittest.TestCase):
 
     def setUp(self):
         self.root = self.layer.get_application()
+        self.layer.login('editor')
         factory = self.root.manage_addProduct['Silva']
         factory.manage_addLink('link', 'Link', url="http://www.google.com")
         self.link = self.root.link
-        self.version = getattr(self.root.link, '0')
-        self.upgrader = LinkVersionUpgrader('2.3', 'Link Version')
+        self.version = self.link.get_editable()
 
         factory.manage_addPublication('pub', 'Pub')
         self.pub = self.root.pub
@@ -512,21 +561,21 @@ class LinkVersionUpgraderTestCase(unittest.TestCase):
 
     def test_not_validate_absolute_link(self):
         self.version._url = 'http://www.google.com/'
-        self.assertFalse(self.upgrader.validate(self.version))
+        self.assertFalse(link_upgrader.validate(self.version))
 
     def test_not_validate_relative_set(self):
         self.version._relative = False
-        self.assertFalse(self.upgrader.validate(self.version))
+        self.assertFalse(link_upgrader.validate(self.version))
 
     def test_validate_when_relative(self):
         self.version._url = '/root/pub/file'
-        self.assertTrue(self.upgrader.validate(self.version))
+        self.assertTrue(link_upgrader.validate(self.version))
         self.version._url = 'pub/file'
-        self.assertTrue(self.upgrader.validate(self.version))
+        self.assertTrue(link_upgrader.validate(self.version))
 
     def test_root_link(self):
         self.version._url = '/root/pub/file'
-        self.upgrader.upgrade(self.version)
+        link_upgrader.upgrade(self.version)
         self.assertEquals(self.pub.file, self.version._target)
 
     def test_root_link_without_root(self):
@@ -534,17 +583,17 @@ class LinkVersionUpgraderTestCase(unittest.TestCase):
         in apache.
         """
         self.version._url = '/pub/file'
-        self.upgrader.upgrade(self.version)
+        link_upgrader.upgrade(self.version)
         self.assertEquals(self.pub.file, self.version._target)
 
     def test_relative_to_self(self):
         self.version._url = '../root/pub/file'
-        self.upgrader.upgrade(self.version)
+        link_upgrader.upgrade(self.version)
         self.assertEquals(self.pub.file, self.version._target)
 
     def test_relative_to_not_exists(self):
         self.version._url = '/root/doesnotexists'
-        self.upgrader.upgrade(self.version)
+        link_upgrader.upgrade(self.version)
         self.assertEquals(None, self.version._target)
 
 

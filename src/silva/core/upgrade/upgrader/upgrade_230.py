@@ -80,27 +80,33 @@ class RootUpgrader(BaseUpgrader):
 root_upgrader = RootUpgrader(VERSION_A1, 'Silva Root')
 
 
-def split_path(path, context):
+def split_path(path, context, root=None):
     """Split path, remove . components, be sure there is enough parts
     in the context path to get all .. working.
     """
+    if root is None:
+        root = context.getPhysicalRoot()
     parts = path.split('/')
     if len(parts) and not parts[0]:
-        context = context.getPhysicalRoot()
+        context = root
     parts = filter(lambda x: x != '', parts)
-    context_parts = context.getPhysicalPath()
+    context_parts = filter(lambda x: x != '', list(context.getPhysicalPath()))
+    root_parts = filter(lambda x: x != '', list(root.getPhysicalPath()))
+    assert len(context_parts) >= len(root_parts)
+    if len(root_parts):
+        context_parts = context_parts[len(root_parts):]
     while parts:
         if parts[0] == '.':
             parts = parts[1:]
         elif parts[0] == '..':
-            if len(context_parts) > 1:
+            if len(context_parts):
                 context_parts = context_parts[:-1]
                 parts = parts[1:]
             else:
                 raise KeyError(path)
         else:
             break
-    return parts, context
+    return context_parts + parts, root
 
 
 def build_reference(context, target, node):
@@ -127,8 +133,14 @@ def resolve_path(url, content_path, context, obj_type=u'link'):
         cleaned_path, path_root = split_path(path, context)
         target = path_root.unrestrictedTraverse(cleaned_path)
     except (AttributeError, KeyError, NotFound, TypeError):
-        logger.error(u'broken %s %s in %s' % (obj_type, url, content_path))
-        return None, fragment
+        # Try again using Silva Root as /
+        try:
+            cleaned_path, path_root = split_path(
+                path, context, context.get_root())
+            target = path_root.unrestrictedTraverse(cleaned_path)
+        except (AttributeError, KeyError, NotFound, TypeError):
+            logger.error(u'broken %s %s in %s' % (obj_type, url, content_path))
+            return None, fragment
     if not ISilvaObject.providedBy(target):
         logger.error(
             u'%s %s did not resolve to a Silva content in %s' % (
@@ -318,7 +330,7 @@ class LinkVersionUpgrader(BaseUpgrader):
     def upgrade(self, version):
         link_path = content_path(version)
         target, fragment = resolve_path(
-            version._url, link_path, version.get_content())
+            version._url, link_path, version.get_container())
 
         if target:
             logger.info('upgrade link %s' % link_path)
