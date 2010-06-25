@@ -112,7 +112,7 @@ def build_reference(context, target, node):
     node.setAttribute('reference', reference_name)
 
 
-def resolve_path(url, version_path, context, obj_type=u'link'):
+def resolve_path(url, content_path, context, obj_type=u'link'):
     """Resolve path to an object or report an error.
     """
     scheme, netloc, path, parameters, query, fragment = urlparse(url)
@@ -127,19 +127,19 @@ def resolve_path(url, version_path, context, obj_type=u'link'):
         cleaned_path, path_root = split_path(path, context)
         target = path_root.unrestrictedTraverse(cleaned_path)
     except (AttributeError, KeyError, NotFound, TypeError):
-        logger.error(u'broken %s %s in %s' % (obj_type, url, version_path))
+        logger.error(u'broken %s %s in %s' % (obj_type, url, content_path))
         return None, fragment
     if not ISilvaObject.providedBy(target):
         logger.error(
-            u'link %s did not resolve to a Silva content in %s' % (
-                path, version_path))
+            u'%s %s did not resolve to a Silva content in %s' % (
+                obj_type, path, content_path))
         return None, fragment
     try:
         [o for o in aq_iter(target, error=RuntimeError)]
         return target, fragment
     except RuntimeError:
-        logger.error(u'invalid target link %s in %s' %(
-                path, version_path))
+        logger.error(u'invalid target %s %s in %s' %(
+                obj_type, path, content_path))
         return None, fragment
 
 
@@ -311,35 +311,24 @@ class LinkVersionUpgrader(BaseUpgrader):
     """ replace relative links with references
     """
 
-    def validate(self, link_version):
-        return (not link_version.__dict__.has_key('_relative') and
-                not self.__is_absolute_url(link_version._url))
+    def validate(self, version):
+        return (not version.__dict__.has_key('_relative') and
+                not self.__is_absolute_url(version._url))
 
-    def upgrade(self, link_version):
-        root = link_version.get_root()
-        root_start = '%s/' % "/".join(root.getPhysicalPath())
-        path = link_version._url.split('/')
-
-        if link_version._url.startswith(root_start):
-            traverse_base = root
-        elif link_version._url.startswith('/'):
-            traverse_base = root
-            path = path[1:]
-        else:
-            traverse_base = link_version.get_content().get_container()
-
-        target = traverse_base.unrestrictedTraverse(path, None)
+    def upgrade(self, version):
+        link_path = content_path(version)
+        target, fragment = resolve_path(
+            version._url, link_path, version.get_content())
 
         if target:
-            logger.info('upgrade link %s' %
-                        "/".join(link_version.getPhysicalPath()))
-            link_version.set_relative(True)
-            link_version.set_target(target)
+            logger.info('upgrade link %s' % link_path)
+            version.set_relative(True)
+            version.set_target(target)
+            version._url = u''
         else:
             logger.warn('cannot find target for link %s to %s' %
-                        ("/".join(link_version.getPhysicalPath()),
-                         link_version._url,))
-        return link_version
+                        (link_path, version._url,))
+        return version
 
     def __is_absolute_url(self, url):
         purl = urlparse(url)
