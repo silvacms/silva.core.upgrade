@@ -44,6 +44,9 @@ class BaseUpgrader(object):
         self.meta_type = meta_type
         self.priority = priority
 
+    def available(self, obj):
+        return True
+
     def upgrade(self, obj):
         raise NotImplementedError
 
@@ -118,7 +121,10 @@ class UpgradeRegistry(object):
         return upgraders
 
     def upgradeObject(self, obj, version):
+        """Upgrade a single object.
+        """
         changed = False
+        no_iterate = False
         for upgrader in self.getUpgraders(version, obj.meta_type):
             path = content_path(obj)
             logger.debug('Upgrading %s with %r' % (path, upgrader))
@@ -130,7 +136,12 @@ class UpgradeRegistry(object):
             __traceback_supplement__ = (
                 UpgraderTracebackSupplement, self, obj, upgrader)
             try:
-                if not hasattr(upgrader, 'validate') or upgrader.validate(obj):
+                try:
+                    available = upgrader.validate(obj)
+                except StopIteration:
+                    available = False
+                    no_iterate = True
+                if available:
                     obj = upgrader.upgrade(obj)
                     changed = True
             except ValueError, e:
@@ -139,35 +150,31 @@ class UpgradeRegistry(object):
                 changed = True
             assert obj is not None, "Upgrader %r seems to be broken, " \
                 "this is a bug." % (upgrader, )
-        return obj, changed
+        return obj, changed, no_iterate
 
     def upgradeTree(self, root, version, blacklist=[]):
-        stats = {
-            'total': 0,
-            'threshold': 0,
-            'maxqueue' : 0,
-            }
-
-        object_list = [root]
-        while object_list:
+        """Upgrade an object and its children to a version.
+        """
+        count = 0
+        stack = [root]
+        while stack:
             changed = False
-            obj = object_list.pop()
+            no_iterate = False
+            obj = stack.pop()
 
             if not (obj.meta_type in blacklist):
-                obj, changed = self.upgradeObject(obj, version)
+                obj, changed, no_iterate = self.upgradeObject(obj, version)
 
-            if (hasattr(obj.aq_base, 'objectValues') and
+            if (not no_iterate and
+                hasattr(obj.aq_base, 'objectValues') and
                 obj.meta_type != "Parsed XML"):
 
-                object_list.extend(obj.objectValues())
-                stats['maxqueue'] = max(
-                    stats['maxqueue'], len(object_list))
+                stack.extend(obj.objectValues())
 
             if changed:
-                stats['total'] += 1
-                stats['threshold'] += 1
+                count += 1
 
-            if stats['threshold'] > THRESHOLD:
+            if count > THRESHOLD:
                 transaction.commit()
                 if hasattr(aq_base(obj), '_p_jar') and obj._p_jar is not None:
                     # Cache minimize kill the ZODB cache
@@ -175,8 +182,7 @@ class UpgradeRegistry(object):
                     # normally as well.
                     gc.collect()
                     obj._p_jar.cacheMinimize()
-                stats['threshold'] = 0
-        return stats
+                count = 0
 
     def upgrade(self, root, from_version, to_version):
         """Upgrade a root object from the from_version to the
