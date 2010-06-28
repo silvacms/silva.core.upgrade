@@ -44,7 +44,7 @@ class BaseUpgrader(object):
         self.meta_type = meta_type
         self.priority = priority
 
-    def available(self, obj):
+    def validate(self, obj):
         return True
 
     def upgrade(self, obj):
