@@ -576,7 +576,7 @@ class LinkVersionUpgraderTestCase(unittest.TestCase):
     def test_root_link(self):
         self.version._url = '/root/pub/file'
         link_upgrader.upgrade(self.version)
-        self.assertEquals(self.pub.file, self.version._target)
+        self.assertEquals(self.pub.file, self.version.get_target())
 
     def test_root_link_without_root(self):
         """ A common case when the root is remove with rewrite rules
@@ -584,17 +584,17 @@ class LinkVersionUpgraderTestCase(unittest.TestCase):
         """
         self.version._url = '/pub/file'
         link_upgrader.upgrade(self.version)
-        self.assertEquals(self.pub.file, self.version._target)
+        self.assertEquals(self.pub.file, self.version.get_target())
 
     def test_relative_to_self(self):
         self.version._url = '../root/pub/file'
         link_upgrader.upgrade(self.version)
-        self.assertEquals(self.pub.file, self.version._target)
+        self.assertEquals(self.pub.file, self.version.get_target())
 
     def test_relative_to_not_exists(self):
         self.version._url = '/root/doesnotexists'
         link_upgrader.upgrade(self.version)
-        self.assertEquals(None, self.version._target)
+        self.assertEquals(None, self.version.get_target())
 
 
 def test_suite():
