@@ -25,6 +25,9 @@ parser = optparse.OptionParser(
 parser.add_option(
     "-c", "--config",
     help="load zope config")
+parser.add_option(
+    "--pack", action="store_true", dest="pack",
+    help="pack database after the upgrade")
 
 
 def upgrade():
@@ -45,7 +48,7 @@ def upgrade():
     root = makerequest(Zope2.bobo_application())
 
     if not len(args):
-        sys.stderr.write("gives path to Silva Root in arguments.")
+        sys.stderr.write("Please give paths to Silva Root as arguments.")
         sys.exit(1)
 
     for silva_path in args:
@@ -66,3 +69,9 @@ def upgrade():
         silva._content_version = to_version
 
     Zope2.zpublisher_transactions_manager.commit()
+    if options.pack:
+        logger.info("packing database...")
+        Zope2.DB.pack()
+
+    logger.info("closing database.")
+    Zope2.DB.close()
