@@ -362,6 +362,6 @@ document_upgrader_agenda = DocumentUpgrader(
     VERSION_A1, ["Silva Agenda Item Version", "Silva Article Version"], 1000)
 
 ghost_upgrader = GhostUpgrader(
-    VERSION_A1, ["Silva Ghost", "Silva Ghost Folder"])
+    VERSION_A1, ["Silva Ghost Version", "Silva Ghost Folder"])
 indexer_upgrader = UpdateIndexerUpgrader(
     VERSION_A1, "Silva Indexer")
