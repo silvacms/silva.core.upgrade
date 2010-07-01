@@ -2,6 +2,7 @@
 # See also LICENSE.txt
 # $Id$
 
+from zope.component import getUtility
 from Acquisition import aq_base
 from Products.SilvaDocument.interfaces import IDocumentVersion
 from Products.SilvaDocument.transform.base import Context
@@ -13,7 +14,7 @@ from silva.core.interfaces import ISilvaObject, IVersionedContent
 from silva.core.references.interfaces import IReferenceService
 from silva.core.upgrade.upgrade import BaseUpgrader, content_path
 from silva.core.upgrade.upgrader.upgrade_220 import UpdateIndexerUpgrader
-
+from Products.SilvaFind.interfaces import IPathCriterionField
 from urlparse import urlparse
 import logging
 import transaction
@@ -23,7 +24,7 @@ logger = logging.getLogger('silva.core.upgrade')
 
 
 #-----------------------------------------------------------------------------
-# 2.2.0 to 2.3.0a1
+# 2.2.0 to 2.3.0=a1
 #-----------------------------------------------------------------------------
 
 VERSION_A1='2.3a1'
@@ -347,6 +348,51 @@ class LinkVersionUpgrader(BaseUpgrader):
         return bool(purl.netloc)
 
 
+
+class SilvaFindUpgrader(BaseUpgrader):
+
+    def validate(self, obj):
+        return True
+
+    @property
+    def ref_service(self):
+        if hasattr(self, '_ref_service'):
+            return self._ref_service
+        self._ref_service = getUtility(IReferenceService)
+        return self._ref_service
+
+    def upgrade(self, obj):
+        fields = obj.service_find.getSearchSchema().getFields()
+        fields = filter(lambda x: IPathCriterionField.providedBy(x), fields)
+        root = obj.get_root()
+        root_path = root.getPhysicalPath()
+        for field in fields:
+            field_name = field.getName()
+            if obj.searchValues.has_key(field_name):
+                value = obj.searchValues[field_name]
+                if value:
+                    path = value.split('/')
+                    if tuple(path[:len(root_path)]) == root_path:
+                        traverse_path = path[len(root_path):]
+                        target = root.unrestrictedTraverse(traverse_path, None)
+                        if target:
+                            ref = self.ref_service.new_reference(
+                                obj, name=unicode(field_name))
+                            ref.set_target(target)
+                            logger.info('reference created for field %s of '
+                                        'silva find at %s' %
+                                        (field_name,
+                                         "/".join(obj.getPhysicalPath())))
+                        else:
+                            logger.warn('silva find target at %s '
+                                        'not found' % value)
+                    else:
+                        logger.warn('silva find target at %s '
+                                    'outside of silva root' % value)
+                del obj.searchValues[field_name]
+        return obj
+
+
 link_upgrader = LinkVersionUpgrader(VERSION_A1, 'Silva Link Version')
 
 document_upgrader = DocumentUpgrader(
@@ -365,3 +411,5 @@ ghost_upgrader = GhostUpgrader(
     VERSION_A1, ["Silva Ghost Version", "Silva Ghost Folder"])
 indexer_upgrader = UpdateIndexerUpgrader(
     VERSION_A1, "Silva Indexer")
+silva_find_upgrader = SilvaFindUpgrader(VERSION_A1, "Silva Find")
+
