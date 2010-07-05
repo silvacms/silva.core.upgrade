@@ -48,9 +48,16 @@ class RootUpgrader(BaseUpgrader):
             install_ref_service()
 
         reg = root.service_view_registry
-        reg.unregister('public', 'Silva Ghost')
-        reg.unregister('public', 'Silva Ghost Version')
+        reg.unregister('add', 'Silva Ghost Folder')
+        reg.unregister('add', 'Silva Ghost')
+        reg.unregister('edit', 'Silva Link')
+        reg.unregister('preview', 'Silva Agenda Item Version')
+        reg.unregister('preview', 'Silva Article Version')
         reg.unregister('preview', 'Silva Ghost Version')
+        reg.unregister('public', 'Silva Agenda Item')
+        reg.unregister('public', 'Silva Article')
+        reg.unregister('public', 'Silva Ghost Version')
+        reg.unregister('public', 'Silva Ghost')
 
         # remove un-needed Silva Document services
         for service in ['service_editor',
