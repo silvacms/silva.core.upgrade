@@ -300,7 +300,7 @@ class GhostUpgrader(BaseUpgrader):
         if target_path:
             target = obj.get_root().unrestrictedTraverse(
                 target_path, None)
-            if target:
+            if target is not None:
                 logger.info('upgrade reference object for Ghost @%s' %
                             "/".join(obj.getPhysicalPath()))
                 obj.set_haunted(target)
