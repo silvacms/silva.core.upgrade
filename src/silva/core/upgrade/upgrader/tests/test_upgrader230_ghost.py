@@ -4,9 +4,12 @@
 
 import unittest
 
+from Acquisition import aq_chain
+
 from Products.Silva.testing import FunctionalLayer
 from silva.core.upgrade.upgrader.upgrade_230 import ghost_upgrader
-from zope import component
+from silva.core.references.interfaces import IReferenceService
+from zope.component import getUtility
 
 
 class GhostUpgraderTestCase(unittest.TestCase):
@@ -37,16 +40,32 @@ class GhostUpgraderTestCase(unittest.TestCase):
     def test_upgrade_ghost(self):
         self.assertTrue(ghost_upgrader.validate(self.ghost_version))
         ghost_upgrader.upgrade(self.ghost_version)
+
         self.assertFalse(ghost_upgrader.validate(self.ghost_version))
-        self.assertEquals(self.root.doc,
-                          self.ghost_version.get_haunted())
+        self.assertEquals(
+            self.root.doc,
+            self.ghost_version.get_haunted())
+        self.assertEquals(
+            aq_chain(self.root.doc),
+            aq_chain(self.ghost_version.get_haunted()))
+
+        service = getUtility(IReferenceService)
+        reference = service.get_reference(self.ghost_version, name=u"haunted")
+        self.assertEquals(
+            aq_chain(reference.source),
+            aq_chain(self.ghost_version))
 
     def test_upgrade_ghost_folder(self):
         self.assertTrue(ghost_upgrader.validate(self.ghost_folder))
         ghost_upgrader.upgrade(self.ghost_folder)
+
         self.assertFalse(ghost_upgrader.validate(self.ghost_folder))
-        self.assertEquals(self.root.pub,
-                          self.ghost_folder.get_haunted())
+        self.assertEquals(
+            self.root.pub,
+            self.ghost_folder.get_haunted())
+        self.assertEquals(
+            aq_chain(self.root.pub),
+            aq_chain(self.ghost_folder.get_haunted()))
 
 
 def test_suite():
