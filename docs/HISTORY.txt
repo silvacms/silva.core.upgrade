@@ -1,10 +1,19 @@
 Changelog
 =========
 
-2.2 (unreleased)
-----------------
+2.3b1 (2010/07.16)
+------------------
 
-* ...
+* Improve upgraders to Silva 2.2.
+
+* Add upgraders to Silva 2.3.
+
+* Update code to be compliant with Python 2.6 and Zope 2.12.
+
+* Add a command line tool ``silvaupdate`` to do upgrades on a non-running
+  Zope instance.
+
+* Keep upgrades log in a temporary file.
 
 2.2b1 (2010-02-01)
 ------------------
