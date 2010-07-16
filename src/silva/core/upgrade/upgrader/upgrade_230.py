@@ -24,10 +24,10 @@ logger = logging.getLogger('silva.core.upgrade')
 
 
 #-----------------------------------------------------------------------------
-# 2.2.0 to 2.3.0=a1
+# 2.2.0 to 2.3.0b1
 #-----------------------------------------------------------------------------
 
-VERSION_A1='2.3a1'
+VERSION_B1='2.3b1'
 
 
 class RootUpgrader(BaseUpgrader):
@@ -85,7 +85,7 @@ class RootUpgrader(BaseUpgrader):
         return root
 
 
-root_upgrader = RootUpgrader(VERSION_A1, 'Silva Root')
+root_upgrader = RootUpgrader(VERSION_B1, 'Silva Root')
 
 
 def split_path(path, context, root=None):
@@ -400,23 +400,23 @@ class SilvaFindUpgrader(BaseUpgrader):
         return obj
 
 
-link_upgrader = LinkVersionUpgrader(VERSION_A1, 'Silva Link Version')
+link_upgrader = LinkVersionUpgrader(VERSION_B1, 'Silva Link Version')
 
 document_upgrader = DocumentUpgrader(
-    VERSION_A1, 'Silva Document Version')
+    VERSION_B1, 'Silva Document Version')
 cache_upgrader = VersionedContentUpgrader(
-    VERSION_A1, ['Silva Ghost', 'Silva Link', 'Silva Document'])
+    VERSION_B1, ['Silva Ghost', 'Silva Link', 'Silva Document'])
 
 article_upgrader_agenda = ArticleUpgrader(
-    VERSION_A1, ['Silva Agenda Item', 'Silva Article'])
+    VERSION_B1, ['Silva Agenda Item', 'Silva Article'])
 article_cache_upgrader = VersionedContentUpgrader(
-    VERSION_A1, ['Silva Article', 'Silva Agenda Item'])
+    VERSION_B1, ['Silva Article', 'Silva Agenda Item'])
 document_upgrader_agenda = DocumentUpgrader(
-    VERSION_A1, ["Silva Agenda Item Version", "Silva Article Version"], 1000)
+    VERSION_B1, ["Silva Agenda Item Version", "Silva Article Version"], 1000)
 
 ghost_upgrader = GhostUpgrader(
-    VERSION_A1, ["Silva Ghost Version", "Silva Ghost Folder"])
+    VERSION_B1, ["Silva Ghost Version", "Silva Ghost Folder"])
 indexer_upgrader = UpdateIndexerUpgrader(
-    VERSION_A1, "Silva Indexer")
-silva_find_upgrader = SilvaFindUpgrader(VERSION_A1, "Silva Find")
+    VERSION_B1, "Silva Indexer")
+silva_find_upgrader = SilvaFindUpgrader(VERSION_B1, "Silva Find")
 
