@@ -8,7 +8,6 @@ from zope.component import getUtility
 from Products.Silva.testing import FunctionalLayer
 from silva.core.upgrade.upgrader.upgrade_230 import silva_find_upgrader
 from silva.core.references.interfaces import IReferenceService
-from Products.SilvaFind.errors import SilvaFindError
 
 
 class SilvaFindUpgraderTestCase(unittest.TestCase):
