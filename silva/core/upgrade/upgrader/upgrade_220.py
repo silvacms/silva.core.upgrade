@@ -25,16 +25,16 @@ logger = logging.getLogger('silva.core.upgrade')
 
 # silva imports
 from silva.core import interfaces
-from silva.core.upgrade.upgrade import BaseUpgrader, AnyMetaType
-from silva.core.upgrade.silvaxml import NAMESPACES_CHANGES
+from silva.core.services.catalog import CatalogService
+from silva.core.services.interfaces import ICatalogService
 from silva.core.upgrade.localsite import setup_intid
+from silva.core.upgrade.silvaxml import NAMESPACES_CHANGES
+from silva.core.upgrade.upgrade import BaseUpgrader, AnyMetaType
 
 from Products.Silva.adapters import version_management
 from Products.Silva.File import FileSystemFile
 from Products.SilvaExternalSources.interfaces import ICodeSourceService
 from Products.SilvaMetadata.interfaces import IMetadataService
-from silva.core.services.interfaces import ICatalogService
-from silva.core.services.catalog import CatalogService
 
 
 #-----------------------------------------------------------------------------
@@ -58,9 +58,7 @@ class RootUpgrader(BaseUpgrader):
         ism = interfaces.ISiteManager(obj)
         if not ism.isSite():
             ism.makeSite()
-            setSite(obj)
-
-        reg = obj.service_view_registry
+        setSite(obj)
 
         # Delete unused Silva Document service
         for s in ['service_doc_previewer',
@@ -68,6 +66,8 @@ class RootUpgrader(BaseUpgrader):
                   'service_sub_previewer',]:
             if hasattr(obj, s):
                 obj.manage_delObjects([s,])
+
+        reg = obj.service_view_registry
         reg.unregister('public', 'Silva Document Version')
         reg.unregister('add', 'Silva Document')
         reg.unregister('preview', 'Silva Document Version')
@@ -84,7 +84,7 @@ class RootUpgrader(BaseUpgrader):
             reg.unregister('add', 'Silva Layout Configuration')
             if hasattr(obj.service_views, 'SilvaLayout'):
                 obj.service_views.manage_delObjects(['SilvaLayout'])
-            #update the views (in service_view_registry) to ensure
+            # update the views (in service_view_registry) to ensure
             # that SilvaLayout is removed from it's internal list
             # of root view directories
             obj.service_extensions._update_views(obj)
@@ -99,7 +99,7 @@ class RootUpgrader(BaseUpgrader):
         return obj
 
 
-RootUpgrader = RootUpgrader(VERSION_A1, 'Silva Root')
+root_upgrader = RootUpgrader(VERSION_A1, 'Silva Root')
 
 
 class ImagesUpgrader(BaseUpgrader):
@@ -126,11 +126,15 @@ class ImagesUpgrader(BaseUpgrader):
             return obj
         else:
             raise ValueError, "Unknown mimetype"
+        data.seek(0)
         full_data = data.read()
         data.seek(0)
         ct, _, _ = OFS.Image.getImageInfo(full_data)
         if not ct:
             raise ValueError, "Impossible to detect mimetype"
+        # fix some bug in old Images that could be BMP
+        if obj.web_format not in obj.web_formats:
+            obj.web_format = 'JPEG'
         obj._image_factory('hires_image', data, ct)
         obj._createDerivedImages()
         data.close()
@@ -138,7 +142,7 @@ class ImagesUpgrader(BaseUpgrader):
         return obj
 
 
-ImagesUpgrader = ImagesUpgrader(VERSION_A1, 'Silva Image')
+images_upgrader = ImagesUpgrader(VERSION_A1, 'Silva Image')
 
 
 #-----------------------------------------------------------------------------
@@ -175,15 +179,15 @@ class SilvaXMLUpgrader(BaseUpgrader):
             #html isn't currently allowed in author, source, so
             # we don't need to "sanity" check them!
             for node in c.childNodes:
-                val = node.firstChild.writeStream().getvalue().replace('&lt;','<')
+                if not node.firstChild:
+                    continue
+                val = node.firstChild.\
+                    writeStream().getvalue().replace('&lt;','<')
                 if node.nodeType == node.ELEMENT_NODE:
-                    if node.firstChild:
-                        if node.nodeName == 'author':
-                            author = val
-                        elif node.nodeName == 'source':
-                            source = val
-                        else:
-                            citation.append(val)
+                    if node.nodeName == 'author':
+                        author = val
+                    elif node.nodeName == 'source':
+                        source = val
                     else:
                         citation.append(val)
                 else:
@@ -311,21 +315,24 @@ class SilvaXMLUpgrader(BaseUpgrader):
 
             t.parentNode.replaceChild(cs,t)
 
-SilvaXMLUpgrader = SilvaXMLUpgrader(VERSION_A2, AnyMetaType)
+silva_xml_ugrader = SilvaXMLUpgrader(VERSION_A2, AnyMetaType)
+
 
 class AllowedAddablesUpgrader(BaseUpgrader):
 
     def upgrade(self, obj):
         if interfaces.IContainer.providedBy(obj):
-            if hasattr(obj.aq_explicit,'_addables_allowed_in_publication'):
-                obj._addables_allowed_in_container = obj._addables_allowed_in_publication
-                del obj._addables_allowed_in_publication
-            elif not hasattr(obj.aq_explicit, '_addables_allowed_in_container'):
-                obj._addables_allowed_in_container = None
+            clean_obj = aq_base(obj)
+            if hasattr(clean_obj,'_addables_allowed_in_publication'):
+                clean_obj._addables_allowed_in_container = \
+                    clean_obj._addables_allowed_in_publication
+                del clean_obj._addables_allowed_in_publication
+            elif not hasattr(clean_obj, '_addables_allowed_in_container'):
+                clean_obj._addables_allowed_in_container = None
         return obj
 
 
-AllowedAddablesUpgrader = AllowedAddablesUpgrader(VERSION_A2, AnyMetaType)
+allowed_addables_upgrader = AllowedAddablesUpgrader(VERSION_A2, AnyMetaType)
 
 #-----------------------------------------------------------------------------
 # 2.2.0a2 to 2.2.0b1
@@ -346,7 +353,7 @@ class UpdateIndexerUpgrader(BaseUpgrader):
         return obj
 
 
-UpdateIndexerUpgrader = UpdateIndexerUpgrader(VERSION_B1, 'Silva Indexer')
+update_indexer_upgrader = UpdateIndexerUpgrader(VERSION_B1, 'Silva Indexer')
 
 
 class SecondRootUpgrader(BaseUpgrader):
@@ -388,6 +395,11 @@ class SecondRootUpgrader(BaseUpgrader):
                 if ('doc_attr' in melt.index_constructor_args and
                     melt.index_constructor_args['doc_attr'] == 'proxy_value'):
                     del melt.index_constructor_args['doc_attr']
+                if melt.index_type == 'TextIndex':
+                    melt.index_type = 'ZCTextIndex'
+                    melt.index_constructor_args.update(
+                        {'index_type': 'Cosine Measure',
+                         'lexicon_id': 'silva_lexicon'})
             mset.initialized = 0
             mset.initialize()
 
@@ -415,11 +427,17 @@ class SecondRootUpgrader(BaseUpgrader):
             obj.manage_pasteObjects(cit)
         # Setup SilvaLayout
         if not service_ext.is_installed('SilvaLayout'):
-            service_ext.install('SilvaLayout')
+            try:
+                import Products.SilvaLayout
+            except ImportError:
+                logger.info('Products.SilvaLayout is not installed, '
+                            'skipping installation of extension')
+            else:
+              service_ext.install('SilvaLayout')
 
         return obj
 
-SecondRootUpgrader = SecondRootUpgrader(VERSION_B1, 'Silva Root', 50)
+second_root_upgrader = SecondRootUpgrader(VERSION_B1, 'Silva Root', 50)
 
 
 class MetadataSetUpgrader(BaseUpgrader):
@@ -438,7 +456,7 @@ class MetadataSetUpgrader(BaseUpgrader):
         return obj
 
 
-MetadataSetUpgrader = MetadataSetUpgrader(VERSION_B1, 'Silva Root', 40)
+metadata_set_upgrader = MetadataSetUpgrader(VERSION_B1, 'Silva Root', 40)
 
 
 class MetadataUpgrader(BaseUpgrader):
@@ -476,4 +494,4 @@ class MetadataUpgrader(BaseUpgrader):
         return obj
 
 
-MetadataUpgrader = MetadataUpgrader(VERSION_B1, AnyMetaType)
+metadata_upgrader = MetadataUpgrader(VERSION_B1, AnyMetaType)
