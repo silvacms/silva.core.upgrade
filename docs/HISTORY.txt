@@ -1,10 +1,10 @@
 Changelog
 =========
 
-2.2 (unreleased)
+2.2 (2010-07-18)
 ----------------
 
-* ...
+* Improve upgraders for 2.2 (backport fixes from the 2.3 branch).
 
 2.2b1 (2010-02-01)
 ------------------
