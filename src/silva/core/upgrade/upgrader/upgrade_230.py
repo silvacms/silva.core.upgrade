@@ -28,6 +28,7 @@ logger = logging.getLogger('silva.core.upgrade')
 #-----------------------------------------------------------------------------
 
 VERSION_B1='2.3b1'
+VERSION_FINAL='2.3'
 
 
 class RootUpgrader(BaseUpgrader):
@@ -420,3 +421,18 @@ indexer_upgrader = UpdateIndexerUpgrader(
     VERSION_B1, "Silva Indexer")
 silva_find_upgrader = SilvaFindUpgrader(VERSION_B1, "Silva Find")
 
+
+class SecondRootUpgrader(BaseUpgrader):
+
+    def upgrade(self, root):
+        # Upgrader Silva Views.
+        reg = root.service_view_registry
+        reg.unregister('edit', 'Silva Find')
+
+        # Convert Members folder
+        root.manage_renameObject('Members', 'OldMembers')
+        root.manage_addProduct['BTreeFolder2'].manage_addBTreeFolder('Members')
+        root.Members._populateFromFolder(root.OldMembers)
+        root.manage_delObjects(['OldMembers'])
+
+root_upgrader = RootUpgrader(VERSION_FINAL, 'Silva Root')
