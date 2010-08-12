@@ -356,20 +356,13 @@ class LinkVersionUpgrader(BaseUpgrader):
         return bool(purl.netloc)
 
 
-
 class SilvaFindUpgrader(BaseUpgrader):
 
     def validate(self, obj):
         return True
 
-    @property
-    def ref_service(self):
-        if hasattr(self, '_ref_service'):
-            return self._ref_service
-        self._ref_service = getUtility(IReferenceService)
-        return self._ref_service
-
     def upgrade(self, obj):
+        service = getUtility(IReferenceService)
         fields = obj.service_find.getSearchSchema().getFields()
         fields = filter(lambda x: IPathCriterionField.providedBy(x), fields)
         root = obj.get_root()
@@ -384,7 +377,7 @@ class SilvaFindUpgrader(BaseUpgrader):
                         traverse_path = path[len(root_path):]
                         target = root.unrestrictedTraverse(traverse_path, None)
                         if target:
-                            ref = self.ref_service.new_reference(
+                            ref = service.new_reference(
                                 obj, name=unicode(field_name))
                             ref.set_target(target)
                             logger.info('reference created for field %s of '
@@ -428,11 +421,16 @@ class SecondRootUpgrader(BaseUpgrader):
         # Upgrader Silva Views.
         reg = root.service_view_registry
         reg.unregister('edit', 'Silva Find')
+        reg.unregister('preview', 'Silva Image')
+        reg.unregister('public', 'Silva Image')
+        reg.unregister('public', 'Silva File')
 
         # Convert Members folder
         root.manage_renameObject('Members', 'OldMembers')
         root.manage_addProduct['BTreeFolder2'].manage_addBTreeFolder('Members')
         root.Members._populateFromFolder(root.OldMembers)
         root.manage_delObjects(['OldMembers'])
+        return root
 
-root_upgrader = RootUpgrader(VERSION_FINAL, 'Silva Root')
+
+second_root_upgrader = SecondRootUpgrader(VERSION_FINAL, 'Silva Root')
