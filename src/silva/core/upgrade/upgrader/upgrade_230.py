@@ -2,22 +2,26 @@
 # See also LICENSE.txt
 # $Id$
 
+from urlparse import urlparse
+import logging
+
 from zope.component import getUtility
+import transaction
+
 from Acquisition import aq_base
-from Products.SilvaDocument.interfaces import IDocumentVersion
-from Products.SilvaDocument.transform.base import Context
-from Products.ParsedXML.ParsedXML import ParsedXML
 from zExceptions import NotFound
 from five.intid.site import aq_iter
 
+from Products.SilvaDocument.interfaces import IDocumentVersion
+from Products.SilvaDocument.transform.base import Context
+from Products.ParsedXML.ParsedXML import ParsedXML
+from Products.SilvaFind.interfaces import IPathCriterionField
+
 from silva.core.interfaces import ISilvaObject, IVersionedContent
+from silva.core.interfaces.service import IMemberService
 from silva.core.references.interfaces import IReferenceService
 from silva.core.upgrade.upgrade import BaseUpgrader, content_path
 from silva.core.upgrade.upgrader.upgrade_220 import UpdateIndexerUpgrader
-from Products.SilvaFind.interfaces import IPathCriterionField
-from urlparse import urlparse
-import logging
-import transaction
 
 
 logger = logging.getLogger('silva.core.upgrade')
@@ -430,6 +434,10 @@ class SecondRootUpgrader(BaseUpgrader):
         root.manage_addProduct['BTreeFolder2'].manage_addBTreeFolder('Members')
         root.Members._populateFromFolder(root.OldMembers)
         root.manage_delObjects(['OldMembers'])
+
+        # Register services
+        sm = root.getSiteManager()
+        sm.registerUtility(root.service_members, IMemberService)
         return root
 
 
