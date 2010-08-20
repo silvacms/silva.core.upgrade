@@ -432,8 +432,16 @@ class SecondRootUpgrader(BaseUpgrader):
         reg.unregister('edit', 'Silva Virtual Group')
         reg.unregister('edit', 'Silva Find')
         reg.unregister('preview', 'Silva Image')
+        reg.unregister('preview', 'Silva Folder')
+        reg.unregister('preview', 'Silva Ghost Folder')
+        reg.unregister('preview', 'Silva Publication')
+        reg.unregister('preview', 'Silva Root')
         reg.unregister('public', 'Silva Image')
         reg.unregister('public', 'Silva File')
+        reg.unregister('public', 'Silva Folder')
+        reg.unregister('public', 'Silva Ghost Folder')
+        reg.unregister('public', 'Silva Publication')
+        reg.unregister('public', 'Silva Root')
 
         # Convert Members folder
         root.manage_renameObject('Members', 'OldMembers')
