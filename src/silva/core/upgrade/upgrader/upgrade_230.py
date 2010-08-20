@@ -424,6 +424,12 @@ class SecondRootUpgrader(BaseUpgrader):
     def upgrade(self, root):
         # Upgrader Silva Views.
         reg = root.service_view_registry
+        reg.unregister('add', 'Silva Group')
+        reg.unregister('add', 'Silva IP Group')
+        reg.unregister('add', 'Silva Virtual Group')
+        reg.unregister('edit', 'Silva Group')
+        reg.unregister('edit', 'Silva IP Group')
+        reg.unregister('edit', 'Silva Virtual Group')
         reg.unregister('edit', 'Silva Find')
         reg.unregister('preview', 'Silva Image')
         reg.unregister('public', 'Silva Image')
