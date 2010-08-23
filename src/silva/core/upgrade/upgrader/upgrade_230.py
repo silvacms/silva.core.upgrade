@@ -18,7 +18,7 @@ from Products.ParsedXML.ParsedXML import ParsedXML
 from Products.SilvaFind.interfaces import IPathCriterionField
 
 from silva.core.interfaces import ISilvaObject, IVersionedContent
-from silva.core.interfaces.service import IMemberService
+from silva.core.services.interfaces import IMemberService
 from silva.core.references.interfaces import IReferenceService
 from silva.core.upgrade.upgrade import BaseUpgrader, content_path
 from silva.core.upgrade.upgrader.upgrade_220 import UpdateIndexerUpgrader
