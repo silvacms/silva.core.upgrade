@@ -58,16 +58,16 @@ class BaseUpgrader(object):
         return sort
 
 
+def convert_dev(version):
+    if 'dev' in version:
+        return version.replace('dev', '**dev')
+    return version
+
+
 def get_version_index(version_list, wanted_version):
     """Return the index of the version in the list.
     """
-    try:
-        dev_index = wanted_version.index('dev')
-        wanted_version = wanted_version[:dev_index]
-    except ValueError:
-        # It's not a development version everything is ok.
-        pass
-    wanted_version = parse_version(wanted_version)
+    wanted_version = parse_version(convert_dev(wanted_version))
     for index, version in enumerate(version_list):
         parsed_version = parse_version(version)
         if wanted_version < parsed_version:
@@ -82,6 +82,8 @@ def get_upgrade_chain(versions, from_version, to_version):
     """Return a list of version to upgrade to when upgrading from to
     to version.
     """
+    from_version = convert_dev(from_version)
+    to_version = convert_dev(to_version)
     versions.sort(lambda x, y: cmp(parse_version(x), parse_version(y)))
     version_start_index = get_version_index(versions, from_version)
     version_end_index = get_version_index(versions, to_version)
