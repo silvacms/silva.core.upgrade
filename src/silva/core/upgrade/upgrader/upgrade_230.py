@@ -465,7 +465,7 @@ class SecondRootUpgrader(BaseUpgrader):
         if hasattr(aq_base(container_policy), '_policies'):
             container_policy._ContainerPolicyRegistry__policies = dict(
                 container_policy._policies)
-            delattr container_policy._policies
+            delattr(container_policy, '_policies')
         sm.registerUtility(
             root.service_containerpolicy, IContainerPolicyService)
         return root
