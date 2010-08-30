@@ -462,7 +462,7 @@ class SecondRootUpgrader(BaseUpgrader):
         sm.registerUtility(
             root.service_members, IMemberService)
         container_policy = root.service_containerpolicy
-        if hasattr(aq_base(container_policy, '_policies')):
+        if hasattr(aq_base(container_policy), '_policies'):
             container_policy._ContainerPolicyRegistry__policies = dict(
                 container_policy._policies)
             delattr container_policy._policies
