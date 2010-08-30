@@ -18,8 +18,9 @@ from Products.ParsedXML.ParsedXML import ParsedXML
 from Products.SilvaFind.interfaces import IPathCriterionField
 
 from silva.core.interfaces import ISilvaObject, IVersionedContent
-from silva.core.services.interfaces import IMemberService
 from silva.core.references.interfaces import IReferenceService
+from silva.core.services.interfaces import IContainerPolicyService
+from silva.core.services.interfaces import IMemberService
 from silva.core.upgrade.upgrade import BaseUpgrader, content_path
 from silva.core.upgrade.upgrader.upgrade_220 import UpdateIndexerUpgrader
 
@@ -32,7 +33,7 @@ logger = logging.getLogger('silva.core.upgrade')
 #-----------------------------------------------------------------------------
 
 VERSION_B1='2.3b1'
-VERSION_FINAL='2.3'
+VERSION_B2='2.3b2'
 
 
 class RootUpgrader(BaseUpgrader):
@@ -427,10 +428,17 @@ class SecondRootUpgrader(BaseUpgrader):
         reg.unregister('add', 'Silva Group')
         reg.unregister('add', 'Silva IP Group')
         reg.unregister('add', 'Silva Virtual Group')
+        reg.unregister('add', 'Five Content')
+        reg.unregister('add', 'Silva AutoTOC')
+        reg.unregister('add', 'Silva Publication')
+        reg.unregister('add', 'Silva Folder')
+        reg.unregister('add', 'Silva Link')
         reg.unregister('edit', 'Silva Group')
         reg.unregister('edit', 'Silva IP Group')
         reg.unregister('edit', 'Silva Virtual Group')
         reg.unregister('edit', 'Silva Find')
+        reg.unregister('edit', 'Silva AutoTOC')
+        reg.unregister('edit', 'Silva Indexer')
         reg.unregister('preview', 'Silva Image')
         reg.unregister('preview', 'Silva Folder')
         reg.unregister('preview', 'Silva Ghost Folder')
@@ -451,8 +459,11 @@ class SecondRootUpgrader(BaseUpgrader):
 
         # Register services
         sm = root.getSiteManager()
-        sm.registerUtility(root.service_members, IMemberService)
+        sm.registerUtility(
+            root.service_members, IMemberService)
+        sm.registerUtility(
+            root.service_containerpolicy, IContainerPolicyService)
         return root
 
 
-second_root_upgrader = SecondRootUpgrader(VERSION_FINAL, 'Silva Root')
+second_root_upgrader = SecondRootUpgrader(VERSION_B2, 'Silva Root')
