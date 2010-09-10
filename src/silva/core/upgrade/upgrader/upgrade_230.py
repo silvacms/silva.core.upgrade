@@ -447,6 +447,18 @@ class SecondRootUpgrader(BaseUpgrader):
         reg.unregister('edit', 'Silva Find')
         reg.unregister('edit', 'Silva Forum Comment')
         reg.unregister('edit', 'Silva Group')
+        reg.unregister('add', 'Silva Agenda Filter')
+        reg.unregister('add', 'Silva News Category Filter')
+        reg.unregister('add', 'Silva News Filter')
+        reg.unregister('add', 'Silva News Publication')
+        reg.unregister('add', 'Silva Agenda Item')
+        reg.unregister('add', 'Silva Article')
+        reg.unregister('add', 'Silva RSS Aggregator')
+        reg.unregister('add', 'Silva Agenda Viewer')
+        reg.unregister('add', 'Silva News Viewer')
+        reg.unregister('edit', 'Silva News Viewer')
+        reg.unregister('edit', 'Silva Agenda Viewer')
+        reg.unregister('edit', 'Silva RSS Aggregator')
         reg.unregister('edit', 'Silva IP Group')
         reg.unregister('edit', 'Silva Indexer')
         reg.unregister('edit', 'Silva Virtual Group')
@@ -484,4 +496,17 @@ class SecondRootUpgrader(BaseUpgrader):
         return root
 
 
+class SilvaNewsAgendaItemVersionCleanup(BaseUpgrader):
+    def validate(self, content):
+        if hasattr(content, '_calendar_date_representation'):
+            return True
+        return False
+
+    def upgrade(self, content):
+        del content._calendar_date_representation
+        return content
+
+
 second_root_upgrader = SecondRootUpgrader(VERSION_B2, 'Silva Root')
+agenda_item_upgrader = SilvaNewsAgendaItemVersionCleanup(
+    VERSION_B2, 'Silva Agenda Item Version')
