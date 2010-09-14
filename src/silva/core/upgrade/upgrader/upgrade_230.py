@@ -448,6 +448,8 @@ class SecondRootUpgrader(BaseUpgrader):
         reg.unregister('edit', 'Silva Find')
         reg.unregister('edit', 'Silva Forum Comment')
         reg.unregister('edit', 'Silva Group')
+        reg.unregister('edit', 'Silva Ghost')
+        reg.unregister('edit', 'Silva Ghost Folder')
         reg.unregister('edit', 'Silva IP Group')
         reg.unregister('edit', 'Silva Indexer')
         reg.unregister('edit', 'Silva News Viewer')
