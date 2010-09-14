@@ -443,10 +443,6 @@ class SecondRootUpgrader(BaseUpgrader):
         reg.unregister('add', 'Silva Publication')
         reg.unregister('add', 'Silva RSS Aggregator')
         reg.unregister('add', 'Silva Virtual Group')
-        reg.unregister('edit', 'Silva AutoTOC')
-        reg.unregister('edit', 'Silva Find')
-        reg.unregister('edit', 'Silva Forum Comment')
-        reg.unregister('edit', 'Silva Group')
         reg.unregister('add', 'Silva Agenda Filter')
         reg.unregister('add', 'Silva News Category Filter')
         reg.unregister('add', 'Silva News Filter')
@@ -463,6 +459,10 @@ class SecondRootUpgrader(BaseUpgrader):
         reg.unregister('edit', 'Silva Indexer')
         reg.unregister('edit', 'Silva Virtual Group')
         reg.unregister('edit', 'Silva Simple Member')
+        reg.unregister('edit', 'Silva AutoTOC')
+        reg.unregister('edit', 'Silva Find')
+        reg.unregister('edit', 'Silva Forum Comment')
+        reg.unregister('edit', 'Silva Group')
         reg.unregister('preview', 'Silva Image')
         reg.unregister('preview', 'Silva Folder')
         reg.unregister('preview', 'Silva Ghost Folder')
@@ -493,6 +493,10 @@ class SecondRootUpgrader(BaseUpgrader):
             delattr(container_policy, '_policies')
         sm.registerUtility(
             root.service_containerpolicy, IContainerPolicyService)
+        if hasattr(root, 'service_news'):
+            from Products.SilvaNews.interfaces import IServiceNews
+            sm.registerUtility(
+                root.service_news, IServiceNews)
         return root
 
 
