@@ -443,26 +443,17 @@ class SecondRootUpgrader(BaseUpgrader):
         reg.unregister('add', 'Silva Publication')
         reg.unregister('add', 'Silva RSS Aggregator')
         reg.unregister('add', 'Silva Virtual Group')
-        reg.unregister('add', 'Silva Agenda Filter')
-        reg.unregister('add', 'Silva News Category Filter')
-        reg.unregister('add', 'Silva News Filter')
-        reg.unregister('add', 'Silva News Publication')
-        reg.unregister('add', 'Silva Agenda Item')
-        reg.unregister('add', 'Silva Article')
-        reg.unregister('add', 'Silva RSS Aggregator')
-        reg.unregister('add', 'Silva Agenda Viewer')
-        reg.unregister('add', 'Silva News Viewer')
-        reg.unregister('edit', 'Silva News Viewer')
         reg.unregister('edit', 'Silva Agenda Viewer')
-        reg.unregister('edit', 'Silva RSS Aggregator')
-        reg.unregister('edit', 'Silva IP Group')
-        reg.unregister('edit', 'Silva Indexer')
-        reg.unregister('edit', 'Silva Virtual Group')
-        reg.unregister('edit', 'Silva Simple Member')
         reg.unregister('edit', 'Silva AutoTOC')
         reg.unregister('edit', 'Silva Find')
         reg.unregister('edit', 'Silva Forum Comment')
         reg.unregister('edit', 'Silva Group')
+        reg.unregister('edit', 'Silva IP Group')
+        reg.unregister('edit', 'Silva Indexer')
+        reg.unregister('edit', 'Silva News Viewer')
+        reg.unregister('edit', 'Silva RSS Aggregator')
+        reg.unregister('edit', 'Silva Simple Member')
+        reg.unregister('edit', 'Silva Virtual Group')
         reg.unregister('preview', 'Silva Image')
         reg.unregister('preview', 'Silva Folder')
         reg.unregister('preview', 'Silva Ghost Folder')
@@ -497,6 +488,9 @@ class SecondRootUpgrader(BaseUpgrader):
             from Products.SilvaNews.interfaces import IServiceNews
             sm.registerUtility(
                 root.service_news, IServiceNews)
+        if not hasattr(root, 'service_secret'):
+            factory = root.manage_addProduct['silva.core.services']
+            factory.manage_addSecretService()
         return root
 
 
