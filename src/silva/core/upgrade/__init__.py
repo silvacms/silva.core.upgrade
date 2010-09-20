@@ -61,5 +61,11 @@ CLASS_CHANGES = {
         'zope.interface Interface',
     'silva.core.upgrade.localsite IntIds':
         'silva.core.services.base IntIdService',
-    }
+    'silva.core.interfaces.service IMemberService':
+        'silva.core.services.interfaces IMemberService',
+    'silva.core.services.interfaces ISubscriptionService':
+        'silva.app.subscriptions.interfaces ISubscriptionService',
+    'Products.Silva.subscriptionservice SubscriptionService':
+        'silva.app.subscriptions.service SubscriptionService',
 
+    }
