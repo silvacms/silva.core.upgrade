@@ -470,7 +470,7 @@ class SecondRootUpgrader(BaseUpgrader):
         # Clean service views:
         for directory_id in ['SilvaFind', 'SilvaForum']:
             if directory_id in root.service_views.objectIds():
-                root.service_views.manager_delObjects([directory_id])
+                root.service_views.manage_delObjects([directory_id])
 
         # Convert Members folder
         root.manage_renameObject('Members', 'OldMembers')
@@ -500,9 +500,9 @@ class SecondRootUpgrader(BaseUpgrader):
         if not hasattr(root, 'service_secret'):
             factory = root.manage_addProduct['silva.core.services']
             factory.manage_addSecretService()
-        if hasattr(root, 'service_subscription_mailhost'):
+        if hasattr(root, 'service_subscriptions_mailhost'):
             root.manage_renameObject(
-                'service_subscription_mailhost',
+                'service_subscriptions_mailhost',
                 'service_mailhost')
         return root
 
