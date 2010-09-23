@@ -491,7 +491,7 @@ class SecondRootUpgrader(BaseUpgrader):
             root.service_containerpolicy, IContainerPolicyService)
         if hasattr(root, 'service_subscriptions'):
             from silva.app.subscriptions.interfaces import ISubscriptionService
-            sm.regiserUtility(
+            sm.registerUtility(
                 root.service_subscriptions, ISubscriptionService)
         if hasattr(root, 'service_news'):
             from Products.SilvaNews.interfaces import IServiceNews
