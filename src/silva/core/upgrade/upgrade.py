@@ -14,6 +14,7 @@ logger = logging.getLogger('silva.core.upgrade')
 
 # Zope
 from Acquisition import aq_base
+from ZODB.broken import Broken
 from zope.interface import implements
 import transaction
 
@@ -93,7 +94,6 @@ def get_upgrade_chain(versions, from_version, to_version):
 class UpgradeRegistry(object):
     """Here people can register upgrade methods for their objects
     """
-
     implements(IUpgradeRegistry)
 
     def __init__(self):
@@ -158,20 +158,25 @@ class UpgradeRegistry(object):
         """Upgrade an object and its children to a version.
         """
         count = 0
-        stack = [root]
-        while stack:
+        contents = [root]
+        while contents:
             changed = False
             no_iterate = False
-            obj = stack.pop()
+            obj = contents.pop()
 
-            if not (obj.meta_type in blacklist):
+            if isinstance(obj, Broken):
+                # We don't upgrade broken objects. They should be
+                # removed by their contains if needed.
+                continue
+
+            if obj.meta_type not in blacklist:
                 obj, changed, no_iterate = self.upgradeObject(obj, version)
 
             if (not no_iterate and
-                hasattr(obj.aq_base, 'objectValues') and
+                hasattr(aq_base(obj), 'objectValues') and
                 obj.meta_type != "Parsed XML"):
 
-                stack.extend(obj.objectValues())
+                contents.extend(obj.objectValues())
 
             if changed:
                 count += 1
@@ -244,19 +249,19 @@ class UpgraderTracebackSupplement(object):
     information is present.
     """
 
-    def __init__(self, context, obj, upgrader):
+    def __init__(self, context, content, upgrader):
         self.context = context
-        self.obj = obj
+        self.content = content
         self.upgrader = upgrader
 
     def getInfo(self, as_html=0):
         import pprint
-        data = {"object": self.obj,
-                "object_path": content_path(self.obj),
+        data = {"content": self.content,
+                "content_path": content_path(self.content),
                 "upgrader": self.upgrader}
         s = pprint.pformat(data)
         if not as_html:
-            return '   - Object Info:\n      %s' % s.replace('\n', '\n      ')
+            return '   - Content Info:\n      %s' % s.replace('\n', '\n      ')
         else:
             from cgi import escape
             return '<b>Names:</b><pre>%s</pre>'%(escape(s))
