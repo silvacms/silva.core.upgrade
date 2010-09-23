@@ -484,6 +484,10 @@ class SecondRootUpgrader(BaseUpgrader):
             delattr(container_policy, '_policies')
         sm.registerUtility(
             root.service_containerpolicy, IContainerPolicyService)
+        if hasattr(root, 'service_subscriptions'):
+            from silva.app.subscriptions.interfaces import ISubscriptionService
+            sm.regiserUtility(
+                root.service_subscriptions, ISubscriptionService)
         if hasattr(root, 'service_news'):
             from Products.SilvaNews.interfaces import IServiceNews
             sm.registerUtility(
@@ -491,6 +495,10 @@ class SecondRootUpgrader(BaseUpgrader):
         if not hasattr(root, 'service_secret'):
             factory = root.manage_addProduct['silva.core.services']
             factory.manage_addSecretService()
+        if hasattr(root, 'service_subscription_mailhost'):
+            root.manage_renameObject(
+                'service_subscription_mailhost',
+                'service_mailhost')
         return root
 
 
