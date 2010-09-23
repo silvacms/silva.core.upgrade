@@ -467,6 +467,11 @@ class SecondRootUpgrader(BaseUpgrader):
         reg.unregister('public', 'Silva Publication')
         reg.unregister('public', 'Silva Root')
 
+        # Clean service views:
+        for directory_id in ['SilvaFind', 'SilvaForum']:
+            if directory_id in root.service_views.objectIds():
+                root.service_views.manager_delObjects([directory_id])
+
         # Convert Members folder
         root.manage_renameObject('Members', 'OldMembers')
         root.manage_addProduct['BTreeFolder2'].manage_addBTreeFolder('Members')
