@@ -508,6 +508,7 @@ class SecondRootUpgrader(BaseUpgrader):
 
 
 class SilvaNewsAgendaItemVersionCleanup(BaseUpgrader):
+
     def validate(self, content):
         if hasattr(content, '_calendar_date_representation'):
             return True
@@ -518,6 +519,17 @@ class SilvaNewsAgendaItemVersionCleanup(BaseUpgrader):
         return content
 
 
+class CSVSourceUpgrader(BaseUpgrader):
+
+    def upgrader(self, content):
+        from Products.SilvaExternalSources.CSVSource import (
+            reset_parameter_form, reset_table_layout)
+        reset_parameter_form(content)
+        reset_table_layout(content)
+        return content
+
+
+csvsource_upgrader = CSVSourceUpgrader(VERSION_B2, 'Silva CSV Source')
 second_root_upgrader = SecondRootUpgrader(VERSION_B2, 'Silva Root')
 agenda_item_upgrader = SilvaNewsAgendaItemVersionCleanup(
     VERSION_B2, 'Silva Agenda Item Version')
