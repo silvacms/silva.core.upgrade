@@ -475,7 +475,9 @@ class SecondRootUpgrader(BaseUpgrader):
         # Convert Members folder
         root.manage_renameObject('Members', 'OldMembers')
         root.manage_addProduct['BTreeFolder2'].manage_addBTreeFolder('Members')
-        root.Members._populateFromFolder(root.OldMembers)
+        for identifier, member in root.OldMembers.objectItems():
+            if identifier not in root.Members.objectIds():
+                root.Members._setObject(identifier, aq_base(member))
         root.manage_delObjects(['OldMembers'])
 
         # Register services
@@ -521,7 +523,7 @@ class SilvaNewsAgendaItemVersionCleanup(BaseUpgrader):
 
 class CSVSourceUpgrader(BaseUpgrader):
 
-    def upgrader(self, content):
+    def upgrade(self, content):
         from Products.SilvaExternalSources.CSVSource import (
             reset_parameter_form, reset_table_layout)
         reset_parameter_form(content)
