@@ -459,6 +459,7 @@ class SecondRootUpgrader(BaseUpgrader):
         reg.unregister('preview', 'Silva Ghost Folder')
         reg.unregister('preview', 'Silva Publication')
         reg.unregister('preview', 'Silva Root')
+        reg.unregister('public', 'Silva Link Version')
         reg.unregister('public', 'Silva CSV Source')
         reg.unregister('public', 'Silva File')
         reg.unregister('public', 'Silva Folder')
