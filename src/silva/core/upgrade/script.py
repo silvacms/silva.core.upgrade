@@ -26,6 +26,9 @@ parser.add_option(
     "-c", "--config",
     help="load zope config")
 parser.add_option(
+    "--from-option", dest="version",
+    help="start upgrade from the given version")
+parser.add_option(
     "--pack", action="store_true", dest="pack",
     help="pack database after the upgrade")
 
@@ -61,7 +64,9 @@ def upgrade():
         else:
             setSite(None)
         setHooks()
-        from_version = silva.get_silva_content_version()
+        from_version = options.version
+        if not from_version:
+            from_version = silva.get_silva_content_version()
         to_version = silva.get_silva_software_version()
         logger.info("upgrade from version %s to version %s" % (
                 from_version, to_version))
