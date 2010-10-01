@@ -26,7 +26,7 @@ parser.add_option(
     "-c", "--config",
     help="load zope config")
 parser.add_option(
-    "--from-option", dest="version",
+    "--from-version", dest="version",
     help="start upgrade from the given version")
 parser.add_option(
     "--pack", action="store_true", dest="pack",
