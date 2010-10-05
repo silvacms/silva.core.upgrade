@@ -5,6 +5,8 @@
 from urlparse import urlparse
 import logging
 
+from zope.event import notify
+from zope.lifecycleevent import ObjectCreatedEvent
 from zope.component import getUtility
 import transaction
 
@@ -496,6 +498,10 @@ class SecondRootUpgrader(BaseUpgrader):
             from silva.app.subscriptions.interfaces import ISubscriptionService
             sm.registerUtility(
                 root.service_subscriptions, ISubscriptionService)
+            template_ids = root.service_subscriptions.objectIds()
+            root.service_subscriptions.manage_delObjects(template_ids)
+            # This trigger a reconfiguration of the service.
+            notify(ObjectCreatedEvent(root.service_subscriptions))
         if hasattr(root, 'service_news'):
             from Products.SilvaNews.interfaces import IServiceNews
             sm.registerUtility(
