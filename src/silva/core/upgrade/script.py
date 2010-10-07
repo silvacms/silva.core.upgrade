@@ -2,6 +2,7 @@
 # See also LICENSE.txt
 # $Id$
 
+import atexit
 import logging
 import optparse
 import os.path
@@ -29,6 +30,10 @@ parser.add_option(
     "--from-version", dest="version",
     help="start upgrade from the given version")
 parser.add_option(
+    "--list", action="store_true", dest="list",
+    help="list all available Silva at the root of the database "
+    "and their versions"),
+parser.add_option(
     "--pack", action="store_true", dest="pack",
     help="pack database after the upgrade")
 
@@ -50,6 +55,20 @@ def upgrade():
     Zope2.zpublisher_transactions_manager.begin()
     root = makerequest(Zope2.bobo_application())
 
+    def close():
+        logger.info("Closing database.")
+        Zope2.DB.close()
+
+    atexit.register(close)
+
+    if options.list:
+        logger.info('Silva Root at the root of the database:')
+        for content_id, content in root.objectItems():
+            if IRoot.providedBy(content):
+                logger.info('- /%s: version %s' % (
+                        content_id, content.get_silva_content_version()))
+        sys.exit(0)
+
     if not len(args):
         sys.stderr.write("Please give paths to Silva Root as arguments.")
         sys.exit(1)
@@ -57,7 +76,7 @@ def upgrade():
     for silva_path in args:
         silva = root.unrestrictedTraverse(silva_path)
         if not IRoot.providedBy(silva):
-            sys.stderr.write("%s is not a valid Silva Root" % silva_path)
+            sys.stderr.write("%s is not a valid Silva Root." % silva_path)
             sys.exit(1)
         if ISite.providedBy(silva):
             setSite(silva)
@@ -78,5 +97,4 @@ def upgrade():
         logger.info("packing database...")
         Zope2.DB.pack()
 
-    logger.info("closing database.")
-    Zope2.DB.close()
+    sys.exit(0)
