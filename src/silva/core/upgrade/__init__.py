@@ -67,5 +67,6 @@ CLASS_CHANGES = {
         'silva.app.subscriptions.interfaces ISubscriptionService',
     'Products.Silva.subscriptionservice SubscriptionService':
         'silva.app.subscriptions.service SubscriptionService',
-
+    'plone.keyring.interfaces IKeyManager':
+        'zope.interface Interface'
     }
