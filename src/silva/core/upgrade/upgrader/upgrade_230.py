@@ -18,6 +18,7 @@ from Products.SilvaDocument.interfaces import IDocumentVersion
 from Products.SilvaDocument.transform.base import Context
 from Products.ParsedXML.ParsedXML import ParsedXML
 from Products.SilvaFind.interfaces import IPathCriterionField
+from Products.Silva.ExtensionRegistry import extensionRegistry
 
 from silva.core.interfaces import ISilvaObject, IVersionedContent
 from silva.core.references.interfaces import IReferenceService
@@ -490,8 +491,15 @@ class SecondRootUpgrader(BaseUpgrader):
 
         # Register services
         sm = root.getSiteManager()
-        sm.registerUtility(
-            root.service_members, IMemberService)
+        if not IMemberService.providedBy(root.service_members):
+            root.manage_delObjects(['service_members'])
+            if extensionRegistry.have('silva.pas.base'):
+                root.service_extensions.install('silva.pas.base')
+            else:
+                factory = root.manage_addProduct['Silva']
+                factory.manage_addSimpleMemberService()
+        else:
+            sm.registerUtility(root.service_members, IMemberService)
         container_policy = root.service_containerpolicy
         if hasattr(aq_base(container_policy), '_policies'):
             container_policy._ContainerPolicyRegistry__policies = dict(
