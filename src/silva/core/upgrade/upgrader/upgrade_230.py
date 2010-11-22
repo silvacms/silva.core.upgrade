@@ -565,5 +565,4 @@ class ThirdRootUpgrader(BaseUpgrader):
             del content.__dict__['_properties']
         return content
 
-
 third_root_upgrarder = ThirdRootUpgrader(VERSION_FINAL, 'Silva Root')
