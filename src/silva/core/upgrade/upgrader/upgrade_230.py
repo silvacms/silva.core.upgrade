@@ -37,6 +37,7 @@ logger = logging.getLogger('silva.core.upgrade')
 
 VERSION_B1='2.3b1'
 VERSION_B2='2.3b2'
+VERSION_FINAL='2.3b3'
 
 
 class RootUpgrader(BaseUpgrader):
@@ -555,3 +556,14 @@ csvsource_upgrader = CSVSourceUpgrader(VERSION_B2, 'Silva CSV Source')
 second_root_upgrader = SecondRootUpgrader(VERSION_B2, 'Silva Root')
 agenda_item_upgrader = SilvaNewsAgendaItemVersionCleanup(
     VERSION_B2, 'Silva Agenda Item Version')
+
+
+class ThirdRootUpgrader(BaseUpgrader):
+
+    def upgrade(self, content):
+        if '_properties' in content.__dict__:
+            del content.__dict__['_properties']
+        return content
+
+
+third_root_upgrarder = ThirdRootUpgrader(VERSION_FINAL, 'Silva Root')
