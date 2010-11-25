@@ -542,6 +542,16 @@ class SilvaNewsAgendaItemVersionCleanup(BaseUpgrader):
         return content
 
 
+class SilvaNewsAgendaItemRecurrenceUpgrade(BaseUpgrader):
+    def validate(self, content):
+        return not hasattr(content, '_recurrence')
+
+    def upgrade(self, content):
+        content._end_recurrence_datetime = None
+        content._recurrence = None
+        return content
+
+
 class CSVSourceUpgrader(BaseUpgrader):
 
     def upgrade(self, content):
@@ -556,6 +566,8 @@ csvsource_upgrader = CSVSourceUpgrader(VERSION_B2, 'Silva CSV Source')
 second_root_upgrader = SecondRootUpgrader(VERSION_B2, 'Silva Root')
 agenda_item_upgrader = SilvaNewsAgendaItemVersionCleanup(
     VERSION_B2, 'Silva Agenda Item Version')
+agenda_item_recurrence_upgrader = SilvaNewsAgendaItemRecurrenceUpgrade(
+    VERSION_B2, 'Silva Agenda Item Version')
 
 
 class ThirdRootUpgrader(BaseUpgrader):
@@ -565,4 +577,53 @@ class ThirdRootUpgrader(BaseUpgrader):
             del content.__dict__['_properties']
         return content
 
+
+class SilvaNewsFilterUpgrader(BaseUpgrader):
+
+    def validate(self, content):
+        return hasattr(content, '_sources')
+
+    def upgrade(self, content):
+        root = content.get_root()
+        for source in content._sources:
+            try:
+                target = root.unrestrictedTraverse(source)
+            except StandardError as e:
+                logger.error('could not find object %s : %s' % (source, e))
+                continue
+            if target.meta_type in content._allowed_source_types:
+                content.add_source(target)
+            else:
+                logger.warn('Content type %s is not an allowed source' %
+                    target.meta_type)
+        del content._sources
+
+
+class SilvaNewsViewerUpgrader(BaseUpgrader):
+
+    def validate(self, content):
+        return hasattr(content, '_filters')
+
+    def upgrade(self, content):
+        root = content.get_root()
+        for flt in content._filters:
+            try:
+                target = root.unrestrictedTraverse(flt)
+            except StandardError as e:
+                logger.error('could not find object %s : %s' % (flt, e))
+                continue
+            if target.meta_type in content.filter_meta_types:
+                content.add_filter(target)
+            else:
+                logger.warn('Content type %s is not an allowed filter type' %
+                    target.meta_type)
+        del content._filters
+
+
 third_root_upgrarder = ThirdRootUpgrader(VERSION_FINAL, 'Silva Root')
+silvanews_filter_upgrader = SilvaNewsFilterUpgrader(VERSION_FINAL,
+    ['Silva News Filter', 'Silva Agenda Filter'])
+silvanews_viewer_upgrader = SilvaNewsViewerUpgrader(VERSION_FINAL,
+    ['Silva News Viewer', 'Silva Agenda Viewer'])
+
+
