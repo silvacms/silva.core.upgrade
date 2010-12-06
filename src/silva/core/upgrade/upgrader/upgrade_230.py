@@ -597,6 +597,7 @@ class SilvaNewsFilterUpgrader(BaseUpgrader):
                 logger.warn('Content type %s is not an allowed source' %
                     target.meta_type)
         del content._sources
+        return content
 
 
 class SilvaNewsViewerUpgrader(BaseUpgrader):
@@ -618,6 +619,7 @@ class SilvaNewsViewerUpgrader(BaseUpgrader):
                 logger.warn('Content type %s is not an allowed filter type' %
                     target.meta_type)
         del content._filters
+        return content
 
 
 third_root_upgrarder = ThirdRootUpgrader(VERSION_FINAL, 'Silva Root')
