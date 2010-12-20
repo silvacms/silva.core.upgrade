@@ -37,7 +37,7 @@ logger = logging.getLogger('silva.core.upgrade')
 
 VERSION_B1='2.3b1'
 VERSION_B2='2.3b2'
-VERSION_FINAL='2.3b3'
+VERSION_FINAL='2.3'
 
 
 class RootUpgrader(BaseUpgrader):
