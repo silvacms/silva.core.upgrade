@@ -10,7 +10,7 @@ import zLOG
 from Products.Silva import mangle
 from Products.Silva.adapters import version_management
 
-from silva.core.interfaces.adapters import IIndexable
+from silva.core.interfaces.adapters import IIndexEntries
 from silva.core.interfaces import IVersionedContent, IRoot, ISilvaObject, \
     IVersion, IInvisibleService
 from silva.core.upgrade.upgrade import BaseUpgrader, AnyMetaType
@@ -35,7 +35,7 @@ class IndexItemUpgrader(BaseUpgrader):
                         self._upgrade_helper(dom.documentElement)
         else:
             try:
-                indexable = IIndexable(obj)
+                indexable = IIndexEntries(obj)
             except:
                 return obj
             if not hasattr(obj, 'content'):
