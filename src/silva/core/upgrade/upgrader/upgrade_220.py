@@ -9,7 +9,7 @@ logger = logging.getLogger('silva.core.upgrade')
 
 from ZPublisher.BeforeTraverse import unregisterBeforeTraverse
 from zope.annotation.interfaces import IAnnotations
-from zope.app.component.hooks import setSite, setHooks
+from zope.site.hooks import setSite, setHooks
 from zope.location.interfaces import ISite
 import ZODB.broken
 import zope.interface
