@@ -29,6 +29,7 @@ from silva.core.upgrade.localsite import setup_intid
 from silva.core.upgrade.silvaxml import NAMESPACES_CHANGES
 from silva.core.upgrade.upgrade import BaseUpgrader, AnyMetaType
 
+from Products.Silva.adapters import version_management
 from Products.Silva.File import BlobFile
 from Products.Silva.magic import MagicGuess
 from Products.SilvaExternalSources.interfaces import ICodeSourceService
@@ -170,7 +171,8 @@ class SilvaXMLUpgrader(BaseUpgrader):
        <citation> elements to cs_citation sources'''
     def upgrade(self, obj):
         if interfaces.IVersionedContent.providedBy(obj):
-            for version in obj.objectValues():
+            vm = version_management.getVersionManagementAdapter(obj)
+            for version in vm.getVersions():
                 if hasattr(version, 'content'):
                     dom = version.content
                     if hasattr(dom, 'documentElement'):
