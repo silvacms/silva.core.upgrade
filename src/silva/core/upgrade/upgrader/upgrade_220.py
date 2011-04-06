@@ -154,7 +154,7 @@ class ImagesUpgrader(BaseUpgrader):
         return obj
 
 
-images_upgrader = ImagesUpgrader(VERSION_A1, 'Silva Image')
+#images_upgrader = ImagesUpgrader(VERSION_A1, 'Silva Image')
 
 
 #-----------------------------------------------------------------------------
@@ -185,6 +185,9 @@ class SilvaXMLUpgrader(BaseUpgrader):
         if cites:
             logger.info('upgrading CITE Elements in: %s' % (
                 '/'.join(version.getPhysicalPath())))
+        else:
+            return
+
         for c in cites:
             author = source = ''
             citation = []
@@ -234,6 +237,8 @@ class SilvaXMLUpgrader(BaseUpgrader):
         if tocs:
             logger.info('upgrading TOC Elements in: %s' %
                         ('/'.join(version.getPhysicalPath())))
+        else:
+            return
         path = '/'.join(version.get_container().getPhysicalPath())
         for t in tocs:
             depth = t.getAttribute('toc_depth')
