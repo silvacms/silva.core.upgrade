@@ -191,6 +191,8 @@ class DocumentUpgrader(BaseUpgrader):
         version_path = content_path(version)
         if links:
             logger.info(u'upgrading links in: %s', version_path)
+        else:
+            return
         for link in links:
             if link.hasAttribute('reference'):
                 # Already migrated
@@ -233,6 +235,8 @@ class DocumentUpgrader(BaseUpgrader):
 
         if images:
             logger.info('upgrading images in: %s', version_path)
+        else:
+            return
         for image in images:
             if image.hasAttribute('reference'):
                 # Already a reference
@@ -631,13 +635,13 @@ silvanews_viewer_upgrader = SilvaNewsViewerUpgrader(VERSION_FINAL,
 
 class ReindexUpgrader(BaseUpgrader):
 
-    def update(self, content):
+    def upgrade(self, content):
         ICataloging(content).reindex()
         return content
 
 
 # 2.3.1
-silva_news_reindex = ReindexUpgrader('2.3.1',
-    ["Silva News Publication", "Silva Article", "Silva Agenda Item"])
+#silva_news_reindex = ReindexUpgrader('2.3.1',
+#    ["Silva News Publication", "Silva Article", "Silva Agenda Item"])
 
 

@@ -154,7 +154,7 @@ class ImagesUpgrader(BaseUpgrader):
         return obj
 
 
-#images_upgrader = ImagesUpgrader(VERSION_A1, 'Silva Image')
+images_upgrader = ImagesUpgrader(VERSION_A1, 'Silva Image')
 
 
 #-----------------------------------------------------------------------------
