@@ -641,7 +641,7 @@ class ReindexUpgrader(BaseUpgrader):
 
 
 # 2.3.1
-#silva_news_reindex = ReindexUpgrader('2.3.1',
-#    ["Silva News Publication", "Silva Article", "Silva Agenda Item"])
+silva_news_reindex = ReindexUpgrader('2.3.1',
+    ["Silva News Publication", "Silva Article", "Silva Agenda Item"])
 
 
