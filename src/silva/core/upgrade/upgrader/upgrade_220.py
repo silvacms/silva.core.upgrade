@@ -24,7 +24,7 @@ from Acquisition import aq_base
 
 from silva.core import interfaces
 from silva.core.services.catalog import CatalogService
-from silva.core.services.interfaces import ICatalogService
+from silva.core.services.interfaces import ICatalogService, IFilesService
 from silva.core.upgrade.localsite import setup_intid
 from silva.core.upgrade.silvaxml import NAMESPACES_CHANGES
 from silva.core.upgrade.upgrade import BaseUpgrader, AnyMetaType
@@ -381,7 +381,7 @@ class SecondRootUpgrader(BaseUpgrader):
 
         # Register service_files and others
         sm = obj.getSiteManager()
-        sm.registerUtility(obj.service_files, interfaces.IFilesService)
+        sm.registerUtility(obj.service_files, IFilesService)
         if hasattr(obj, 'service_codesources'):
             # We should have it however ...
             sm.registerUtility(obj.service_codesources, ICodeSourceService)
