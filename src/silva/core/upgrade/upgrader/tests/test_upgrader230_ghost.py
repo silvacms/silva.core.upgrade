@@ -24,9 +24,8 @@ class GhostUpgraderTestCase(unittest.TestCase):
         factory = self.root.manage_addProduct['Silva']
         factory.manage_addPublication('pub', 'Publication')
         factory.manage_addGhostFolder('ghost_folder', 'Ghost Folder')
+        factory.manage_addMockupVersionedContent('doc', 'Document')
 
-        factory = self.root.manage_addProduct['SilvaDocument']
-        factory.manage_addDocument('doc', 'Document')
         factory = self.root.pub.manage_addProduct['Silva']
         factory.manage_addGhost('ghost', 'Ghost of Document')
 

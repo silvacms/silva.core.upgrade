@@ -14,9 +14,6 @@ from Acquisition import aq_base
 from zExceptions import NotFound
 from five.intid.site import aq_iter
 
-from Products.SilvaDocument.interfaces import IDocumentVersion
-from Products.SilvaDocument.transform.base import Context
-from Products.ParsedXML.ParsedXML import ParsedXML
 from Products.SilvaFind.interfaces import IPathCriterionField
 from Products.Silva.ExtensionRegistry import extensionRegistry
 
@@ -127,15 +124,6 @@ def split_path(path, context, root=None):
     return context_parts + parts, root
 
 
-def build_reference(context, target, node):
-    """Create a new reference to the given target and store it on the
-    node.
-    """
-    reference_name, reference = context.new_reference()
-    reference.set_target(target)
-    node.setAttribute('reference', reference_name)
-
-
 def resolve_path(url, content_path, context, obj_type=u'link'):
     """Resolve path to an object or report an error.
     """
@@ -171,133 +159,6 @@ def resolve_path(url, content_path, context, obj_type=u'link'):
         logger.error(u'invalid target %s %s in %s' %(
                 obj_type, path, content_path))
         return None, fragment
-
-
-class DocumentUpgrader(BaseUpgrader):
-    """We rewrite here document links and images in order to use
-    references where ever it is possible.
-    """
-
-    def upgrade(self, obj):
-        if IDocumentVersion.providedBy(obj):
-            context = Context(obj, None)
-            dom = obj.content.documentElement
-            self.__upgrade_links(obj, context, dom)
-            self.__upgrade_images(obj, context, dom)
-        return obj
-
-    def __upgrade_links(self, version, context, dom):
-        links = dom.getElementsByTagName('link')
-        version_path = content_path(version)
-        if links:
-            logger.info(u'upgrading links in: %s', version_path)
-        for link in links:
-            if link.hasAttribute('reference'):
-                # Already migrated
-                continue
-            path = link.getAttribute('url')
-            # Look for object
-            target, fragment = resolve_path(path, version_path, context.model)
-            if fragment:
-                link.setAttribute('anchor', fragment)
-                link.removeAttribute('url')
-            if target is None:
-                continue
-            build_reference(context, target, link)
-            if not fragment:
-                link.removeAttribute('url')
-
-    def __upgrade_images(self, version, context, dom):
-        images = dom.getElementsByTagName('image')
-        version_path = content_path(version)
-
-        def make_link(image, target, title='', window_target='', fragment=''):
-            """Create a link, replace the image with it and set the
-            image as child of the link.
-            """
-            link = dom.createElement('link')
-            if not isinstance(target, basestring):
-                build_reference(context, target, link)
-            else:
-                link.setAttribute('url', target)
-            if fragment:
-                link.setAttribute('anchor', fragment)
-            if title:
-                link.setAttribute('title', title)
-            if window_target:
-                link.setAttribute('target', window_target)
-            parent = image.parentNode
-            parent.replaceChild(link, image)
-            link.appendChild(image)
-            return link
-
-        if images:
-            logger.info('upgrading images in: %s', version_path)
-        for image in images:
-            if image.hasAttribute('reference'):
-                # Already a reference
-                continue
-            path = image.getAttribute('path')
-            target, fragment = resolve_path(
-                path, version_path, context.model, 'image')
-            if target is not None:
-                # If the image target is found it is changed to a
-                # reference. However if it is not, we still want to
-                # process the other aspect of the image tag migration
-                # so just don't do continue here.
-                build_reference(context, target, image)
-                image.removeAttribute('path')
-                image.removeAttribute('rewritten_path')
-            # Collect link title/target
-            title = ''
-            if image.hasAttribute('title'):
-                title = image.getAttribute('title')
-                image.removeAttribute('title')
-            window_target = ''
-            if image.hasAttribute('target'):
-                window_target = image.getAttribute('target')
-                image.removeAttribute('target')
-            link_set = False
-            # Check for a link
-            if image.hasAttribute('link'):
-                link = image.getAttribute('link')
-                if link:
-                    link_target, fragment = resolve_path(
-                        link, version_path, context.model)
-                    if link_target is not None:
-                        make_link(
-                            image, link_target, title, window_target, fragment)
-                    elif fragment:
-                        make_link(image, '', title, window_target, fragment)
-                    else:
-                        make_link(image, link, title, window_target)
-                    link_set = True
-                image.removeAttribute('link')
-            # Check for a link to high resolution version of the image
-            if image.hasAttribute('link_to_hires'):
-                link = image.getAttribute('link_to_hires')
-                if link == '1' and link_set is False:
-                    make_link(image, target, title, window_target)
-                    link_set = True
-                image.removeAttribute('link_to_hires')
-            # Save the image title (aka alt) to its new name
-            if image.hasAttribute('image_title'):
-                title = image.getAttribute('image_title')
-                image.removeAttribute('image_title')
-                image.setAttribute('title', title)
-
-
-class ArticleUpgrader(BaseUpgrader):
-
-    def upgrade(self, obj):
-        for version in obj.objectValues():
-            if IDocumentVersion.providedBy(version):
-                if not isinstance(version.content, ParsedXML):
-                    logger.info('upgrade xmlattribute for %s' %
-                                "/".join(version.getPhysicalPath()))
-                    parsed_xml = version.content._content
-                    version.content = parsed_xml
-        return obj
 
 
 class GhostUpgrader(BaseUpgrader):
@@ -405,17 +266,8 @@ class SilvaFindUpgrader(BaseUpgrader):
 
 link_upgrader = LinkVersionUpgrader(VERSION_B1, 'Silva Link Version')
 
-document_upgrader = DocumentUpgrader(
-    VERSION_B1, 'Silva Document Version')
 cache_upgrader = VersionedContentUpgrader(
     VERSION_B1, ['Silva Ghost', 'Silva Link', 'Silva Document'])
-
-article_upgrader_agenda = ArticleUpgrader(
-    VERSION_B1, ['Silva Agenda Item', 'Silva Article'])
-article_cache_upgrader = VersionedContentUpgrader(
-    VERSION_B1, ['Silva Article', 'Silva Agenda Item'])
-document_upgrader_agenda = DocumentUpgrader(
-    VERSION_B1, ["Silva Agenda Item Version", "Silva Article Version"], 1000)
 
 ghost_upgrader = GhostUpgrader(
     VERSION_B1, ["Silva Ghost Version", "Silva Ghost Folder"])
