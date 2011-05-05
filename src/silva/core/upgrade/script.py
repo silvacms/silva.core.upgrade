@@ -31,6 +31,9 @@ parser.add_option(
     "--from-version", dest="version",
     help="start upgrade from the given version")
 parser.add_option(
+    "--to-version", dest="toversion",
+    help="stop upgrade at the given version")
+parser.add_option(
     "--list", action="store_true", dest="list",
     help="list all available Silva at the root of the database "
     "and their versions"),
@@ -90,18 +93,20 @@ def upgrade():
         from_version = options.version
         if not from_version:
             from_version = silva.get_silva_content_version()
-        to_version = silva.get_silva_software_version()
+        to_version = options.toversion
+        if not to_version:
+            to_version = silva.get_silva_software_version()
         logger.info("upgrade from version %s to version %s" % (
                 from_version, to_version))
-        try:
-            registry.upgrade(silva, from_version, to_version)
-            silva._content_version = to_version
-        except Exception, error:
-            if options.debug:
-                print "%s:" % sys.exc_info()[0]
-                print sys.exc_info()[1]
-                pdb.post_mortem(sys.exc_info()[2])
-            raise error
+        #try:
+        registry.upgrade(silva, from_version, to_version)
+        silva._content_version = to_version
+        #except Exception, error:
+            #if options.debug:
+                #print "%s:" % sys.exc_info()[0]
+                #print sys.exc_info()[1]
+                #pdb.post_mortem(sys.exc_info()[2])
+            #raise error
 
     Zope2.zpublisher_transactions_manager.commit()
     if options.pack:

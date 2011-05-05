@@ -26,7 +26,7 @@ from silva.core.services.interfaces import IContainerPolicyService
 from silva.core.services.interfaces import IMemberService
 from silva.core.upgrade.upgrade import BaseUpgrader, content_path
 from silva.core.upgrade.upgrader.upgrade_220 import UpdateIndexerUpgrader
-
+from silva.core.services.interfaces import ICataloging
 
 logger = logging.getLogger('silva.core.upgrade')
 
@@ -191,6 +191,8 @@ class DocumentUpgrader(BaseUpgrader):
         version_path = content_path(version)
         if links:
             logger.info(u'upgrading links in: %s', version_path)
+        else:
+            return
         for link in links:
             if link.hasAttribute('reference'):
                 # Already migrated
@@ -233,6 +235,8 @@ class DocumentUpgrader(BaseUpgrader):
 
         if images:
             logger.info('upgrading images in: %s', version_path)
+        else:
+            return
         for image in images:
             if image.hasAttribute('reference'):
                 # Already a reference
@@ -627,5 +631,17 @@ silvanews_filter_upgrader = SilvaNewsFilterUpgrader(VERSION_FINAL,
     ['Silva News Filter', 'Silva Agenda Filter'])
 silvanews_viewer_upgrader = SilvaNewsViewerUpgrader(VERSION_FINAL,
     ['Silva News Viewer', 'Silva Agenda Viewer'])
+
+
+class ReindexUpgrader(BaseUpgrader):
+
+    def upgrade(self, content):
+        ICataloging(content).reindex()
+        return content
+
+
+# 2.3.1
+silva_news_reindex = ReindexUpgrader('2.3.1',
+    ["Silva News Publication", "Silva Article", "Silva Agenda Item"])
 
 
