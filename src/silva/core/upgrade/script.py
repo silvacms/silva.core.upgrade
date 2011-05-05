@@ -42,7 +42,7 @@ parser.add_option(
     help="pack database after the upgrade")
 parser.add_option(
     "--debug", action="store_true", dest="debug",
-    help="debug upgrade failures")
+    help="debug upgrade failures (launches pdb, starts zope in debug mode)")
 
 
 def upgrade():
