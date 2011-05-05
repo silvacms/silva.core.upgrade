@@ -52,7 +52,7 @@ def upgrade():
     logger.setLevel(logging.INFO)
     logger.addHandler(logging.StreamHandler(sys.stdout))
 
-    boot_zope(options.config)
+    boot_zope(options.config, debug_mode=options.debug)
 
     newInteraction()
     newSecurityManager(None, AccessControl.User.system)
