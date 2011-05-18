@@ -7,14 +7,12 @@ import logging
 
 from zope.event import notify
 from zope.lifecycleevent import ObjectCreatedEvent
-from zope.component import getUtility
 import transaction
 
 from Acquisition import aq_base
 from zExceptions import NotFound
 from five.intid.site import aq_iter
 
-from Products.SilvaFind.interfaces import IPathCriterionField
 from Products.Silva.ExtensionRegistry import extensionRegistry
 
 from silva.core.interfaces import ISilvaObject, IVersionedContent
@@ -226,43 +224,6 @@ class LinkVersionUpgrader(BaseUpgrader):
         return bool(purl.netloc)
 
 
-class SilvaFindUpgrader(BaseUpgrader):
-
-    def validate(self, obj):
-        return True
-
-    def upgrade(self, obj):
-        service = getUtility(IReferenceService)
-        fields = obj.service_find.getSearchSchema().getFields()
-        fields = filter(lambda x: IPathCriterionField.providedBy(x), fields)
-        root = obj.get_root()
-        root_path = root.getPhysicalPath()
-        for field in fields:
-            field_name = field.getName()
-            if obj.searchValues.has_key(field_name):
-                value = obj.searchValues[field_name]
-                if value:
-                    path = value.split('/')
-                    if tuple(path[:len(root_path)]) == root_path:
-                        traverse_path = path[len(root_path):]
-                        target = root.unrestrictedTraverse(traverse_path, None)
-                        if target:
-                            ref = service.new_reference(
-                                obj, name=unicode(field_name))
-                            ref.set_target(target)
-                            logger.info('reference created for field %s of '
-                                        'silva find at %s' %
-                                        (field_name,
-                                         "/".join(obj.getPhysicalPath())))
-                        else:
-                            logger.warn('silva find target at %s '
-                                        'not found' % value)
-                    else:
-                        logger.warn('silva find target at %s '
-                                    'outside of silva root' % value)
-                del obj.searchValues[field_name]
-        return obj
-
 
 link_upgrader = LinkVersionUpgrader(VERSION_B1, 'Silva Link Version')
 
@@ -273,7 +234,6 @@ ghost_upgrader = GhostUpgrader(
     VERSION_B1, ["Silva Ghost Version", "Silva Ghost Folder"])
 indexer_upgrader = UpdateIndexerUpgrader(
     VERSION_B1, "Silva Indexer")
-silva_find_upgrader = SilvaFindUpgrader(VERSION_B1, "Silva Find")
 
 
 class SecondRootUpgrader(BaseUpgrader):

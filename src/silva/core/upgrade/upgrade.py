@@ -163,7 +163,6 @@ class UpgradeRegistry(object):
             changed = False
             no_iterate = False
             obj = contents.pop()
-
             if isinstance(obj, Broken):
                 # We don't upgrade broken objects. They should be
                 # removed by their contains if needed.
