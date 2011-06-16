@@ -137,19 +137,19 @@ class UpgradeRegistry(object):
             # (probably deleted) one
             __traceback_supplement__ = (
                 UpgraderTracebackSupplement, self, obj, upgrader)
+            #try:
             try:
-                try:
-                    available = upgrader.validate(obj)
-                except StopIteration:
-                    available = False
-                    no_iterate = True
-                if available:
-                    obj = upgrader.upgrade(obj)
-                    changed = True
-            except ValueError, e:
-                logger.error('Error while upgrading object %s with %r: %s' %
-                             (path, upgrader, str(e)))
+                available = upgrader.validate(obj)
+            except StopIteration:
+                available = False
+                no_iterate = True
+            if available:
+                obj = upgrader.upgrade(obj)
                 changed = True
+            #except ValueError, e:
+            #    logger.error('Error while upgrading object %s with %r: %s' %
+            #                 (path, upgrader, str(e)))
+            #    changed = True
             assert obj is not None, "Upgrader %r seems to be broken, " \
                 "this is a bug." % (upgrader, )
         return obj, changed, no_iterate
