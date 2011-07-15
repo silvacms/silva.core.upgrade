@@ -14,6 +14,40 @@ logger = logging.getLogger('silva.core.upgrade')
 VERSION_A1='3.0a0'
 
 
+class RootUpgrader(BaseUpgrader):
+
+    def upgrade(self, root):
+        installed_ids = root.objectIds()
+
+        # Remove old services
+        for to_remove in ['globals',
+                          'service_static_cache_manager',
+                          'service_kupu',
+                          'service_kupu_silva',
+                          'service_renderer_registry',
+                          'service_sidebar',
+                          'service_typo_chars',
+                          'service_view_registry',
+                          'service_views',
+                          'service_resources',
+                          'service_views']:
+            if to_remove in installed_ids:
+                root.manage_delObjects([to_remove])
+
+        # We need to install the new SilvaDocument, and Silva Obsolete
+        # Document for the document migration.
+        extensions = root.service_extensions
+        if not extensions.is_installed('silva.app.document'):
+            extensions.install('silva.app.document')
+        if not extensions.is_installed('SilvaDocument'):
+            extensions.install('SilvaDocument')
+
+        return root
+
+
+root_upgrader = RootUpgrader(VERSION_A1, 'Silva Root')
+
+
 class ContainerUpgrader(BaseUpgrader):
 
     def validate(self, container):
