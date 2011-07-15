@@ -45,6 +45,8 @@
 CLASS_CHANGES = {
     'Products.Annotations.AnnotationTool Annotations':
         'persistent.mapping PersistentMapping',
+    'Products.Silva.emaillinesfield EmailLinesField':
+        'Products.Formulator.EmailLinesField EmailLinesField',
     'Products.Silva.interfaces IInvisibleService':
         'silva.core.interfaces.service IInvisibleService',
     'Products.Silva.interfaces.service IInvisibleService':
