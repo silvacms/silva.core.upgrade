@@ -31,7 +31,8 @@ class RootUpgrader(BaseUpgrader):
                           'service_view_registry',
                           'service_views',
                           'service_resources',
-                          'service_views']:
+                          'service_views',
+                          'service_toc_filter']:
             if to_remove in installed_ids:
                 root.manage_delObjects([to_remove])
 
@@ -41,6 +42,11 @@ class RootUpgrader(BaseUpgrader):
         if 'service_ui' not in installed_ids:
             factory = root.manage_addProduct['silva.ui']
             factory.manage_addUIService()
+
+        # Add service filtering
+        if 'service_filtering' not in installed_ids:
+            factory = root.manage_addProduct['Silva']
+            factory.manage_addTOCFilterService()
 
         # We need to install the new SilvaDocument, and Silva Obsolete
         # Document for the document migration.
