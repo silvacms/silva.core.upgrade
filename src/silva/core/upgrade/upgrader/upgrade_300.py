@@ -5,13 +5,14 @@
 
 import logging
 
-
 from silva.core.interfaces import IOrderableContainer, IOrderManager
 from silva.core.upgrade.upgrade import BaseUpgrader, AnyMetaType, content_path
 
 logger = logging.getLogger('silva.core.upgrade')
 
 VERSION_A1='3.0a0'
+
+SMI_SKIN = 'silva.ui.interfaces.ISilvaUITheme'
 
 
 class RootUpgrader(BaseUpgrader):
@@ -34,6 +35,13 @@ class RootUpgrader(BaseUpgrader):
             if to_remove in installed_ids:
                 root.manage_delObjects([to_remove])
 
+        # Reset SMI skin, add service_ui
+        if root._smi_skin != SMI_SKIN:
+            root._smi_skin = SMI_SKIN
+        if 'service_ui' not in installed_ids:
+            factory = root.manage_addProduct['silva.ui']
+            factory.manage_addUIService()
+
         # We need to install the new SilvaDocument, and Silva Obsolete
         # Document for the document migration.
         extensions = root.service_extensions
@@ -55,7 +63,7 @@ class ContainerUpgrader(BaseUpgrader):
                 hasattr(container, '_ordered_ids'))
 
     def upgrade(self, container):
-        logger.info('upgrade container %s' % content_path(container))
+        logger.info('upgrade container order %s' % content_path(container))
         manager = IOrderManager(container)
         manager.order = container._ordered_ids
         del container._ordered_ids
