@@ -20,7 +20,7 @@ from zope.site.hooks import setSite, setHooks
 import AccessControl.User
 import Zope2
 
-logger = logging.getLogger('silva.core.upgrade')
+logger = logging.getLogger('silva')
 
 parser = optparse.OptionParser(
     description="Upgrade a Silva site to the lastest version.")
@@ -42,15 +42,28 @@ parser.add_option(
     help="debug upgrade failures")
 
 
+def setup_logging(options):
+    """Setup logger to log silva messages on the output.
+    """
+    level = logging.INFO
+    if options.debug:
+        level = logging.DEBUG
+    logger.setLevel(level)
+    handler = logging.StreamHandler(sys.stdout)
+    handler.setFormatter(logging.Formatter(fmt='%(levelname)s: %(message)s'))
+    logger.addHandler(handler)
+
+
 def upgrade():
+    """Silva Upgrade script.
+    """
     options, args = parser.parse_args()
 
     if options.config is None or not os.path.isfile(options.config):
         sys.stderr.write("use --config to specify zope configuration")
         sys.exit(1)
 
-    logger.setLevel(logging.INFO)
-    logger.addHandler(logging.StreamHandler(sys.stdout))
+    setup_logging(options)
 
     boot_zope(options.config, debug_mode=options.debug)
 
@@ -60,7 +73,7 @@ def upgrade():
     root = makerequest(Zope2.bobo_application())
 
     def close():
-        logger.info("Closing database.")
+        logger.info("closing database.")
         Zope2.DB.close()
 
     atexit.register(close)

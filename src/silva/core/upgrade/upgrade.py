@@ -128,16 +128,12 @@ class UpgradeRegistry(object):
         changed = False
         no_iterate = False
         for upgrader in self.getUpgraders(version, obj.meta_type):
-            path = content_path(obj)
-            logger.debug('Upgrading %s with %r' % (path, upgrader))
-
             # sometimes upgrade methods will replace objects, if so
             # the new object should be returned so that can be used
             # for the rest of the upgrade chain instead of the old
             # (probably deleted) one
             __traceback_supplement__ = (
                 UpgraderTracebackSupplement, self, obj, upgrader)
-            #try:
             try:
                 available = upgrader.validate(obj)
             except StopIteration:
@@ -146,10 +142,6 @@ class UpgradeRegistry(object):
             if available:
                 obj = upgrader.upgrade(obj)
                 changed = True
-            #except ValueError, e:
-            #    logger.error('Error while upgrading object %s with %r: %s' %
-            #                 (path, upgrader, str(e)))
-            #    changed = True
             assert obj is not None, "Upgrader %r seems to be broken, " \
                 "this is a bug." % (upgrader, )
         return obj, changed, no_iterate
