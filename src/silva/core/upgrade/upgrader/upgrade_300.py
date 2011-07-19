@@ -56,6 +56,11 @@ class RootUpgrader(BaseUpgrader):
         if not extensions.is_installed('SilvaDocument'):
             extensions.install('SilvaDocument')
 
+        # If silva.app.redirectlink we disable it (for the document
+        # conversion). It can be re-enabled later on.
+        if extensions.is_installed('silva.app.redirectlink'):
+            extensions.uninstall('silva.app.redirectlink')
+
         return root
 
 
