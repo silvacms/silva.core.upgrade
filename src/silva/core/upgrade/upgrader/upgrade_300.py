@@ -43,6 +43,12 @@ class RootUpgrader(BaseUpgrader):
             factory = root.manage_addProduct['silva.ui']
             factory.manage_addUIService()
 
+        # Update catalog indexes
+        catalog = root.service_catalog._catalog
+        if 'version_status' in catalog.indexes:
+            catalog.delIndex('version_status')
+            catalog.addIndex('publication_status', 'FieldIndex')
+
         # Add service filtering
         if 'service_filtering' not in installed_ids:
             factory = root.manage_addProduct['Silva']
