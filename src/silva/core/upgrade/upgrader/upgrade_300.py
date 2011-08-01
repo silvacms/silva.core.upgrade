@@ -45,8 +45,8 @@ class RootUpgrader(BaseUpgrader):
             factory.manage_addUIService()
 
         # Update catalog indexes
-        catalog = root.service_catalog._catalog
-        if 'version_status' in catalog.indexes:
+        catalog = root.service_catalog
+        if 'version_status' in catalog.indexes():
             catalog.delIndex('version_status')
             catalog.addIndex('publication_status', 'FieldIndex')
 
