@@ -22,6 +22,7 @@ class RootUpgrader(BaseUpgrader):
 
         # Remove old services
         for to_remove in ['globals',
+                          'service_groups',
                           'service_static_cache_manager',
                           'service_kupu',
                           'service_kupu_silva',
