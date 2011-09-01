@@ -32,6 +32,7 @@ setup(name='silva.core.upgrade',
           'grokcore.site',
           'silva.core.interfaces',
           'silva.core.services',
+          'silva.system.utils',
           'zope.annotation',
           'zope.interface',
           'zope.component',
@@ -40,7 +41,7 @@ setup(name='silva.core.upgrade',
       entry_points = """
       [zodbupdate]
       renames = silva.core.upgrade:CLASS_CHANGES
-      [console_scripts]
-      silvaupdate = silva.core.upgrade.script:upgrade [script]
+      [silva.system.utils]
+      upgrade = silva.core.upgrade.command:UpgradeCommand
       """
       )
