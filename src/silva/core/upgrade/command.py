@@ -2,7 +2,7 @@
 # See also LICENSE.txt
 # $Id$
 
-from silva.system.utils.script import NEED_SILVA_RUNNING
+from silva.system.utils.script import NEED_SILVA_SESSION
 from silva.core.upgrade.upgrade import registry
 import transaction
 import logging
@@ -11,7 +11,7 @@ logger = logging.getLogger('silva.system')
 
 
 class UpgradeCommand(object):
-    flags = NEED_SILVA_RUNNING
+    flags = NEED_SILVA_SESSION
 
     def get_options(self, factory):
         parser = factory(
