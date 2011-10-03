@@ -7,11 +7,12 @@ import logging
 from Products.Silva.ExtensionRegistry import extensionRegistry
 from silva.core.interfaces import IContainer
 from silva.core.upgrade.upgrade import BaseUpgrader, content_path
+from silva.core.services.interfaces import ICataloging
 
 
 logger = logging.getLogger('silva.core.upgrade')
 
-VERSION_FOUR='2.3.3'
+VERSION_FOUR='2.3.4'
 
 
 def get_content_to_reindex(start):
@@ -47,7 +48,7 @@ class SidebarUpgrader(BaseUpgrader):
 
         logger.debug(u'reindex containers ...')
         for container in get_content_to_reindex(root):
-            container.reindex_object()
+            ICataloging(content).index()
 
         return root
 
