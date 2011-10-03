@@ -11,7 +11,7 @@ from silva.core.upgrade.upgrade import BaseUpgrader, content_path
 
 logger = logging.getLogger('silva.core.upgrade')
 
-VERSION_FOUR='2.3.4'
+VERSION_FOUR='2.3.3'
 
 
 def get_content_to_reindex(start):
