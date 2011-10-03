@@ -48,7 +48,7 @@ class SidebarUpgrader(BaseUpgrader):
 
         logger.debug(u'reindex containers ...')
         for container in get_content_to_reindex(root):
-            ICataloging(content).index()
+            ICataloging(container).index()
 
         return root
 
