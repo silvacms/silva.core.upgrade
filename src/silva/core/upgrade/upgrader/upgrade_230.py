@@ -631,7 +631,7 @@ silvanews_viewer_upgrader = SilvaNewsViewerUpgrader(VERSION_FINAL,
 
 class ReindexUpgrader(BaseUpgrader):
 
-    def update(self, content):
+    def upgrade(self, content):
         ICataloging(content).reindex()
         return content
 
