@@ -1,7 +1,7 @@
 from setuptools import setup, find_packages
 import os
 
-version = '2.3.5dev'
+version = '2.3.4'
 
 setup(name='silva.core.upgrade',
       version=version,
