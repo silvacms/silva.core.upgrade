@@ -4,6 +4,7 @@
 
 import logging
 
+from DateTime import DateTime
 from silva.core.upgrade.upgrade import BaseUpgrader, content_path
 from Products.SilvaNews.AgendaItem import AgendaItemOccurrence
 
@@ -27,7 +28,10 @@ class AgendaItemVersionUpgrader(BaseUpgrader):
                          'timezone_name']:
                 attr = '_' + name
                 if attr in item.__dict__:
-                    values[name] = item.__dict__[attr]
+                    value = item.__dict__[attr]
+                    if isinstance(value, DateTime):
+                        value = value.asdatetime()
+                    values[name] = value
                     del item.__dict__[attr]
             item.set_occurrences([AgendaItemOccurrence(**values)])
         return item
