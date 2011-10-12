@@ -31,7 +31,8 @@ class AgendaItemVersionUpgrader(BaseUpgrader):
                     value = item.__dict__[attr]
                     if isinstance(value, DateTime):
                         value = value.asdatetime()
-                    values[name] = value
+                    if value is not None:
+                        values[name] = value
                     del item.__dict__[attr]
             item.set_occurrences([AgendaItemOccurrence(**values)])
         return item
