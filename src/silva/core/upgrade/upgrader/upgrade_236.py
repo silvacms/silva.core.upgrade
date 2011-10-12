@@ -21,7 +21,6 @@ class AgendaItemVersionUpgrader(BaseUpgrader):
             values = {}
             for name in ['start_datetime',
                          'end_datetime',
-                         'display_time',
                          'location',
                          'recurrence',
                          'all_day',
