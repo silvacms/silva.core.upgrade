@@ -68,11 +68,18 @@ class RootUpgrader(BaseUpgrader):
         if extensions.is_installed('silva.app.redirectlink'):
             extensions.uninstall('silva.app.redirectlink')
 
-        # Add a missing catalog index
+        # Update catalog indexes
         catalog = root.service_catalog
         if 'content_intid' not in catalog.schema():
             catalog.addColumn('content_intid')
-
+        for column in ['sidebar_position', 'sidebar_title',
+                       'location', 'start_datetime', 'end_datetime']:
+            if column in catalog.schema():
+                catalog.delColumn(column)
+        for index in ['start_datetime', 'end_datetime', 'sidebar_parent',
+                      'haunted_path']:
+            if index in catalog.indexes():
+                catalog.delIndex(index)
         return root
 
 
