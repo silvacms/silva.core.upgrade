@@ -1,10 +1,17 @@
 Changelog
 =========
 
-2.3 (unreleased)
-----------------
+3.0b1 (2011/11/11)
+------------------
 
-* ...
+* Add upgraders to Silva 3.0b1.
+
+* Remove old upgraders before 2.1.
+
+* Base the command script on ``silva.system.utils``.
+
+* Extension upgraders (SilvaFind, SilvaNews) moved to theirs
+  respective extensions.
 
 2.3b2 (2010/10/27)
 ------------------

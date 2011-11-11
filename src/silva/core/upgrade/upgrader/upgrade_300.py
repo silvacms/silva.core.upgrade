@@ -10,7 +10,7 @@ from silva.core.upgrade.upgrade import BaseUpgrader, AnyMetaType, content_path
 
 logger = logging.getLogger('silva.core.upgrade')
 
-VERSION_A1='3.0a0'
+VERSION_A1='3.0a1'
 
 SMI_SKIN = 'silva.ui.interfaces.ISilvaUITheme'
 

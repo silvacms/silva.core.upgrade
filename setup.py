@@ -1,7 +1,12 @@
 from setuptools import setup, find_packages
 import os
 
-version = '2.3dev'
+version = '3.0b1'
+
+tests_require = [
+    'Products.Silva [test]',
+    'infrae.testing',
+    ]
 
 setup(name='silva.core.upgrade',
       version=version,
@@ -37,7 +42,8 @@ setup(name='silva.core.upgrade',
           'zope.interface',
           'zope.component',
           ],
-      extras_require = {'script': ['infrae.wsgi',]},
+      tests_require = tests_require,
+      extras_require = {'test': tests_require},
       entry_points = """
       [zodbupdate]
       renames = silva.core.upgrade:CLASS_CHANGES
