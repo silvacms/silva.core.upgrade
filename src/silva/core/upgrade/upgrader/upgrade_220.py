@@ -31,7 +31,6 @@ from silva.core.upgrade.upgrade import BaseUpgrader, AnyMetaType
 
 from Products.Silva.File import BlobFile
 from Products.Silva.magic import MagicGuess
-from Products.SilvaExternalSources.interfaces import ICodeSourceService
 from Products.SilvaMetadata.interfaces import IMetadataService
 
 
@@ -384,6 +383,7 @@ class SecondRootUpgrader(BaseUpgrader):
         sm.registerUtility(obj.service_files, IFilesService)
         if hasattr(obj, 'service_codesources'):
             # We should have it however ...
+            from Products.SilvaExternalSources.interfaces import ICodeSourceService
             sm.registerUtility(obj.service_codesources, ICodeSourceService)
 
         # Update metadata service
