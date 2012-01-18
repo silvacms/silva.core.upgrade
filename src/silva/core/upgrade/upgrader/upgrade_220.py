@@ -9,8 +9,9 @@ logger = logging.getLogger('silva.core.upgrade')
 
 from ZPublisher.BeforeTraverse import unregisterBeforeTraverse
 from zope.annotation.interfaces import IAnnotations
-from zope.app.component.hooks import setSite, setHooks
+from zope.site.hooks import setSite, setHooks
 from zope.location.interfaces import ISite
+from zope.component import getUtility
 import ZODB.broken
 import zope.interface
 
@@ -31,7 +32,6 @@ from silva.core.upgrade.upgrade import BaseUpgrader, AnyMetaType
 
 from Products.Silva.adapters import version_management
 from Products.Silva.File import BlobFile
-from Products.Silva.magic import MagicGuess
 from Products.SilvaExternalSources.interfaces import ICodeSourceService
 from Products.SilvaMetadata.interfaces import IMetadataService
 
@@ -113,8 +113,14 @@ root_upgrader = RootUpgrader(VERSION_A1, 'Silva Root')
 
 
 class ImagesUpgrader(BaseUpgrader):
+    _guess_buffer_type = None
 
-    magic_guess = MagicGuess()
+    @property
+    def guess_buffer_type(self):
+        if self._guess_buffer_type is None:
+            self._guess_buffer_type = getUtility(
+                interfaces.IMimeTypeClassifier).guess_buffer_type
+        return self._guess_buffer_type
 
     def upgrade(self, obj):
         # Add stuff here
@@ -141,7 +147,7 @@ class ImagesUpgrader(BaseUpgrader):
         data.seek(0)
         full_data = data.read()
         data.seek(0)
-        ct = self.magic_guess.buffer(full_data)
+        ct = self.guess_buffer_type(full_data)
         if not ct:
             raise ValueError, "Impossible to detect mimetype"
         # fix some bug in old Images that could be BMP
