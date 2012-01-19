@@ -47,7 +47,7 @@ class FileUpgrader(BaseUpgrader):
 
     @property
     def get_filename(self):
-        if self._guess_filename is None:
+        if self._get_filename is None:
             self._get_filename = getUtility(IMimeTypeClassifier).guess_filename
         return self._get_filename
 
