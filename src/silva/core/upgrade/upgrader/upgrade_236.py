@@ -4,6 +4,8 @@
 
 import logging
 
+from zope.component import getUtility
+from silva.core.interfaces import IMimeTypeClassifier
 from DateTime import DateTime
 from silva.core.upgrade.upgrade import BaseUpgrader, content_path
 from Products.SilvaNews.AgendaItem import AgendaItemOccurrence
@@ -36,6 +38,35 @@ class AgendaItemVersionUpgrader(BaseUpgrader):
             item.set_occurrences([AgendaItemOccurrence(**values)])
         return item
 
-
 agenda_upgrader = AgendaItemVersionUpgrader(
     VERSION_SIX, 'Silva Agenda Item Version')
+
+
+class FileUpgrader(BaseUpgrader):
+    _get_filename = None
+
+    @property
+    def get_filename(self):
+        if self._guess_filename is None:
+            self._get_filename = getUtility(IMimeTypeClassifier).guess_filename
+        return self._get_filename
+
+    def upgrade(self, item):
+        self.get_filename(item, item.getId())
+        return item
+
+
+file_upgrader = FileUpgrader(VERSION_SIX, 'Silva File')
+
+
+class ImageUpgrader(FileUpgrader):
+
+    def upgrade(self, item):
+        for file_id in ('hires_image', 'image', 'thumbnail_image'):
+            image_file = getattr(item, file_id, None)
+            if image_file is None:
+                continue
+            self.get_filename(image_file, item.getId())
+        return item
+
+image_upgrader = ImageUpgrader(VERSION_SIX, 'Silva Image')
