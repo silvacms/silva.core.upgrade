@@ -66,7 +66,9 @@ class BaseUpgrader(object):
                 new_obj._last_author_userid = user.id
                 new_obj._last_author_info = user
         # Copy creator information
-        new_obj._owner = getattr(aq_base(old_obj), '_owner', None)
+        owner = getattr(aq_base(old_obj), '_owner', None)
+        if owner is not None:
+            new_obj._owner = owner
 
     def replace_references(self, old_obj, new_obj):
         """Helper that help to replace a referenced Silva object by a
@@ -165,7 +167,6 @@ class UpgradeRegistry(object):
         no_iterate = False
         for upgrader in self.getUpgraders(version, obj.meta_type):
             path = content_path(obj)
-            logger.debug('Upgrading %s with %r' % (path, upgrader))
 
             # sometimes upgrade methods will replace objects, if so
             # the new object should be returned so that can be used
@@ -180,6 +181,7 @@ class UpgradeRegistry(object):
                     available = False
                     no_iterate = True
                 if available:
+                    logger.debug('Upgrading %s with %r' % (path, upgrader))
                     obj = upgrader.upgrade(obj)
                     changed = True
             except ValueError, e:
