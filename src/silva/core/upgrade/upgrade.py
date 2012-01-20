@@ -9,6 +9,7 @@ import tempfile
 import logging
 import datetime
 import gc
+import copy
 
 logger = logging.getLogger('silva.core.upgrade')
 
@@ -16,10 +17,15 @@ logger = logging.getLogger('silva.core.upgrade')
 from Acquisition import aq_base
 from ZODB.broken import Broken
 from zope.interface import implements
+from zope.component import getUtility
+from zope.annotation.interfaces import IAnnotations
 import transaction
 
 # Silva
+from Products.Silva.Membership import NoneMember
+from silva.core.interfaces import ISecurity
 from silva.core.interfaces import IUpgrader, IUpgradeRegistry, IRoot
+from silva.core.references.interfaces import IReferenceService
 
 THRESHOLD = 500
 
@@ -44,6 +50,36 @@ class BaseUpgrader(object):
         self.version = version
         self.meta_type = meta_type
         self.priority = priority
+
+    def replace(self, old_obj, new_obj):
+        """Helper that help to replace a Silva object by a different one.
+        """
+        # Copy annotations (metadata)
+        source_annotations = IAnnotations(old_obj)
+        target_annotations = IAnnotations(new_obj)
+        for key in source_annotations.keys():
+            target_annotations[key] = copy.deepcopy(source_annotations[key])
+        if ISecurity.providedBy(old_obj):
+            # Copy last author information
+            user = aq_base(old_obj.sec_get_last_author_info())
+            if not isinstance(user, NoneMember):
+                new_obj._last_author_userid = user.id
+                new_obj._last_author_info = user
+        # Copy creator information
+        new_obj._owner = getattr(aq_base(old_obj), '_owner', None)
+
+    def replace_references(self, old_obj, new_obj):
+        """Helper that help to replace a referenced Silva object by a
+        different one.
+        """
+        service = getUtility(IReferenceService)
+        # list are here required. You cannot iterator and change the
+        # result at the same time, as they won't appear in the result any
+        # more and move eveything. :)
+        for reference in list(service.get_references_to(old_obj)):
+            reference.set_target(new_obj)
+        for reference in list(service.get_references_from(old_obj)):
+            reference.set_source(new_obj)
 
     def validate(self, obj):
         return True
