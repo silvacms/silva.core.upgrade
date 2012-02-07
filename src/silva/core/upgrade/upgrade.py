@@ -184,7 +184,7 @@ class UpgradeRegistry(object):
                     available = False
                     no_iterate = True
                 if available:
-                    logger.debug('Upgrading %s with %r' % (path, upgrader))
+                    #logger.debug('Upgrading %s with %r' % (path, upgrader))
                     obj = upgrader.upgrade(obj)
                     changed = True
             except ValueError, e:
