@@ -51,7 +51,7 @@ def upgrade():
 
     log_level = logging.INFO
     if options.debug:
-        log_level.DEBUG
+        log_level = logging.DEBUG
     logger.setLevel(log_level)
     logger.addHandler(logging.StreamHandler(sys.stdout))
 
