@@ -49,7 +49,10 @@ def upgrade():
         sys.stderr.write("use --config to specify zope configuration")
         sys.exit(1)
 
-    logger.setLevel(logging.INFO)
+    log_level = logging.INFO
+    if options.debug:
+        log_level.DEBUG
+    logger.setLevel(log_level)
     logger.addHandler(logging.StreamHandler(sys.stdout))
 
     boot_zope(options.config, debug_mode=options.debug)
