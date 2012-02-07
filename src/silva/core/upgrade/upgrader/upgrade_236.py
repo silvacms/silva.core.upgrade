@@ -69,10 +69,15 @@ class ImageUpgrader(FileUpgrader):
 
     def upgrade(self, item):
         for file_id in ('hires_image', 'image', 'thumbnail_image'):
-            image_file = getattr(item, file_id, None)
-            if image_file is None:
+            item_file = getattr(item, file_id, None)
+            if item_file is None:
                 continue
-            self.update_filename(image_file, item.getId())
+            old_filename = item_file.get_filename()
+            new_filename = self.update_filename(item_file, item.getId())
+            if old_filename != new_filename:
+                logger.debug('update filename from %s to %s (%s), in %s' % (
+                        old_filename, new_filename,
+                        item_file.content_type(), content_path(item)))
         return item
 
 image_upgrader = ImageUpgrader(VERSION_SIX, 'Silva Image')
