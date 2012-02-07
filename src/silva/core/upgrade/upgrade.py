@@ -16,9 +16,10 @@ logger = logging.getLogger('silva.core.upgrade')
 # Zope
 from Acquisition import aq_base
 from ZODB.broken import Broken
-from zope.interface import implements
-from zope.component import getUtility
 from zope.annotation.interfaces import IAnnotations
+from zope.component import getUtility
+from zope.event import notify
+from zope.interface import implements
 import transaction
 
 # Silva
@@ -26,6 +27,8 @@ from Products.Silva.Membership import NoneMember
 from silva.core.interfaces import ISecurity
 from silva.core.interfaces import IUpgrader, IUpgradeRegistry, IRoot
 from silva.core.references.interfaces import IReferenceService
+from silva.core.interfaces.events import UpgradeStartedEvent
+from silva.core.interfaces.events import UpgradeFinishedEvent
 
 THRESHOLD = 500
 
@@ -160,7 +163,7 @@ class UpgradeRegistry(object):
         upgraders.extend(v_mt.get(meta_type, []))
         return upgraders
 
-    def upgradeObject(self, obj, version):
+    def _upgrade_content(self, obj, version):
         """Upgrade a single object.
         """
         changed = False
@@ -192,7 +195,7 @@ class UpgradeRegistry(object):
                 "this is a bug." % (upgrader, )
         return obj, changed, no_iterate
 
-    def upgradeTree(self, root, version, blacklist=[]):
+    def _upgrade_container(self, root, version, blacklist=[]):
         """Upgrade an object and its children to a version.
         """
         count = 0
@@ -208,7 +211,8 @@ class UpgradeRegistry(object):
                 continue
 
             if obj.meta_type not in blacklist:
-                obj, changed, no_iterate = self.upgradeObject(obj, version)
+                obj, changed, no_iterate = self._upgrade_content(
+                    obj, version)
 
             if (not no_iterate and
                 hasattr(aq_base(obj), 'objectValues') and
@@ -229,22 +233,37 @@ class UpgradeRegistry(object):
                     obj._p_jar.cacheMinimize()
                 count = 0
 
+    def upgradeTree(self, root, version, blacklist=[]):
+        logger.info(
+            'upgrading container %s to %s.' % (content_path(root), version))
+        start = datetime.datetime.now()
+        notify(UpgradeStartedEvent(root, 'n/a', version))
+        try:
+            self._upgrade_container(self, root, version, blacklist=blacklist)
+        except:
+            notify(UpgradeFinishedEvent(root, 'n/a', version, False))
+        else:
+            end = datetime.datetime.now()
+            notify(UpgradeFinishedEvent(root, 'n/a', version, True))
+            logger.info(
+                'upgrade finished in %d seconds.' % (end - start).seconds)
+
     def upgrade(self, root, from_version, to_version):
         """Upgrade a root object from the from_version to the
         to_version.
         """
         if self.__in_process is True:
             raise ValueError(u"An upgrade process is already going on")
-        gc_original_flags = gc.get_debug()
-        gc.set_debug(gc.DEBUG_INSTANCES)
         log_stream = tempfile.NamedTemporaryFile()
         log_handler = logging.StreamHandler(log_stream)
         logger.addHandler(log_handler)
         try:
-            logger.info('upgrading from %s to %s.' %
-                        (from_version, to_version))
+            logger.info(
+                'upgrading from %s to %s.' % (from_version, to_version))
+            notify(UpgradeStartedEvent(root, from_version, to_version))
 
             start = datetime.datetime.now()
+            end = None
             upgrade_chain = get_upgrade_chain(
                 self.__registry.keys(), from_version, to_version)
             if not upgrade_chain:
@@ -255,12 +274,13 @@ class UpgradeRegistry(object):
                 # extensions will be upgraded
                 for version in upgrade_chain:
                     logger.info('upgrading root to version %s.' % version)
-                    self.upgradeObject(root, version)
+                    self._upgrade_content(root, version)
 
             # Now, upgrade site content
             for version in upgrade_chain:
                 logger.info('upgrading content to version %s.' % version)
-                self.upgradeTree(root, version, blacklist=['Silva Root',])
+                self._upgrade_container(
+                    root, version, blacklist=['Silva Root',])
 
             if IRoot.providedBy(root):
                 # Now, refresh extensions
@@ -272,8 +292,8 @@ class UpgradeRegistry(object):
                 'upgrade finished in %d seconds.' % (end - start).seconds)
         finally:
             logger.removeHandler(log_handler)
-            gc.set_debug(gc_original_flags)
             self.__in_process = False
+        notify(UpgradeFinishedEvent(root, from_version, to_version, end is not None))
         log_stream.seek(0, 0)
         return log_stream
 
