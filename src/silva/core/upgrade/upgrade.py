@@ -239,7 +239,7 @@ class UpgradeRegistry(object):
         start = datetime.datetime.now()
         notify(UpgradeStartedEvent(root, 'n/a', version))
         try:
-            self._upgrade_container(self, root, version, blacklist=blacklist)
+            self._upgrade_container(root, version, blacklist=blacklist)
         except:
             notify(UpgradeFinishedEvent(root, 'n/a', version, False))
             raise
