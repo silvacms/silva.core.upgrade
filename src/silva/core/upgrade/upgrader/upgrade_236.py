@@ -43,16 +43,22 @@ agenda_upgrader = AgendaItemVersionUpgrader(
 
 
 class FileUpgrader(BaseUpgrader):
-    _get_filename = None
+    _update_filename = None
 
     @property
-    def get_filename(self):
-        if self._get_filename is None:
-            self._get_filename = getUtility(IMimeTypeClassifier).guess_filename
-        return self._get_filename
+    def update_filename(self):
+        if self._update_filename is None:
+            self._update_filename = getUtility(
+                IMimeTypeClassifier).guess_filename
+        return self._update_filename
 
     def upgrade(self, item):
-        self.get_filename(item, item.getId())
+        old_filename = item.get_filename()
+        new_filename = self.update_filename(item, item.getId())
+        if old_filename != new_filename:
+            logger.debug('update filename from %s to %s (%s), in %s' % (
+                    old_filename, new_filename,
+                    item.content_type(), content_path(item)))
         return item
 
 
@@ -66,7 +72,7 @@ class ImageUpgrader(FileUpgrader):
             image_file = getattr(item, file_id, None)
             if image_file is None:
                 continue
-            self.get_filename(image_file, item.getId())
+            self.update_filename(image_file, item.getId())
         return item
 
 image_upgrader = ImageUpgrader(VERSION_SIX, 'Silva Image')
