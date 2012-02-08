@@ -15,6 +15,7 @@ logger = logging.getLogger('silva.core.upgrade')
 
 # Zope
 from Acquisition import aq_base
+from OFS.interfaces import IFolder
 from ZODB.broken import Broken
 from zope.annotation.interfaces import IAnnotations
 from zope.component import getUtility
@@ -205,7 +206,7 @@ class UpgradeRegistry(object):
                     obj, version)
 
             if (not no_iterate and
-                hasattr(aq_base(obj), 'objectValues') and
+                IFolder.providedBy(obj) and
                 obj.meta_type != "Parsed XML"):
 
                 contents.extend(obj.objectValues())
