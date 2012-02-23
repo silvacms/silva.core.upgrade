@@ -1,7 +1,7 @@
 Changelog
 =========
 
-2.3.6 (2012/02.23)
+2.3.6 (2012/02/23)
 ------------------
 
 * Add some helpers used to upgrade content.
