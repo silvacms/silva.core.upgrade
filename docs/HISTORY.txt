@@ -1,6 +1,20 @@
 Changelog
 =========
 
+2.3.6 (2012/02.23)
+------------------
+
+* Add some helpers used to upgrade content.
+
+* Add support for events on start and end of upgrade.
+
+* Review upgrade API.
+
+* Recompute filename on Silva File and Silva Image in order to correct
+  wrong extensions.
+
+* Upgrade Agenda Items to support multiple times and locations.
+
 2.3.4 (2010/10/04)
 ------------------
 
