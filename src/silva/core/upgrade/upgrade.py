@@ -9,17 +9,27 @@ import tempfile
 import logging
 import datetime
 import gc
+import copy
 
 logger = logging.getLogger('silva.core.upgrade')
 
 # Zope
 from Acquisition import aq_base
+from OFS.interfaces import IFolder
 from ZODB.broken import Broken
+from zope.annotation.interfaces import IAnnotations
+from zope.component import getUtility
+from zope.event import notify
 from zope.interface import implements
 import transaction
 
 # Silva
+from Products.Silva.Membership import NoneMember
+from silva.core.interfaces import ISecurity
 from silva.core.interfaces import IUpgrader, IUpgradeRegistry, IRoot
+from silva.core.references.interfaces import IReferenceService
+from silva.core.interfaces.events import UpgradeStartedEvent
+from silva.core.interfaces.events import UpgradeFinishedEvent
 
 THRESHOLD = 500
 
@@ -44,6 +54,38 @@ class BaseUpgrader(object):
         self.version = version
         self.meta_type = meta_type
         self.priority = priority
+
+    def replace(self, old_obj, new_obj):
+        """Helper that help to replace a Silva object by a different one.
+        """
+        # Copy annotations (metadata)
+        source_annotations = IAnnotations(old_obj)
+        target_annotations = IAnnotations(new_obj)
+        for key in source_annotations.keys():
+            target_annotations[key] = copy.deepcopy(source_annotations[key])
+        if ISecurity.providedBy(old_obj):
+            # Copy last author information
+            user = aq_base(old_obj.sec_get_last_author_info())
+            if not isinstance(user, NoneMember):
+                new_obj._last_author_userid = user.id
+                new_obj._last_author_info = user
+        # Copy creator information
+        owner = getattr(aq_base(old_obj), '_owner', None)
+        if owner is not None:
+            new_obj._owner = owner
+
+    def replace_references(self, old_obj, new_obj):
+        """Helper that help to replace a referenced Silva object by a
+        different one.
+        """
+        service = getUtility(IReferenceService)
+        # list are here required. You cannot iterator and change the
+        # result at the same time, as they won't appear in the result any
+        # more and move eveything. :)
+        for reference in list(service.get_references_to(old_obj)):
+            reference.set_target(new_obj)
+        for reference in list(service.get_references_from(old_obj)):
+            reference.set_source(new_obj)
 
     def validate(self, obj):
         return True
@@ -122,31 +164,29 @@ class UpgradeRegistry(object):
         upgraders.extend(v_mt.get(meta_type, []))
         return upgraders
 
-    def upgradeObject(self, obj, version):
+    def _upgrade_content(self, obj, version):
         """Upgrade a single object.
         """
         changed = False
         no_iterate = False
         for upgrader in self.getUpgraders(version, obj.meta_type):
-            # sometimes upgrade methods will replace objects, if so
-            # the new object should be returned so that can be used
-            # for the rest of the upgrade chain instead of the old
-            # (probably deleted) one
-            __traceback_supplement__ = (
-                UpgraderTracebackSupplement, self, obj, upgrader)
+            path = content_path(obj)
+            __traceback_supplement__ = (UpgraderTracebackSupplement, self, obj, upgrader)
             try:
-                available = upgrader.validate(obj)
+                if upgrader.validate(obj):
+                    #logger.debug('Upgrading %s with %r' % (path, upgrader))
+                    obj = upgrader.upgrade(obj)
+                    assert obj is not None, \
+                        "Upgrader %r returned None." % (upgrader, )
+                    changed = True
             except StopIteration:
-                available = False
                 no_iterate = True
-            if available:
-                obj = upgrader.upgrade(obj)
-                changed = True
-            assert obj is not None, "Upgrader %r seems to be broken, " \
-                "this is a bug." % (upgrader, )
+            except ValueError, e:
+                logger.error('Error while upgrading object %s with %r: %s' %
+                             (path, upgrader, str(e)))
         return obj, changed, no_iterate
 
-    def upgradeTree(self, root, version, blacklist=[]):
+    def _upgrade_container(self, root, version, blacklist=[]):
         """Upgrade an object and its children to a version.
         """
         count = 0
@@ -155,16 +195,18 @@ class UpgradeRegistry(object):
             changed = False
             no_iterate = False
             obj = contents.pop()
+
             if isinstance(obj, Broken):
                 # We don't upgrade broken objects. They should be
                 # removed by their contains if needed.
                 continue
 
             if obj.meta_type not in blacklist:
-                obj, changed, no_iterate = self.upgradeObject(obj, version)
+                obj, changed, no_iterate = self._upgrade_content(
+                    obj, version)
 
             if (not no_iterate and
-                hasattr(aq_base(obj), 'objectValues') and
+                IFolder.providedBy(obj) and
                 obj.meta_type != "Parsed XML"):
 
                 contents.extend(obj.objectValues())
@@ -182,22 +224,38 @@ class UpgradeRegistry(object):
                     obj._p_jar.cacheMinimize()
                 count = 0
 
+    def upgradeTree(self, root, version, blacklist=[]):
+        logger.info(
+            'upgrading container %s to %s.' % (content_path(root), version))
+        start = datetime.datetime.now()
+        notify(UpgradeStartedEvent(root, 'n/a', version))
+        try:
+            self._upgrade_container(root, version, blacklist=blacklist)
+        except:
+            notify(UpgradeFinishedEvent(root, 'n/a', version, False))
+            raise
+        else:
+            end = datetime.datetime.now()
+            notify(UpgradeFinishedEvent(root, 'n/a', version, True))
+            logger.info(
+                'upgrade finished in %d seconds.' % (end - start).seconds)
+
     def upgrade(self, root, from_version, to_version):
         """Upgrade a root object from the from_version to the
         to_version.
         """
         if self.__in_process is True:
             raise ValueError(u"An upgrade process is already going on")
-        gc_original_flags = gc.get_debug()
-        gc.set_debug(gc.DEBUG_INSTANCES)
         log_stream = tempfile.NamedTemporaryFile()
         log_handler = logging.StreamHandler(log_stream)
         logger.addHandler(log_handler)
         try:
-            logger.info('upgrading from %s to %s.' %
-                        (from_version, to_version))
+            logger.info(
+                'upgrading from %s to %s.' % (from_version, to_version))
+            notify(UpgradeStartedEvent(root, from_version, to_version))
 
             start = datetime.datetime.now()
+            end = None
             upgrade_chain = get_upgrade_chain(
                 self.__registry.keys(), from_version, to_version)
             if not upgrade_chain:
@@ -208,12 +266,13 @@ class UpgradeRegistry(object):
                 # extensions will be upgraded
                 for version in upgrade_chain:
                     logger.info('upgrading root to version %s.' % version)
-                    self.upgradeObject(root, version)
+                    self._upgrade_content(root, version)
 
             # Now, upgrade site content
             for version in upgrade_chain:
                 logger.info('upgrading content to version %s.' % version)
-                self.upgradeTree(root, version, blacklist=['Silva Root',])
+                self._upgrade_container(
+                    root, version, blacklist=['Silva Root',])
 
             if IRoot.providedBy(root):
                 # Now, refresh extensions
@@ -225,8 +284,8 @@ class UpgradeRegistry(object):
                 'upgrade finished in %d seconds.' % (end - start).seconds)
         finally:
             logger.removeHandler(log_handler)
-            gc.set_debug(gc_original_flags)
             self.__in_process = False
+        notify(UpgradeFinishedEvent(root, from_version, to_version, end is not None))
         log_stream.seek(0, 0)
         return log_stream
 
