@@ -20,7 +20,6 @@ from silva.core.references.interfaces import IReferenceService
 from silva.core.services.interfaces import IContainerPolicyService
 from silva.core.services.interfaces import IMemberService
 from silva.core.upgrade.upgrade import BaseUpgrader, content_path
-from silva.core.upgrade.upgrader.upgrade_220 import UpdateIndexerUpgrader
 
 
 logger = logging.getLogger('silva.core.upgrade')
@@ -223,6 +222,17 @@ class LinkVersionUpgrader(BaseUpgrader):
         purl = urlparse(url)
         return bool(purl.netloc)
 
+
+class UpdateIndexerUpgrader(BaseUpgrader):
+    """Update Silva Indexer obj which uses now an id to objects and
+    not the path (moving/renaming tolerant).
+    """
+
+    def upgrade(self, obj):
+        obj.update()
+        logger.info('refresh indexer %s' % (
+                '/'.join(obj.getPhysicalPath())))
+        return obj
 
 
 link_upgrader = LinkVersionUpgrader(VERSION_B1, 'Silva Link Version')
