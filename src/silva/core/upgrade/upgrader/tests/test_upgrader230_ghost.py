@@ -30,7 +30,7 @@ class GhostUpgraderTestCase(unittest.TestCase):
         factory.manage_addGhost('ghost', 'Ghost of Document')
 
         self.ghost = self.root.pub.ghost
-        self.ghost_version = self.ghost.getLastVersion()
+        self.ghost_version = self.ghost.get_editable()
         self.ghost_version._content_path = ('', 'root', 'doc')
 
         self.ghost_folder = self.root.ghost_folder
