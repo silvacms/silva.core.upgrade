@@ -16,5 +16,5 @@ class UpgradeGrokker(martian.InstanceGrokker):
     martian.priority(200)
 
     def grok(self, name, instance, module_info, config, **kw):
-        registry.registerUpgrader(instance)
+        registry.register(instance)
         return True

@@ -27,9 +27,10 @@ import transaction
 from Products.Silva.Membership import NoneMember
 from silva.core.interfaces import ISecurity
 from silva.core.interfaces import IUpgrader, IUpgradeRegistry, IRoot
-from silva.core.references.interfaces import IReferenceService
-from silva.core.interfaces.events import UpgradeStartedEvent
 from silva.core.interfaces.events import UpgradeFinishedEvent
+from silva.core.interfaces.events import UpgradeStartedEvent
+from silva.core.references.interfaces import IReferenceService
+from silva.core.services.catalog import catalog_queue
 
 THRESHOLD = 500
 
@@ -142,7 +143,7 @@ class UpgradeRegistry(object):
         self.__registry = {}
         self.__in_process = False
 
-    def registerUpgrader(self, upgrader, version=None, meta_type=None):
+    def register(self, upgrader, version=None, meta_type=None):
         assert IUpgrader.providedBy(upgrader)
         if not version:
             version = upgrader.version
@@ -155,7 +156,7 @@ class UpgradeRegistry(object):
                 type_, [])
             insort_right(registry, upgrader)
 
-    def getUpgraders(self, version, meta_type):
+    def get_upgraders(self, version, meta_type):
         """Return the registered upgrade_handlers of meta_type
         """
         upgraders = []
@@ -169,7 +170,7 @@ class UpgradeRegistry(object):
         """
         changed = False
         no_iterate = False
-        for upgrader in self.getUpgraders(version, obj.meta_type):
+        for upgrader in self.get_upgraders(version, obj.meta_type):
             path = content_path(obj)
             __traceback_supplement__ = (UpgraderTracebackSupplement, self, obj, upgrader)
             try:
@@ -190,6 +191,7 @@ class UpgradeRegistry(object):
         """Upgrade an object and its children to a version.
         """
         count = 0
+        catalog_queue.activate()
         contents = [root]
         while contents:
             changed = False
@@ -223,10 +225,11 @@ class UpgradeRegistry(object):
                     gc.collect()
                     obj._p_jar.cacheMinimize()
                 count = 0
+                catalog_queue.activate()
 
-    def upgradeTree(self, root, version, blacklist=[]):
+    def upgrade_tree(self, root, version, blacklist=[]):
         logger.info(
-            'upgrading container %s to %s.' % (content_path(root), version))
+            u'upgrading container %s to %s.', content_path(root), version)
         start = datetime.datetime.now()
         notify(UpgradeStartedEvent(root, 'n/a', version))
         try:
@@ -238,7 +241,7 @@ class UpgradeRegistry(object):
             end = datetime.datetime.now()
             notify(UpgradeFinishedEvent(root, 'n/a', version, True))
             logger.info(
-                'upgrade finished in %d seconds.' % (end - start).seconds)
+                u'upgrade finished in %d seconds.', (end - start).seconds)
 
     def upgrade(self, root, from_version, to_version):
         """Upgrade a root object from the from_version to the
@@ -251,7 +254,7 @@ class UpgradeRegistry(object):
         logger.addHandler(log_handler)
         try:
             logger.info(
-                'upgrading from %s to %s.' % (from_version, to_version))
+                u'upgrading from %s to %s.', from_version, to_version)
             notify(UpgradeStartedEvent(root, from_version, to_version))
 
             start = datetime.datetime.now()
@@ -259,7 +262,7 @@ class UpgradeRegistry(object):
             upgrade_chain = get_upgrade_chain(
                 self.__registry.keys(), from_version, to_version)
             if not upgrade_chain:
-                logger.info('nothing needs to be done.')
+                logger.info(u'nothing needs to be done.')
 
             if IRoot.providedBy(root):
                 # First, upgrade Silva Root so Silva services /
@@ -270,7 +273,7 @@ class UpgradeRegistry(object):
 
             # Now, upgrade site content
             for version in upgrade_chain:
-                logger.info('upgrading content to version %s.' % version)
+                logger.info(u'upgrading content to version %s.' % version)
                 self._upgrade_container(
                     root, version, blacklist=['Silva Root',])
 
@@ -281,7 +284,7 @@ class UpgradeRegistry(object):
 
             end = datetime.datetime.now()
             logger.info(
-                'upgrade finished in %d seconds.' % (end - start).seconds)
+                u'upgrade finished in %d seconds.', (end - start).seconds)
         finally:
             logger.removeHandler(log_handler)
             self.__in_process = False

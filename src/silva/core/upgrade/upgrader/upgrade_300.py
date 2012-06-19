@@ -5,6 +5,9 @@
 
 import logging
 
+from zope.component import getUtility
+from zope.intid.interfaces import IIntIds
+
 from silva.core.interfaces import IOrderableContainer, IOrderManager
 from silva.core.upgrade.upgrade import BaseUpgrader, AnyMetaType, content_path
 
@@ -53,7 +56,7 @@ class RootUpgrader(BaseUpgrader):
         # Add service filtering
         if 'service_filtering' not in installed_ids:
             factory = root.manage_addProduct['Silva']
-            factory.manage_addTOCFilterService()
+            factory.manage_addFilteringService()
 
         # We need to install the new SilvaDocument, and Silva Obsolete
         # Document for the document migration.
@@ -95,7 +98,13 @@ class ContainerUpgrader(BaseUpgrader):
     def upgrade(self, container):
         logger.info('upgrade container order %s' % content_path(container))
         manager = IOrderManager(container)
-        manager.order = container._ordered_ids
+        get_id = getUtility(IIntIds).register
+        order = []
+        for identifier in container._ordered_ids:
+            content = container._getOb(identifier, None)
+            if content is not None:
+                order.append(get_id(content))
+        manager.order = order
         del container._ordered_ids
         return container
 

@@ -92,11 +92,11 @@ class UpgradeTestCase(TestCase):
         upgraderB = TestUpgraderB(1.0, 'Silva Root', 100)
         upgraderC = TestUpgraderC(1.0, 'Silva Root', 50)
 
-        registry.registerUpgrader(upgraderB)
-        registry.registerUpgrader(upgraderA)
-        registry.registerUpgrader(upgraderC)
+        registry.register(upgraderB)
+        registry.register(upgraderA)
+        registry.register(upgraderC)
         self.assertItemsEqual(
-            registry.getUpgraders(1.0, 'Silva Root'),
+            registry.get_upgraders(1.0, 'Silva Root'),
             [upgraderA, upgraderB, upgraderC])
 
 

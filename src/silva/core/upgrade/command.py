@@ -21,6 +21,9 @@ class UpgradeCommand(object):
             "--from-version", dest="version",
             help="start upgrade from the given version")
         parser.add_argument(
+            "-u", "--username",
+            help="username to use for the upgrade")
+        parser.add_argument(
             "paths", nargs="+",
             help="path to Silva sites to work on")
         parser.set_defaults(plugin=self)
