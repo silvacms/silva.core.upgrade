@@ -9,6 +9,7 @@
   <grok:grok package=".martiansupport" />
 
   <!-- Grok Silva upgraders if Silva is here -->
+  <grok:grok package=".upgrade" />
   <grok:grok package=".upgrader"
              zcml:condition="installed Products.Silva" />
 

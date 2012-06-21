@@ -14,13 +14,13 @@ import copy
 logger = logging.getLogger('silva.core.upgrade')
 
 # Zope
+from five import grok
 from Acquisition import aq_base
 from OFS.interfaces import IFolder
 from ZODB.broken import Broken
 from zope.annotation.interfaces import IAnnotations
 from zope.component import getUtility
 from zope.event import notify
-from zope.interface import implements
 import transaction
 
 # Silva
@@ -29,8 +29,8 @@ from silva.core.interfaces import ISecurity
 from silva.core.interfaces import IUpgrader, IUpgradeRegistry, IRoot
 from silva.core.interfaces.events import UpgradeFinishedEvent
 from silva.core.interfaces.events import UpgradeStartedEvent
+from silva.core.interfaces.events import UpgradeTransaction, IUpgradeTransaction
 from silva.core.references.interfaces import IReferenceService
-from silva.core.services.catalog import catalog_queue
 
 THRESHOLD = 500
 
@@ -44,7 +44,8 @@ def content_path(content):
 class BaseUpgrader(object):
     """All upgrader should inherit from this upgrader.
     """
-    implements(IUpgrader)
+    grok.implements(IUpgrader)
+    grok.baseclass()
 
     def __init__(self, version, meta_type, priority=0):
         """Create an instance of this upgrader for the given meta_type
@@ -137,7 +138,7 @@ def get_upgrade_chain(versions, from_version, to_version):
 class UpgradeRegistry(object):
     """Here people can register upgrade methods for their objects
     """
-    implements(IUpgradeRegistry)
+    grok.implements(IUpgradeRegistry)
 
     def __init__(self):
         self.__registry = {}
@@ -190,8 +191,8 @@ class UpgradeRegistry(object):
     def _upgrade_container(self, root, version, blacklist=[]):
         """Upgrade an object and its children to a version.
         """
+        notify(UpgradeTransaction())
         count = 0
-        catalog_queue.activate()
         contents = [root]
         while contents:
             changed = False
@@ -218,14 +219,13 @@ class UpgradeRegistry(object):
 
             if count > THRESHOLD:
                 transaction.commit()
+                notify(UpgradeTransaction())
                 if hasattr(aq_base(obj), '_p_jar') and obj._p_jar is not None:
                     # Cache minimize kill the ZODB cache
                     # that is just resized at the end of the request
                     # normally as well.
-                    gc.collect()
                     obj._p_jar.cacheMinimize()
                 count = 0
-                catalog_queue.activate()
 
     def upgrade_tree(self, root, version, blacklist=[]):
         logger.info(
@@ -318,3 +318,8 @@ class UpgraderTracebackSupplement(object):
         else:
             from cgi import escape
             return '<b>Names:</b><pre>%s</pre>'%(escape(s))
+
+
+@grok.subscribe(IUpgradeTransaction)
+def garbage_collect(event):
+    gc.collect()

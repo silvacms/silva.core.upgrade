@@ -11,7 +11,6 @@ import martian
 class UpgradeGrokker(martian.InstanceGrokker):
     """This lookup Upgrade instance and register them.
     """
-
     martian.component(BaseUpgrader)
     martian.priority(200)
 
