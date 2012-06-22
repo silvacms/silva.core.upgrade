@@ -7,7 +7,6 @@ import logging
 
 from zope.event import notify
 from zope.lifecycleevent import ObjectCreatedEvent
-import transaction
 
 from Acquisition import aq_base
 from zExceptions import NotFound
@@ -73,7 +72,6 @@ class RootUpgrader(BaseUpgrader):
                 root.manage_delObjects([service])
             except:
                 logger.warn(u"failed to remove %s", service)
-        transaction.commit()
         return root
 
 
