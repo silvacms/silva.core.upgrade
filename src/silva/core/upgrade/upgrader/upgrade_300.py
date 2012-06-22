@@ -96,7 +96,7 @@ class ContainerUpgrader(BaseUpgrader):
                 hasattr(container, '_ordered_ids'))
 
     def upgrade(self, container):
-        logger.info('upgrade container order %s' % content_path(container))
+        logger.info(u'upgrade container order in %s.', content_path(container))
         manager = IOrderManager(container)
         get_id = getUtility(IIntIds).register
         order = []

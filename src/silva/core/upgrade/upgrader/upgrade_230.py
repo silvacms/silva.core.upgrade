@@ -20,7 +20,7 @@ from silva.core.references.interfaces import IReferenceService
 from silva.core.services.interfaces import IContainerPolicyService
 from silva.core.services.interfaces import IMemberService
 from silva.core.upgrade.upgrade import BaseUpgrader, content_path
-
+#from silva.core.upgrade.upgrader.upgrade_220 import UpdateIndexerUpgrader
 
 logger = logging.getLogger('silva.core.upgrade')
 
@@ -31,7 +31,7 @@ logger = logging.getLogger('silva.core.upgrade')
 
 VERSION_B1='2.3b1'
 VERSION_B2='2.3b2'
-VERSION_FINAL='2.3b3'
+VERSION_FINAL='2.3'
 
 
 class RootUpgrader(BaseUpgrader):
@@ -50,18 +50,6 @@ class RootUpgrader(BaseUpgrader):
         elif not IReferenceService.providedBy(root.service_references):
             root.manage_delObjects(['service_references'])
             install_ref_service()
-
-        reg = root.service_view_registry
-        reg.unregister('add', 'Silva Ghost Folder')
-        reg.unregister('add', 'Silva Ghost')
-        reg.unregister('edit', 'Silva Link')
-        reg.unregister('preview', 'Silva Agenda Item Version')
-        reg.unregister('preview', 'Silva Article Version')
-        reg.unregister('preview', 'Silva Ghost Version')
-        reg.unregister('public', 'Silva Agenda Item')
-        reg.unregister('public', 'Silva Article')
-        reg.unregister('public', 'Silva Ghost Version')
-        reg.unregister('public', 'Silva Ghost')
 
         # remove un-needed Silva Document services
         for service in ['service_editor',
@@ -84,7 +72,7 @@ class RootUpgrader(BaseUpgrader):
             try:
                 root.manage_delObjects([service])
             except:
-                logger.warn("failed to remove %s" % service)
+                logger.warn(u"failed to remove %s", service)
         transaction.commit()
         return root
 
@@ -223,88 +211,19 @@ class LinkVersionUpgrader(BaseUpgrader):
         return bool(purl.netloc)
 
 
-class UpdateIndexerUpgrader(BaseUpgrader):
-    """Update Silva Indexer obj which uses now an id to objects and
-    not the path (moving/renaming tolerant).
-    """
-
-    def upgrade(self, obj):
-        obj.update()
-        logger.info('refresh indexer %s' % (
-                '/'.join(obj.getPhysicalPath())))
-        return obj
-
-
 link_upgrader = LinkVersionUpgrader(VERSION_B1, 'Silva Link Version')
 
 cache_upgrader = VersionedContentUpgrader(
-    VERSION_B1, ['Silva Ghost', 'Silva Link', 'Silva Document'])
-
+    VERSION_B1, ['Silva Ghost', 'Silva Link'])
 ghost_upgrader = GhostUpgrader(
     VERSION_B1, ["Silva Ghost Version", "Silva Ghost Folder"])
-indexer_upgrader = UpdateIndexerUpgrader(
-    VERSION_B1, "Silva Indexer")
+#indexer_upgrader = UpdateIndexerUpgrader(
+#    VERSION_B1, "Silva Indexer")
 
 
 class SecondRootUpgrader(BaseUpgrader):
 
     def upgrade(self, root):
-        # Upgrader Silva Views.
-        reg = root.service_view_registry
-        reg.unregister('add', 'Five Content')
-        reg.unregister('add', 'Silva Agenda Filter')
-        reg.unregister('add', 'Silva Agenda Item')
-        reg.unregister('add', 'Silva Agenda Viewer')
-        reg.unregister('add', 'Silva Article')
-        reg.unregister('add', 'Silva AutoTOC')
-        reg.unregister('add', 'Silva CSV Source')
-        reg.unregister('add', 'Silva Folder')
-        reg.unregister('add', 'Silva Forum Comment')
-        reg.unregister('add', 'Silva Forum Topic')
-        reg.unregister('add', 'Silva Forum')
-        reg.unregister('add', 'Silva Group')
-        reg.unregister('add', 'Silva IP Group')
-        reg.unregister('add', 'Silva Link')
-        reg.unregister('add', 'Silva News Category Filter')
-        reg.unregister('add', 'Silva News Filter')
-        reg.unregister('add', 'Silva News Publication')
-        reg.unregister('add', 'Silva News Viewer')
-        reg.unregister('add', 'Silva Publication')
-        reg.unregister('add', 'Silva RSS Aggregator')
-        reg.unregister('add', 'Silva Virtual Group')
-        reg.unregister('edit', 'Silva Agenda Viewer')
-        reg.unregister('edit', 'Silva AutoTOC')
-        reg.unregister('edit', 'Silva Find')
-        reg.unregister('edit', 'Silva Forum Comment')
-        reg.unregister('edit', 'Silva Forum Topic')
-        reg.unregister('edit', 'Silva Forum')
-        reg.unregister('edit', 'Silva Group')
-        reg.unregister('edit', 'Silva IP Group')
-        reg.unregister('edit', 'Silva Indexer')
-        reg.unregister('edit', 'Silva News Viewer')
-        reg.unregister('edit', 'Silva RSS Aggregator')
-        reg.unregister('edit', 'Silva Simple Member')
-        reg.unregister('edit', 'Silva Virtual Group')
-        reg.unregister('preview', 'Silva Image')
-        reg.unregister('preview', 'Silva Folder')
-        reg.unregister('preview', 'Silva Ghost Folder')
-        reg.unregister('preview', 'Silva Publication')
-        reg.unregister('preview', 'Silva Root')
-        reg.unregister('public', 'Silva Link Version')
-        reg.unregister('public', 'Silva CSV Source')
-        reg.unregister('public', 'Silva File')
-        reg.unregister('public', 'Silva Folder')
-        reg.unregister('public', 'Silva Ghost Folder')
-        reg.unregister('public', 'Silva Image')
-        reg.unregister('public', 'Silva Publication')
-        reg.unregister('public', 'Silva Root')
-
-        # Clean service views:
-        if hasattr(root, 'service_views'):
-            for directory_id in ['SilvaFind', 'SilvaForum']:
-                if directory_id in root.service_views.objectIds():
-                    root.service_views.manage_delObjects([directory_id])
-
         # Convert Members folder
         root.manage_renameObject('Members', 'OldMembers')
         root.manage_addProduct['BTreeFolder2'].manage_addBTreeFolder('Members')
@@ -353,28 +272,6 @@ class SecondRootUpgrader(BaseUpgrader):
         return root
 
 
-class SilvaNewsAgendaItemVersionCleanup(BaseUpgrader):
-
-    def validate(self, content):
-        if hasattr(content, '_calendar_date_representation'):
-            return True
-        return False
-
-    def upgrade(self, content):
-        del content._calendar_date_representation
-        return content
-
-
-class SilvaNewsAgendaItemRecurrenceUpgrade(BaseUpgrader):
-    def validate(self, content):
-        return not hasattr(content, '_recurrence')
-
-    def upgrade(self, content):
-        content._end_recurrence_datetime = None
-        content._recurrence = None
-        return content
-
-
 class CSVSourceUpgrader(BaseUpgrader):
 
     def upgrade(self, content):
@@ -387,10 +284,6 @@ class CSVSourceUpgrader(BaseUpgrader):
 
 csvsource_upgrader = CSVSourceUpgrader(VERSION_B2, 'Silva CSV Source')
 second_root_upgrader = SecondRootUpgrader(VERSION_B2, 'Silva Root')
-agenda_item_upgrader = SilvaNewsAgendaItemVersionCleanup(
-    VERSION_B2, 'Silva Agenda Item Version')
-agenda_item_recurrence_upgrader = SilvaNewsAgendaItemRecurrenceUpgrade(
-    VERSION_B2, 'Silva Agenda Item Version')
 
 
 class ThirdRootUpgrader(BaseUpgrader):
@@ -401,52 +294,6 @@ class ThirdRootUpgrader(BaseUpgrader):
         return content
 
 
-class SilvaNewsFilterUpgrader(BaseUpgrader):
-
-    def validate(self, content):
-        return hasattr(content, '_sources')
-
-    def upgrade(self, content):
-        root = content.get_root()
-        for source in content._sources:
-            try:
-                target = root.unrestrictedTraverse(source)
-            except StandardError as e:
-                logger.error('could not find object %s : %s' % (source, e))
-                continue
-            if target.meta_type in content._allowed_source_types:
-                content.add_source(target)
-            else:
-                logger.warn('Content type %s is not an allowed source' %
-                    target.meta_type)
-        del content._sources
-
-
-class SilvaNewsViewerUpgrader(BaseUpgrader):
-
-    def validate(self, content):
-        return hasattr(content, '_filters')
-
-    def upgrade(self, content):
-        root = content.get_root()
-        for flt in content._filters:
-            try:
-                target = root.unrestrictedTraverse(flt)
-            except StandardError as e:
-                logger.error('could not find object %s : %s' % (flt, e))
-                continue
-            if target.meta_type in content.filter_meta_types:
-                content.add_filter(target)
-            else:
-                logger.warn('Content type %s is not an allowed filter type' %
-                    target.meta_type)
-        del content._filters
-
 
 third_root_upgrarder = ThirdRootUpgrader(VERSION_FINAL, 'Silva Root')
-silvanews_filter_upgrader = SilvaNewsFilterUpgrader(VERSION_FINAL,
-    ['Silva News Filter', 'Silva Agenda Filter'])
-silvanews_viewer_upgrader = SilvaNewsViewerUpgrader(VERSION_FINAL,
-    ['Silva News Viewer', 'Silva Agenda Viewer'])
-
 
