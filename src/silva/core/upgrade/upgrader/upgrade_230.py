@@ -16,6 +16,7 @@ from Products.Silva.ExtensionRegistry import extensionRegistry
 
 from silva.core.interfaces import ISilvaObject, IVersionedContent
 from silva.core.references.interfaces import IReferenceService
+from silva.core.references.service import configure_service
 from silva.core.services.interfaces import IContainerPolicyService
 from silva.core.services.interfaces import IMemberService
 from silva.core.upgrade.upgrade import BaseUpgrader, content_path
@@ -43,6 +44,7 @@ class RootUpgrader(BaseUpgrader):
 
         def install_ref_service():
             factory.manage_addReferenceService('service_references')
+            configure_service(root.service_references)
 
         if 'service_references' not in installed_ids:
             install_ref_service()
@@ -187,7 +189,7 @@ class LinkVersionUpgrader(BaseUpgrader):
 
     def validate(self, version):
         return (not version.__dict__.has_key('_relative') and
-                not self.__is_absolute_url(version._url))
+                not self._is_absolute_url(version._url))
 
     def upgrade(self, version):
         link_path = content_path(version)
@@ -195,7 +197,7 @@ class LinkVersionUpgrader(BaseUpgrader):
             version._url, link_path, version.get_container())
 
         if target:
-            logger.info('upgrade link %s' % link_path)
+            logger.info('upgrade link %s.', link_path)
             version.set_relative(True)
             version.set_target(target)
             version._url = u''
@@ -204,7 +206,7 @@ class LinkVersionUpgrader(BaseUpgrader):
                         (link_path, version._url,))
         return version
 
-    def __is_absolute_url(self, url):
+    def _is_absolute_url(self, url):
         purl = urlparse(url)
         return bool(purl.netloc)
 
@@ -267,6 +269,9 @@ class SecondRootUpgrader(BaseUpgrader):
             root.manage_renameObject(
                 'service_subscriptions_mailhost',
                 'service_mailhost')
+
+        if hasattr(aq_base(root), '__initialization__'):
+            delattr(root, '__initialization__')
         return root
 
 

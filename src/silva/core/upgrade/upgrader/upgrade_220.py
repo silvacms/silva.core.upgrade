@@ -23,10 +23,10 @@ from Acquisition import aq_base
 
 from silva.core import interfaces
 from silva.core.services.catalog import CatalogService
-from silva.core.services.interfaces import ICatalogService
+from silva.core.services.interfaces import ICatalogService, IFilesService
 from silva.core.upgrade.localsite import setup_intid
 from silva.core.upgrade.silvaxml import NAMESPACES_CHANGES
-from silva.core.upgrade.upgrade import BaseUpgrader, AnyMetaType
+from silva.core.upgrade.upgrade import BaseUpgrader, AnyMetaType, content_path
 
 from Products.Silva.File import BlobFile
 from Products.SilvaExternalSources.interfaces import ICodeSourceService
@@ -44,45 +44,48 @@ VERSION_A1='2.2a1'
 
 class RootUpgrader(BaseUpgrader):
 
-    def upgrade(self, obj):
+    def upgrade(self, root):
         # If it's a Five site manager disable it first. The annoying
         # part might be that the code might already have been removed
         # from Zope ...
-        if ISite.providedBy(obj):
-            sm = obj.getSiteManager()
+        setattr(root, '__initialization__', True)
+        if ISite.providedBy(root):
+            sm = root.getSiteManager()
             if ((IFiveSiteManager is not None and
                  IFiveSiteManager.providedBy(sm)) or
                 isinstance(sm, ZODB.broken.Broken)):
                 setSite(None)
                 setHooks()
-                unregisterBeforeTraverse(aq_base(obj), '__local_site_hook__')
-                if hasattr(aq_base(obj), '__local_site_hook__'):
-                    delattr(aq_base(obj), '__local_site_hook__')
-                zope.interface.noLongerProvides(obj, ISite)
-                obj.setSiteManager(None)
+                unregisterBeforeTraverse(aq_base(root), '__local_site_hook__')
+                if hasattr(aq_base(root), '__local_site_hook__'):
+                    delattr(aq_base(root), '__local_site_hook__')
+                zope.interface.noLongerProvides(root, ISite)
+                root.setSiteManager(None)
 
         # Activate local site, add an intid service.
-        ism = interfaces.ISiteManager(obj)
-        if not ism.isSite():
-            ism.makeSite()
-        setSite(obj)
+        ism = interfaces.ISiteManager(root)
+        if not ism.is_site():
+            ism.make_site()
+        setSite(root)
         setHooks()
 
         # Delete unused Silva Document service
         for s in ['service_doc_previewer',
                   'service_nlist_previewer',
                   'service_sub_previewer',]:
-            if hasattr(obj, s):
-                obj.manage_delObjects([s,])
+            if hasattr(root, s):
+                root.manage_delObjects([s,])
 
         # Update service_files settings
-        service_files = obj.service_files
-        if hasattr(service_files, '_filesystem_storage_enabled'):
-            if service_files._filesystem_storage_enabled:
-                service_files.storage = BlobFile
+        service_files = root.service_files
+        if hasattr(aq_base(service_files), '_filesystem_storage_enabled'):
+            service_files.storage = BlobFile
             delattr(service_files , '_filesystem_storage_enabled')
+        elif service_files.storage is not BlobFile:
+            # For the upgrade
+            service_files.storage = BlobFile
 
-        return obj
+        return root
 
 
 root_upgrader = RootUpgrader(VERSION_A1, 'Silva Root')
@@ -98,15 +101,15 @@ class ImagesUpgrader(BaseUpgrader):
                 interfaces.IMimeTypeClassifier).guess_buffer_type
         return self._guess_buffer_type
 
-    def upgrade(self, obj):
+    def upgrade(self, img):
         # Add stuff here
         data = None
-        hires_image = obj.hires_image
+        hires_image = img.hires_image
         if hires_image is None:
-            hires_image = obj.image
-        if hires_image is None:
-            # Can't do anything
-            return obj
+            hires_image = img.image
+            if hires_image is None:
+                # Can't do anything
+                return img
         if hires_image.meta_type == 'Image':
             data = StringIO(str(hires_image.data))
         elif hires_image.meta_type == 'ExtImage':
@@ -114,26 +117,26 @@ class ImagesUpgrader(BaseUpgrader):
             try:
                 data = open(filename, 'rb')
             except IOError:
-                raise ValueError, "Missing file %s" % filename
+                raise ValueError("Missing file %s" % filename)
         elif hires_image.meta_type == 'Silva File':
             # Already converted ?
-            return obj
+            return img
         else:
-            raise ValueError, "Unknown mimetype"
+            raise ValueError("Unknown mimetype")
         data.seek(0)
         full_data = data.read()
         data.seek(0)
-        ct = self.guess_buffer_type(full_data)
-        if not ct:
-            raise ValueError, "Impossible to detect mimetype"
+        content_type, encoding = self.guess_buffer_type(full_data)
+        if content_type is None or encoding is not None:
+            raise ValueError("Impossible to detect mimetype")
         # fix some bug in old Images that could be BMP
-        if obj.web_format not in obj.web_formats:
-            obj.web_format = 'JPEG'
-        obj._image_factory('hires_image', data, ct)
-        obj._createDerivedImages()
+        if img.web_format not in img.web_formats:
+            img.web_format = 'JPEG'
+        img._image_factory('hires_image', data, content_type)
+        img._createDerivedImages()
         data.close()
-        logger.info("image %s rebuilt" % '/'.join(obj.getPhysicalPath()))
-        return obj
+        logger.info("image %s rebuilt", content_path(img))
+        return img
 
 
 images_upgrader = ImagesUpgrader(VERSION_A1, 'Silva Image')
@@ -191,21 +194,22 @@ class SecondRootUpgrader(BaseUpgrader):
     """Change standard_error_message to default_standard_error_message.
     """
 
-    def upgrade(self, obj):
+    def upgrade(self, root):
         # Register service_files and others
-        sm = obj.getSiteManager()
-        sm.registerUtility(obj.service_files, interfaces.IFilesService)
-        if hasattr(obj, 'service_codesources'):
+        sm = root.getSiteManager()
+        sm.registerUtility(root.service_files, IFilesService)
+        if hasattr(aq_base(root), 'service_codesources'):
             # We should have it however ...
-            sm.registerUtility(obj.service_codesources, ICodeSourceService)
+            sm.registerUtility(
+                root.service_codesources, ICodeSourceService)
 
         # Update metadata service
-        metadata = obj.service_metadata
+        metadata = root.service_metadata
         sm.registerUtility(metadata, IMetadataService)
 
         # Update the catalog
-        setup_intid(obj)
-        catalog = obj.service_catalog
+        setup_intid(root)
+        catalog = root.service_catalog
         catalog.__class__ = CatalogService
         sm.registerUtility(catalog, ICatalogService)
         indexes = catalog._catalog.indexes
@@ -227,23 +231,25 @@ class SecondRootUpgrader(BaseUpgrader):
             mset.initialized = 0
             mset.initialize()
 
-        if hasattr(obj, 'service_annotations'):
-            obj.manage_delObjects(['service_annotations'])
+        if hasattr(aq_base(root), 'service_annotations'):
+            root.manage_delObjects(['service_annotations'])
 
         # Setup the cs_toc and cs_citation CS's.
-        service_ext = obj.service_extensions
+        service_ext = root.service_extensions
         if not service_ext.is_installed('SilvaExternalSources'):
             service_ext.install('SilvaExternalSources')
         else:
             service_ext.refresh('SilvaExternalSources')
-        if not hasattr(obj, 'cs_toc'):
-            toc = obj.service_codesources.manage_copyObjects(['cs_toc',])
-            obj.manage_pasteObjects(toc)
-        if not hasattr(obj, 'cs_citation'):
-            cit = obj.service_codesources.manage_copyObjects(['cs_citation',])
-            obj.manage_pasteObjects(cit)
+        if root._getOb('cs_toc', None) is None:
+            toc = root.service_codesources.get_installable_source(
+                'cs_toc')
+            toc.install(root)
+        if root._getOb('cs_citation', None) is None:
+            cit = root.service_codesources.get_installable_source(
+                'cs_citation')
+            cit.install(root)
 
-        return obj
+        return root
 
 second_root_upgrader = SecondRootUpgrader(VERSION_B1, 'Silva Root', 50)
 
@@ -280,7 +286,6 @@ class MetadataUpgrader(BaseUpgrader):
             logger.info('upgrading metadata for %s' % (
                     '/'.join(obj.getPhysicalPath())))
             new_annotations = IAnnotations(aq_base(obj))
-
             for key in old_annotations.keys():
                 old_data = old_annotations[key]
                 # if it is metadata, we have to update the namespaces
@@ -293,9 +298,8 @@ class MetadataUpgrader(BaseUpgrader):
                         else:
                             new_key = old_key
                         new_annotations[new_key] = old_data[old_key]
-                    continue
-
-                #new_annotations[key] = new_data
+                else:
+                    new_annotations[key] = old_data
 
             # remove old annotations
             del aq_base(obj)._portal_annotations_
