@@ -256,7 +256,7 @@ class SecondRootUpgrader(BaseUpgrader):
             # This trigger a reconfiguration of the service.
             notify(ObjectCreatedEvent(root.service_subscriptions))
         if root._getOb('service_news', None) is not None:
-            from Products.SilvaNews.interfaces import IServiceNews
+            from silva.app.news.interfaces import IServiceNews
             sm.registerUtility(root.service_news, IServiceNews)
         if root._getOb('service_find', None) is not None:
             from Products.SilvaFind.interfaces import IFindService
