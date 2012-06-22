@@ -62,6 +62,13 @@ class RootUpgrader(BaseUpgrader):
                     delattr(aq_base(root), '__local_site_hook__')
                 zope.interface.noLongerProvides(root, ISite)
                 root.setSiteManager(None)
+            else:
+                # Cleanup broken utilities
+                for registration in list(sm.registeredUtilities()):
+                    if isinstance(registration.component, ZODB.broken.Broken):
+                        sm.unregisterUtility(
+                            registration.component,
+                            registration.provided)
 
         # Activate local site, add an intid service.
         ism = interfaces.ISiteManager(root)
