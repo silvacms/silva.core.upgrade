@@ -23,6 +23,7 @@ from Acquisition import aq_base
 
 from silva.core import interfaces
 from silva.core.services.catalog import CatalogService
+from silva.core.services.interfaces import ICataloging
 from silva.core.services.interfaces import ICatalogService, IFilesService
 from silva.core.upgrade.localsite import setup_intid
 from silva.core.upgrade.silvaxml import NAMESPACES_CHANGES
@@ -117,12 +118,12 @@ class ImagesUpgrader(BaseUpgrader):
             try:
                 data = open(filename, 'rb')
             except IOError:
-                raise ValueError("Missing file %s" % filename)
+                raise ValueError("Missing file %s." % filename)
         elif hires_image.meta_type == 'Silva File':
             # Already converted ?
             return img
         else:
-            raise ValueError("Unknown mimetype")
+            raise ValueError("Unknown mimetype.")
         data.seek(0)
         full_data = data.read()
         data.seek(0)
@@ -135,7 +136,8 @@ class ImagesUpgrader(BaseUpgrader):
         img._image_factory('hires_image', data, content_type)
         img._createDerivedImages()
         data.close()
-        logger.info("image %s rebuilt", content_path(img))
+        ICataloging(img).reindex()
+        logger.info("image %s rebuilt.", content_path(img))
         return img
 
 
@@ -173,22 +175,6 @@ allowed_addables_upgrader = AllowedAddablesUpgrader(VERSION_A2, AnyMetaType)
 #-----------------------------------------------------------------------------
 
 VERSION_B1='2.2b1'
-
-
-class UpdateIndexerUpgrader(BaseUpgrader):
-    """Update Silva Indexer obj which uses now an id to objects and
-    not the path (moving/renaming tolerant).
-    """
-
-    def upgrade(self, obj):
-        obj.update()
-        logger.info('refresh indexer %s' % (
-                '/'.join(obj.getPhysicalPath())))
-        return obj
-
-
-#update_indexer_upgrader = UpdateIndexerUpgrader(VERSION_B1, 'Silva Indexer')
-
 
 class SecondRootUpgrader(BaseUpgrader):
     """Change standard_error_message to default_standard_error_message.
@@ -283,8 +269,7 @@ class MetadataUpgrader(BaseUpgrader):
             return obj
         old_annotations = getattr(aq_base(obj), '_portal_annotations_', None)
         if old_annotations is not None:
-            logger.info('upgrading metadata for %s' % (
-                    '/'.join(obj.getPhysicalPath())))
+            logger.info('upgrading metadata for %s.', content_path(obj))
             new_annotations = IAnnotations(aq_base(obj))
             for key in old_annotations.keys():
                 old_data = old_annotations[key]

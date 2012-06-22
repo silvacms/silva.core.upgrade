@@ -10,10 +10,12 @@ from zope.intid.interfaces import IIntIds
 
 from silva.core.interfaces import IOrderableContainer, IOrderManager
 from silva.core.upgrade.upgrade import BaseUpgrader, AnyMetaType, content_path
+from Products.Silva.install import configure_metadata
 
 logger = logging.getLogger('silva.core.upgrade')
 
 VERSION_A1='3.0a1'
+VERSION_A2='3.0a2'
 
 SMI_SKIN = 'silva.ui.interfaces.ISilvaUITheme'
 
@@ -83,6 +85,8 @@ class RootUpgrader(BaseUpgrader):
                       'haunted_path']:
             if index in catalog.indexes():
                 catalog.delIndex(index)
+
+        configure_metadata(root.service_metadata, None)
         return root
 
 
@@ -110,3 +114,18 @@ class ContainerUpgrader(BaseUpgrader):
 
 
 container_upgrader = ContainerUpgrader(VERSION_A1, AnyMetaType)
+
+
+class UpdateIndexerUpgrader(BaseUpgrader):
+    """Update Silva Indexer obj which uses now an id to objects and
+    not the path (moving/renaming tolerant).
+    """
+
+    def upgrade(self, obj):
+        obj.update()
+        logger.info('refresh indexer %s' % (
+                '/'.join(obj.getPhysicalPath())))
+        return obj
+
+
+update_indexer_upgrader = UpdateIndexerUpgrader(VERSION_A2, 'Silva Indexer')

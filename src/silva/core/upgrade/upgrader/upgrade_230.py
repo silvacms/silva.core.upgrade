@@ -20,7 +20,6 @@ from silva.core.references.service import configure_service
 from silva.core.services.interfaces import IContainerPolicyService
 from silva.core.services.interfaces import IMemberService
 from silva.core.upgrade.upgrade import BaseUpgrader, content_path
-#from silva.core.upgrade.upgrader.upgrade_220 import UpdateIndexerUpgrader
 
 logger = logging.getLogger('silva.core.upgrade')
 
@@ -217,8 +216,6 @@ cache_upgrader = VersionedContentUpgrader(
     VERSION_B1, ['Silva Ghost', 'Silva Link'])
 ghost_upgrader = GhostUpgrader(
     VERSION_B1, ["Silva Ghost Version", "Silva Ghost Folder"])
-#indexer_upgrader = UpdateIndexerUpgrader(
-#    VERSION_B1, "Silva Indexer")
 
 
 class SecondRootUpgrader(BaseUpgrader):
@@ -250,7 +247,7 @@ class SecondRootUpgrader(BaseUpgrader):
             delattr(container_policy, '_policies')
         sm.registerUtility(
             root.service_containerpolicy, IContainerPolicyService)
-        if hasattr(root, 'service_subscriptions'):
+        if root._getOb('service_subscriptions', None) is not None:
             from silva.app.subscriptions.interfaces import ISubscriptionService
             sm.registerUtility(
                 root.service_subscriptions, ISubscriptionService)
@@ -258,14 +255,16 @@ class SecondRootUpgrader(BaseUpgrader):
             root.service_subscriptions.manage_delObjects(template_ids)
             # This trigger a reconfiguration of the service.
             notify(ObjectCreatedEvent(root.service_subscriptions))
-        if hasattr(root, 'service_news'):
+        if root._getOb('service_news', None) is not None:
             from Products.SilvaNews.interfaces import IServiceNews
-            sm.registerUtility(
-                root.service_news, IServiceNews)
-        if not hasattr(root, 'service_secret'):
+            sm.registerUtility(root.service_news, IServiceNews)
+        if root._getOb('service_find', None) is not None:
+            from Products.SilvaFind.interfaces import IFindService
+            sm.registerUtility(root.service_find, IFindService)
+        if root._getOb('service_secret', None) is None:
             factory = root.manage_addProduct['silva.core.services']
             factory.manage_addSecretService()
-        if hasattr(root, 'service_subscriptions_mailhost'):
+        if root._getOb('service_subscriptions_mailhost', None) is not None:
             root.manage_renameObject(
                 'service_subscriptions_mailhost',
                 'service_mailhost')
