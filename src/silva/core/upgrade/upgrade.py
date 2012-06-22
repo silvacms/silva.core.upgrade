@@ -32,7 +32,7 @@ from silva.core.interfaces.events import UpgradeStartedEvent
 from silva.core.interfaces.events import UpgradeTransaction, IUpgradeTransaction
 from silva.core.references.interfaces import IReferenceService
 
-THRESHOLD = 500
+THRESHOLD = 2000
 
 # marker for upgraders to be called for any object
 AnyMetaType = object()
@@ -265,11 +265,13 @@ class UpgradeRegistry(object):
                 logger.info(u'nothing needs to be done.')
 
             if IRoot.providedBy(root):
+                notify(UpgradeTransaction())
                 # First, upgrade Silva Root so Silva services /
                 # extensions will be upgraded
                 for version in upgrade_chain:
                     logger.info('upgrading root to version %s.' % version)
                     self._upgrade_content(root, version)
+                transaction.commit()
 
             # Now, upgrade site content
             for version in upgrade_chain:
