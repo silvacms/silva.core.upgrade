@@ -121,11 +121,10 @@ class UpdateIndexerUpgrader(BaseUpgrader):
     not the path (moving/renaming tolerant).
     """
 
-    def upgrade(self, obj):
-        obj.update()
-        logger.info('refresh indexer %s' % (
-                '/'.join(obj.getPhysicalPath())))
-        return obj
+    def upgrade(self, indexer):
+        indexer.update()
+        logger.info('refreshed indexer %s.', content_path(indexer))
+        return indexer
 
 
 update_indexer_upgrader = UpdateIndexerUpgrader(VERSION_A2, 'Silva Indexer')
