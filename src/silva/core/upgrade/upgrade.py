@@ -25,7 +25,7 @@ import transaction
 
 # Silva
 from Products.Silva.Membership import NoneMember
-from silva.core.interfaces import ISecurity
+from silva.core.interfaces import ISecurity, IPostUpgrader
 from silva.core.interfaces import IUpgrader, IUpgradeRegistry, IRoot
 from silva.core.interfaces.events import UpgradeFinishedEvent
 from silva.core.interfaces.events import UpgradeStartedEvent
@@ -135,6 +135,97 @@ def get_upgrade_chain(versions, from_version, to_version):
     return versions[version_start_index:version_end_index]
 
 
+class UpgradeProcess(object):
+
+    def __init__(self, registry, versions):
+        self.versions = versions
+        self.registry = registry
+        self._count = 0
+        self._post = []
+        notify(UpgradeTransaction())
+
+    def get_upgraders(self, content):
+        return self.registry.get_upgraders(self.versions, content.meta_type)
+
+    def notify_upgraded(self, content):
+        self._count += 1
+        if self._count > THRESHOLD:
+            transaction.commit()
+            notify(UpgradeTransaction())
+            if (hasattr(aq_base(content), '_p_jar') and
+                content._p_jar is not None):
+                # Cache minimize kill the ZODB cache
+                # that is just resized at the end of the request
+                # normally as well.
+                content._p_jar.cacheMinimize()
+                self._count = 0
+
+    def upgrade_content(self, content):
+        post = []
+        for upgrader in self.get_upgraders(content):
+            __traceback_supplement__ = (UpgraderTraceback, content, upgrader)
+            try:
+                if upgrader.validate(content):
+                    if IPostUpgrader.providedBy(upgrader):
+                        post.append((content, upgrader))
+                    else:
+                        result = upgrader.upgrade(content)
+                        assert result is not None
+                        self.notify_upgraded(result)
+                        if result.meta_type != content.meta_type:
+                            post = []
+                            # Object replaced, abort upgraders.
+                            break
+                        content = result
+            except ValueError as error:
+                logger.error(
+                    u'Error while upgrading object %s with %r: %s',
+                    content_path(content), upgrader, str(error))
+        if post:
+            self._post.extend(post)
+        return content
+
+    def upgrade_container(self, root, blacklist=[]):
+        notify(UpgradeTransaction())
+        contents = [root]
+        while contents:
+            iterate = True
+            content = contents.pop()
+
+            if isinstance(content, Broken):
+                # We don't upgrade broken objects. They should be
+                # removed by their contains if needed.
+                continue
+
+            if content.meta_type not in blacklist:
+                try:
+                    content = self.upgrade_content(content)
+                except StopIteration:
+                    iterate = False
+
+            if (iterate and
+                IFolder.providedBy(content) and
+                content.meta_type != "Parsed XML"):
+                contents.extend(content.objectValues())
+
+    def post_upgrade(self):
+        for content, upgrader in self._post:
+            __traceback_supplement__ = (UpgraderTraceback, content, upgrader)
+            try:
+                result = upgrader.upgrade(content)
+                assert result is not None
+                self.notify_upgraded(result)
+                if result.meta_type != content.meta_type:
+                    # Object replaced, abort upgraders.
+                    break
+                content = result
+            except ValueError as error:
+                logger.error(
+                    u'Error while upgrading object %s with %r: %s',
+                    content_path(content), upgrader, str(error))
+        self._post = []
+
+
 class UpgradeRegistry(object):
     """Here people can register upgrade methods for their objects
     """
@@ -169,74 +260,15 @@ class UpgradeRegistry(object):
             upgraders.extend(v_mt.get(meta_type, []))
         return upgraders
 
-    def _upgrade_content(self, obj, versions):
-        """Upgrade a single object.
-        """
-        changed = False
-        iterate = True
-        for upgrader in self.get_upgraders(versions, obj.meta_type):
-            __traceback_supplement__ = (UpgraderTraceback, obj, upgrader)
-            try:
-                if upgrader.validate(obj):
-                    new_obj = upgrader.upgrade(obj)
-                    assert new_obj is not None
-                    changed = True
-                    if new_obj.meta_type != obj.meta_type:
-                        # Object replaced, abort upgraders.
-                        break
-            except StopIteration:
-                changed = True
-                iterate = False
-            except ValueError as error:
-                logger.error(
-                    u'Error while upgrading object %s with %r: %s',
-                    content_path(obj), upgrader, str(error))
-        return obj, changed, iterate
-
-    def _upgrade_container(self, root, versions, blacklist=[]):
-        """Upgrade an object and its children to a version.
-        """
-        notify(UpgradeTransaction())
-        count = 0
-        contents = [root]
-        while contents:
-            changed = False
-            iterate = True
-            obj = contents.pop()
-
-            if isinstance(obj, Broken):
-                # We don't upgrade broken objects. They should be
-                # removed by their contains if needed.
-                continue
-
-            if obj.meta_type not in blacklist:
-                obj, changed, iterate = self._upgrade_content(obj, versions)
-
-            if (iterate and
-                IFolder.providedBy(obj) and
-                obj.meta_type != "Parsed XML"):
-                contents.extend(obj.objectValues())
-
-            if changed:
-                count += 1
-
-            if count > THRESHOLD:
-                transaction.commit()
-                notify(UpgradeTransaction())
-                if hasattr(aq_base(obj), '_p_jar') and obj._p_jar is not None:
-                    # Cache minimize kill the ZODB cache
-                    # that is just resized at the end of the request
-                    # normally as well.
-                    obj._p_jar.cacheMinimize()
-                count = 0
-
     def upgrade_tree(self, root, version, blacklist=[]):
         logger.info(
-            u'upgrading container %s to %s.', content_path(root), version)
+            u'Upgrading container %s to %s.', content_path(root), version)
         start = datetime.datetime.now()
         notify(UpgradeStartedEvent(root, 'n/a', version))
+        process = UpgradeProcess(self, [version])
         try:
-            self._upgrade_container(root, version, blacklist=blacklist)
+            process.upgrade_container(root, blacklist=blacklist)
+            process.post_upgrade()
         except:
             notify(UpgradeFinishedEvent(root, 'n/a', version, False))
             raise
@@ -244,7 +276,7 @@ class UpgradeRegistry(object):
             end = datetime.datetime.now()
             notify(UpgradeFinishedEvent(root, 'n/a', version, True))
             logger.info(
-                u'upgrade finished in %d seconds.', (end - start).seconds)
+                u'Upgrade finished in %d seconds.', (end - start).seconds)
 
     def upgrade(self, root, from_version, to_version):
         """Upgrade a root object from the from_version to the
@@ -257,7 +289,7 @@ class UpgradeRegistry(object):
         logger.addHandler(log_handler)
         try:
             logger.info(
-                u'upgrading from %s to %s.', from_version, to_version)
+                u'Upgrading from %s to %s.', from_version, to_version)
             notify(UpgradeStartedEvent(root, from_version, to_version))
 
             start = datetime.datetime.now()
@@ -265,26 +297,22 @@ class UpgradeRegistry(object):
             versions = get_upgrade_chain(
                 self.__registry.keys(), from_version, to_version)
             if not versions:
-                logger.info(u'nothing needs to be done.')
+                logger.info(u'Nothing needs to be done.')
+            process = UpgradeProcess(self, versions)
 
             if IRoot.providedBy(root):
-                notify(UpgradeTransaction())
                 # First, upgrade Silva Root so Silva services /
                 # extensions will be upgraded
                 logger.info(
                     u'Upgrading root to versions %s.',
                     ','.join(versions))
-                self._upgrade_content(root, versions)
+                process.upgrade_content(root)
                 transaction.commit()
 
             # Now, upgrade site content
             logger.info(u'Upgrading content to version %s.', ','.join(versions))
-            self._upgrade_container(root, versions, blacklist=['Silva Root',])
-
-            if IRoot.providedBy(root):
-                # Now, refresh extensions
-                logger.info('Refresh extensions.')
-                root.service_extensions.refresh_all()
+            process.upgrade_container(root, blacklist=['Silva Root',])
+            process.post_upgrade()
 
             end = datetime.datetime.now()
             logger.info(

@@ -5,9 +5,11 @@
 
 import logging
 
+from zope.interface import implements
 from zope.component import getUtility
 from zope.intid.interfaces import IIntIds
 
+from silva.core.interfaces import IPostUpgrader
 from silva.core.interfaces import IOrderableContainer, IOrderManager
 from silva.core.upgrade.upgrade import BaseUpgrader, AnyMetaType, content_path
 from Products.Silva.install import configure_metadata
@@ -120,6 +122,7 @@ class UpdateIndexerUpgrader(BaseUpgrader):
     """Update Silva Indexer obj which uses now an id to objects and
     not the path (moving/renaming tolerant).
     """
+    implements(IPostUpgrader)
 
     def upgrade(self, indexer):
         indexer.update()
