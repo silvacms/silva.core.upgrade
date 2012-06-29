@@ -6,8 +6,6 @@
 import logging
 
 from zope.interface import implements
-from zope.component import getUtility
-from zope.intid.interfaces import IIntIds
 
 from silva.core.interfaces import IPostUpgrader
 from silva.core.interfaces import IOrderableContainer, IOrderManager
@@ -62,16 +60,9 @@ class RootUpgrader(BaseUpgrader):
             factory = root.manage_addProduct['Silva']
             factory.manage_addFilteringService()
 
-        # We need to install the new SilvaDocument, and Silva Obsolete
-        # Document for the document migration.
-        extensions = root.service_extensions
-        if not extensions.is_installed('silva.app.document'):
-            extensions.install('silva.app.document')
-        if not extensions.is_installed('SilvaDocument'):
-            extensions.install('SilvaDocument')
-
         # If silva.app.redirectlink we disable it (for the document
         # conversion). It can be re-enabled later on.
+        extensions = root.service_extensions
         if extensions.is_installed('silva.app.redirectlink'):
             extensions.uninstall('silva.app.redirectlink')
 
@@ -102,9 +93,9 @@ class ContainerUpgrader(BaseUpgrader):
                 hasattr(container, '_ordered_ids'))
 
     def upgrade(self, container):
-        logger.info(u'upgrade container order in %s.', content_path(container))
+        logger.info(u'Upgrade container order in %s.', content_path(container))
         manager = IOrderManager(container)
-        get_id = getUtility(IIntIds).register
+        get_id = manager._get_id
         order = []
         for identifier in container._ordered_ids:
             content = container._getOb(identifier, None)
@@ -126,7 +117,7 @@ class UpdateIndexerUpgrader(BaseUpgrader):
 
     def upgrade(self, indexer):
         indexer.update()
-        logger.info('refreshed indexer %s.', content_path(indexer))
+        logger.info('Refreshed indexer %s.', content_path(indexer))
         return indexer
 
 

@@ -142,11 +142,15 @@ class UpgradeProcess(object):
         self.registry = registry
         self._count = 0
         self._post = []
+        self._upgraders = {}
         notify(UpgradeTransaction())
 
     def get_upgraders(self, content):
-        return self.registry.get_upgraders(self.versions, content.meta_type)
-
+        if content.meta_type not in self._upgraders:
+            self._upgraders[content.meta_type] = self.registry.get_upgraders(
+                self.versions, content.meta_type)
+        return self._upgraders[content.meta_type]
+ 
     def notify_upgraded(self, content):
         self._count += 1
         if self._count > THRESHOLD:
