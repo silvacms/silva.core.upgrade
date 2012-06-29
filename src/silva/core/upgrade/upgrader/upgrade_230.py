@@ -156,7 +156,7 @@ class GhostUpgrader(BaseUpgrader):
             target = obj.get_root().unrestrictedTraverse(
                 target_path, None)
             if target is not None:
-                logger.info('upgrade reference object for Ghost @%s' %
+                logger.info('Upgrade reference object for Ghost @%s' %
                             "/".join(obj.getPhysicalPath()))
                 obj.set_haunted(target)
             else:
@@ -196,7 +196,7 @@ class LinkVersionUpgrader(BaseUpgrader):
             version._url, link_path, version.get_container())
 
         if target:
-            logger.info('upgrade link %s.', link_path)
+            logger.info('Upgrade link %s.', link_path)
             version.set_relative(True)
             version.set_target(target)
             version._url = u''

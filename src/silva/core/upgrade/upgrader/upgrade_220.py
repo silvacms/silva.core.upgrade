@@ -144,7 +144,7 @@ class ImagesUpgrader(BaseUpgrader):
         img._create_derived_images()
         data.close()
         ICataloging(img).reindex()
-        logger.info("image %s rebuilt.", content_path(img))
+        logger.info("Update image %s rebuilt.", content_path(img))
         return img
 
 
@@ -276,7 +276,7 @@ class MetadataUpgrader(BaseUpgrader):
             return obj
         old_annotations = getattr(aq_base(obj), '_portal_annotations_', None)
         if old_annotations is not None:
-            logger.info('upgrading metadata for %s.', content_path(obj))
+            logger.info('Upgrading metadata for %s.', content_path(obj))
             new_annotations = IAnnotations(aq_base(obj))
             for key in old_annotations.keys():
                 old_data = old_annotations[key]
