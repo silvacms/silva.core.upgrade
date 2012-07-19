@@ -11,6 +11,8 @@ from silva.core.interfaces import IPostUpgrader
 from silva.core.interfaces import IOrderableContainer, IOrderManager
 from silva.core.upgrade.upgrade import BaseUpgrader, AnyMetaType, content_path
 from Products.Silva.install import configure_metadata
+from persistent.mapping import PersistentMapping
+
 
 logger = logging.getLogger('silva.core.upgrade')
 
@@ -122,3 +124,31 @@ class UpdateIndexerUpgrader(BaseUpgrader):
 
 
 update_indexer_upgrader = UpdateIndexerUpgrader(VERSION_A2, 'Silva Indexer')
+
+
+class UpdateHideFromTOC(BaseUpgrader):
+
+    ns = "http://infrae.com/namespace/metadata/silva-extra"
+    to_ns = "http://infrae.com/namespace/metadata/silva-settings"
+    key = "hide_from_tocs"
+
+    def validate(self, content):
+        annotations = getattr(content, '__annotations__', None)
+        return annotations is not None and \
+            self.ns in annotations and \
+            self.key in annotations[self.ns]
+
+    def upgrade(self, content):
+        annotations = content.__annotations__
+        from_ = annotations[self.ns]
+        value = from_[self.key]
+        del from_[self.key]
+        to = annotations.get(self.to_ns, None)
+        if to is None:
+            to = annotations[self.to_ns] = PersistentMapping()
+        to[self.key] = value
+        logger.info("migrated hide_from_tocs for %r", content)
+        return content
+
+
+hide_from_toc_upgrader = UpdateHideFromTOC(VERSION_A2, AnyMetaType)
