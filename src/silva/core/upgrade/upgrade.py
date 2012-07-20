@@ -18,6 +18,7 @@ from five import grok
 from Acquisition import aq_base
 from OFS.interfaces import IFolder
 from ZODB.broken import Broken
+from zope.interface import providedBy, alsoProvides
 from zope.annotation.interfaces import IAnnotations
 from zope.component import getUtility
 from zope.event import notify
@@ -31,6 +32,7 @@ from silva.core.interfaces.events import UpgradeFinishedEvent
 from silva.core.interfaces.events import UpgradeStartedEvent
 from silva.core.interfaces.events import UpgradeTransaction, IUpgradeTransaction
 from silva.core.references.interfaces import IReferenceService
+from silva.core.views.interfaces import ICustomizableTag
 
 THRESHOLD = 2000
 
@@ -71,6 +73,10 @@ class BaseUpgrader(object):
             if not isinstance(user, NoneMember):
                 new_obj._last_author_userid = user.id
                 new_obj._last_author_info = user
+        # Copy customization markers
+        for iface in providedBy(old_obj).interfaces():
+            if iface.extends(ICustomizableTag):
+                alsoProvides(new_obj, iface)
         # Copy creator information
         owner = getattr(aq_base(old_obj), '_owner', None)
         if owner is not None:
