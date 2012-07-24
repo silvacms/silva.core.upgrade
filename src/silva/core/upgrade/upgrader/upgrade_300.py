@@ -127,7 +127,6 @@ update_indexer_upgrader = UpdateIndexerUpgrader(VERSION_A2, 'Silva Indexer')
 
 
 class UpdateHideFromTOC(BaseUpgrader):
-
     ns = "http://infrae.com/namespace/metadata/silva-extra"
     to_ns = "http://infrae.com/namespace/metadata/silva-settings"
     key = "hide_from_tocs"

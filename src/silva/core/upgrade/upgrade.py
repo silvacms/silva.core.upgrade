@@ -183,9 +183,8 @@ class UpgradeProcess(object):
                         assert result is not None
                         self.notify_upgraded(result)
                         if result.meta_type != content.meta_type:
-                            post = []
-                            # Object replaced, abort upgraders.
-                            break
+                            # Object replaced, abort, return new object
+                            return result
                         content = result
             except ValueError as error:
                 logger.error(
