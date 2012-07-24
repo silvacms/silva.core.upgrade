@@ -147,7 +147,7 @@ class UpdateHideFromTOC(BaseUpgrader):
         if to is None:
             to = annotations[self.to_ns] = PersistentMapping()
         to[self.key] = value
-        logger.info("migrated hide_from_tocs for %r", content)
+        logger.info("Migrated hide_from_tocs for %s.", content_path(content))
         return content
 
 
