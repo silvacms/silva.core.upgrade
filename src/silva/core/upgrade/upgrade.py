@@ -314,12 +314,12 @@ class UpgradeRegistry(object):
                 # extensions will be upgraded
                 logger.info(
                     u'Upgrading root to versions %s.',
-                    ','.join(versions))
+                    ', '.join(versions))
                 process.upgrade_content(root)
                 transaction.commit()
 
             # Now, upgrade site content
-            logger.info(u'Upgrading content to version %s.', ','.join(versions))
+            logger.info(u'Upgrading content to version %s.', ', '.join(versions))
             process.upgrade_container(root, blacklist=['Silva Root',])
             process.post_upgrade()
 
