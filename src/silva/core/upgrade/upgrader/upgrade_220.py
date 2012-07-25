@@ -32,6 +32,7 @@ from silva.core.upgrade.upgrade import BaseUpgrader, AnyMetaType, content_path
 from Products.Silva.File import BlobFile
 from Products.SilvaExternalSources.interfaces import ICodeSourceService
 from Products.SilvaMetadata.interfaces import IMetadataService
+from Products.Silva.install import configure_metadata
 
 logger = logging.getLogger('silva.core.upgrade')
 
@@ -227,6 +228,8 @@ class SecondRootUpgrader(BaseUpgrader):
         if hasattr(aq_base(root), 'service_annotations'):
             root.manage_delObjects(['service_annotations'])
 
+        # Be sure the metadata are configured to be able to install the missing products.
+        configure_metadata(root.service_metadata, None)
         # Setup the cs_toc and cs_citation CS's.
         service_ext = root.service_extensions
         if not service_ext.is_installed('SilvaExternalSources'):

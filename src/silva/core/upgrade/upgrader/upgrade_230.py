@@ -16,7 +16,6 @@ from Products.Silva.ExtensionRegistry import extensionRegistry
 
 from silva.core.interfaces import ISilvaObject, IVersionedContent, IGhostFolder
 from silva.core.references.interfaces import IReferenceService
-from silva.core.references.service import configure_service
 from silva.core.services.interfaces import IContainerPolicyService
 from silva.core.services.interfaces import IMemberService
 from silva.core.upgrade.upgrade import BaseUpgrader, content_path
@@ -42,6 +41,8 @@ class RootUpgrader(BaseUpgrader):
         factory = root.manage_addProduct['silva.core.references']
 
         def install_ref_service():
+            from silva.core.references.service import configure_service
+
             factory.manage_addReferenceService('service_references')
             configure_service(root.service_references)
 
@@ -237,8 +238,12 @@ class SecondRootUpgrader(BaseUpgrader):
         sm = root.getSiteManager()
         if not IMemberService.providedBy(root.service_members):
             root.manage_delObjects(['service_members'])
-            if extensionRegistry.have('silva.pas.base'):
-                root.service_extensions.install('silva.pas.base')
+            if extensionRegistry.get_extension('silva.pas.base') is not None:
+                from silva.pas.base.subscribers import configure_service
+
+                factory = root.manage_addProduct['silva.pas.base']
+                factory.manage_addMemberService()
+                configure_service(root, None)
             else:
                 factory = root.manage_addProduct['Silva']
                 factory.manage_addSimpleMemberService()
