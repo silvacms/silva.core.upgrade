@@ -8,13 +8,13 @@ import logging
 from zope.event import notify
 from zope.lifecycleevent import ObjectCreatedEvent
 
-from Acquisition import aq_base
+from Acquisition import aq_base, aq_parent
 from zExceptions import NotFound
 from five.intid.site import aq_iter
 
 from Products.Silva.ExtensionRegistry import extensionRegistry
 
-from silva.core.interfaces import ISilvaObject, IVersionedContent
+from silva.core.interfaces import ISilvaObject, IVersionedContent, IGhostFolder
 from silva.core.references.interfaces import IReferenceService
 from silva.core.references.service import configure_service
 from silva.core.services.interfaces import IContainerPolicyService
@@ -147,24 +147,28 @@ def resolve_path(url, content_path, context, obj_type=u'link'):
 
 class GhostUpgrader(BaseUpgrader):
 
-    def validate(self, obj):
-        return hasattr(obj, '_content_path')
+    def validate(self, ghost):
+        return hasattr(ghost, '_content_path')
 
-    def upgrade(self, obj):
-        target_path = obj._content_path
+    def upgrade(self, ghost):
+        target_path = ghost._content_path
         if target_path:
-            target = obj.get_root().unrestrictedTraverse(
+            target = ghost.get_root().unrestrictedTraverse(
                 target_path, None)
             if target is not None:
-                logger.info('Upgrade reference object for Ghost @%s' %
-                            "/".join(obj.getPhysicalPath()))
-                obj.set_haunted(target)
+                logger.info(
+                    u'Upgrade reference object for Ghost for %s.',
+                    "/".join(ghost.getPhysicalPath()))
+                container = aq_parent(ghost).get_container()
+                ghost.set_haunted(
+                    target,
+                    auto_delete=IGhostFolder.providedBy(container))
             else:
-                logger.warn(
-                    'Ghost at %s point to a non existing object at %s' %
-                    ("/".join(obj.getPhysicalPath()), target_path,))
-            del obj._content_path
-        return obj
+                logger.error(
+                    u'Ghost at %s point to a non existing object at %s',
+                    "/".join(ghost.getPhysicalPath()), target_path)
+            del ghost._content_path
+        return ghost
 
 
 class VersionedContentUpgrader(BaseUpgrader):

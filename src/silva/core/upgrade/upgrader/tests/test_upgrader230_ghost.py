@@ -6,10 +6,15 @@ import unittest
 
 from Acquisition import aq_chain
 
+from zope.component import getUtility
+from zope.interface.verify import verifyObject
+
 from Products.Silva.testing import FunctionalLayer
 from silva.core.upgrade.upgrader.upgrade_230 import ghost_upgrader
+from silva.core.interfaces import IPublicationWorkflow
 from silva.core.references.interfaces import IReferenceService
-from zope.component import getUtility
+from silva.core.references.interfaces import IWeakReferenceValue
+from silva.core.references.interfaces import IDeleteSourceReferenceValue
 
 
 class GhostUpgraderTestCase(unittest.TestCase):
@@ -22,49 +27,85 @@ class GhostUpgraderTestCase(unittest.TestCase):
         self.root = self.layer.get_application()
         self.layer.login('editor')
         factory = self.root.manage_addProduct['Silva']
-        factory.manage_addPublication('pub', 'Publication')
+        factory.manage_addPublication('publication', 'Publication')
         factory.manage_addGhostFolder('ghost_folder', 'Ghost Folder')
-        factory.manage_addMockupVersionedContent('doc', 'Document')
+        factory.manage_addMockupVersionedContent('document', 'Document')
 
-        factory = self.root.pub.manage_addProduct['Silva']
+        factory = self.root.publication.manage_addProduct['Silva']
         factory.manage_addGhost('ghost', 'Ghost of Document')
 
-        self.ghost = self.root.pub.ghost
-        self.ghost_version = self.ghost.get_editable()
-        self.ghost_version._content_path = ('', 'root', 'doc')
+        version = self.root.publication.ghost.get_editable()
+        version._content_path = ('', 'root', 'document')
+        IPublicationWorkflow(self.root.publication.ghost).publish()
 
-        self.ghost_folder = self.root.ghost_folder
-        self.ghost_folder._content_path = ('', 'root', 'pub')
+        self.root.ghost_folder._content_path = ('', 'root', 'publication')
+        factory = self.root.ghost_folder.manage_addProduct['Silva']
+        factory.manage_addGhost('ghost', 'Ghost of Document')
+        version = self.root.ghost_folder.ghost.get_editable()
+        version._content_path = ('', 'root', 'document')
+        IPublicationWorkflow(self.root.ghost_folder.ghost).publish()
 
     def test_upgrade_ghost(self):
-        self.assertTrue(ghost_upgrader.validate(self.ghost_version))
-        ghost_upgrader.upgrade(self.ghost_version)
+        version = self.root.publication.ghost.get_viewable()
+        self.assertIsNot(version, None)
+        self.assertTrue(ghost_upgrader.validate(version))
+        self.assertEqual(ghost_upgrader.upgrade(version), version)
 
-        self.assertFalse(ghost_upgrader.validate(self.ghost_version))
+        self.assertFalse(ghost_upgrader.validate(version))
+        self.assertEqual(
+            self.root.document,
+            version.get_haunted())
         self.assertEquals(
-            self.root.doc,
-            self.ghost_version.get_haunted())
-        self.assertEquals(
-            aq_chain(self.root.doc),
-            aq_chain(self.ghost_version.get_haunted()))
+            aq_chain(self.root.document),
+            aq_chain(version.get_haunted()))
 
         service = getUtility(IReferenceService)
-        reference = service.get_reference(self.ghost_version, name=u"haunted")
+        reference = service.get_reference(version, name=u"haunted")
+        self.assertTrue(verifyObject(IWeakReferenceValue, reference))
         self.assertEquals(
             aq_chain(reference.source),
-            aq_chain(self.ghost_version))
+            aq_chain(version))
+
+    def test_upgrade_ghost_in_ghost_folder(self):
+        version = self.root.ghost_folder.ghost.get_viewable()
+        self.assertIsNot(version, None)
+        self.assertTrue(ghost_upgrader.validate(version))
+        self.assertEqual(ghost_upgrader.upgrade(version), version)
+
+        self.assertFalse(ghost_upgrader.validate(version))
+        self.assertEqual(
+            self.root.document,
+            version.get_haunted())
+        self.assertEquals(
+            aq_chain(self.root.document),
+            aq_chain(version.get_haunted()))
+
+        service = getUtility(IReferenceService)
+        reference = service.get_reference(version, name=u"haunted")
+        self.assertTrue(verifyObject(IDeleteSourceReferenceValue, reference))
+        self.assertEquals(
+            aq_chain(reference.source),
+            aq_chain(version))
 
     def test_upgrade_ghost_folder(self):
-        self.assertTrue(ghost_upgrader.validate(self.ghost_folder))
-        ghost_upgrader.upgrade(self.ghost_folder)
+        folder = self.root.ghost_folder
+        self.assertTrue(ghost_upgrader.validate(folder))
+        self.assertEqual(ghost_upgrader.upgrade(folder), folder)
 
-        self.assertFalse(ghost_upgrader.validate(self.ghost_folder))
+        self.assertFalse(ghost_upgrader.validate(folder))
         self.assertEquals(
-            self.root.pub,
-            self.ghost_folder.get_haunted())
+            self.root.publication,
+            folder.get_haunted())
         self.assertEquals(
-            aq_chain(self.root.pub),
-            aq_chain(self.ghost_folder.get_haunted()))
+            aq_chain(self.root.publication),
+            aq_chain(folder.get_haunted()))
+
+        service = getUtility(IReferenceService)
+        reference = service.get_reference(folder, name=u"haunted")
+        self.assertTrue(verifyObject(IWeakReferenceValue, reference))
+        self.assertEquals(
+            aq_chain(reference.source),
+            aq_chain(folder))
 
 
 def test_suite():
