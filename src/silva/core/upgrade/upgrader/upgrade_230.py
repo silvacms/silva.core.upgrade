@@ -167,7 +167,8 @@ class GhostUpgrader(BaseUpgrader):
             else:
                 logger.error(
                     u'Ghost at %s point to a non existing object at %s',
-                    "/".join(ghost.getPhysicalPath()), target_path)
+                    "/".join(ghost.getPhysicalPath()),
+                    "/".join(target_path))
             del ghost._content_path
         return ghost
 
