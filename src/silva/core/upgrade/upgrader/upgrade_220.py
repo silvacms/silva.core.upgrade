@@ -273,32 +273,35 @@ class MetadataUpgrader(BaseUpgrader):
     """Migrate metadata information.
     """
 
-    def upgrade(self, obj):
-        if not (interfaces.ISilvaObject.providedBy(obj) or
-                interfaces.IVersion.providedBy(obj)):
-            return obj
-        old_annotations = getattr(aq_base(obj), '_portal_annotations_', None)
-        if old_annotations is not None:
-            logger.info('Upgrading metadata for %s.', content_path(obj))
-            new_annotations = IAnnotations(aq_base(obj))
-            for key in old_annotations.keys():
-                old_data = old_annotations[key]
-                # if it is metadata, we have to update the namespaces
-                # as well inside the data, they will go directly in
-                # the annotation
-                if key == 'http://www.infrae.com/xml/metadata':
-                    for old_key in old_data.keys():
-                        if old_key in NAMESPACES_CHANGES:
-                            new_key = NAMESPACES_CHANGES[old_key]
-                        else:
-                            new_key = old_key
-                        new_annotations[new_key] = old_data[old_key]
-                else:
-                    new_annotations[key] = old_data
+    def validate(self, content):
+        if not (interfaces.ISilvaObject.providedBy(content) or
+                interfaces.IVersion.providedBy(content)):
+            return False
+        annotations = getattr(aq_base(content), '_portal_annotations_', None)
+        return annotations is not None
 
-            # remove old annotations
-            del aq_base(obj)._portal_annotations_
-        return obj
+    def upgrade(self, content):
+        logger.info('Upgrading metadata for %s.', content_path(content))
+        new_annotations = IAnnotations(aq_base(content))
+        old_annotations = getattr(aq_base(content), '_portal_annotations_')
+        for key in old_annotations.keys():
+            old_data = old_annotations[key]
+            # if it is metadata, we have to update the namespaces
+            # as well inside the data, they will go directly in
+            # the annotation
+            if key == 'http://www.infrae.com/xml/metadata':
+                for old_key in old_data.keys():
+                    if old_key in NAMESPACES_CHANGES:
+                        new_key = NAMESPACES_CHANGES[old_key]
+                    else:
+                        new_key = old_key
+                    new_annotations[new_key] = old_data[old_key]
+            else:
+                new_annotations[key] = old_data
+
+        # remove old annotations
+        del aq_base(content)._portal_annotations_
+        return content
 
 
 metadata_upgrader = MetadataUpgrader(VERSION_B1, AnyMetaType)

@@ -115,7 +115,7 @@ def resolve_path(url, content_path, context, obj_type=u'link'):
     scheme, netloc, path, parameters, query, fragment = urlparse(url)
     if scheme:
         # This is a remote URL
-        logger.debug(u'found a remote link %s' % url)
+        #logger.debug(u'Found a remote link %s' % url)
         return None, None
     if not path:
         # This is to an anchor in the document, nothing else
@@ -130,7 +130,7 @@ def resolve_path(url, content_path, context, obj_type=u'link'):
                 path, context, context.get_root())
             target = path_root.unrestrictedTraverse(cleaned_path)
         except (AttributeError, KeyError, NotFound, TypeError):
-            logger.error(u'broken %s %s in %s' % (obj_type, url, content_path))
+            logger.debug(u'Could not resolve %s %s in %s' % (obj_type, url, content_path))
             return None, fragment
     if not ISilvaObject.providedBy(target):
         logger.error(
@@ -202,13 +202,10 @@ class LinkVersionUpgrader(BaseUpgrader):
             version._url, link_path, version.get_container())
 
         if target:
-            logger.info('Upgrade link %s.', link_path)
+            logger.info(u'Upgrade link %s.', link_path)
             version.set_relative(True)
             version.set_target(target)
             version._url = u''
-        else:
-            logger.warn('cannot find target for link %s to %s' %
-                        (link_path, version._url,))
         return version
 
     def _is_absolute_url(self, url):
