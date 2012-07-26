@@ -34,12 +34,12 @@ class LinkVersionUpgraderTestCase(unittest.TestCase):
             resolve_path(' http://www.google.com/',
                          '/root/publication',
                          self.root),
-            (None, None))
+            ('http://www.google.com/', None, None))
         self.assertEqual(
             resolve_path(' http://www.google.com/ ',
                          '/root/publication',
                          self.root),
-            (None, None))
+            ('http://www.google.com/', None, None))
 
     def test_not_validate_absolute_link(self):
         self.version._url = 'http://www.google.com/'

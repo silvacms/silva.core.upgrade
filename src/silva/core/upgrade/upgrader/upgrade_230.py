@@ -117,10 +117,10 @@ def resolve_path(url, content_path, context, obj_type=u'link'):
     if scheme:
         # This is a remote URL
         #logger.debug(u'Found a remote link %s' % url)
-        return None, None
+        return url, None, None
     if not path:
         # This is to an anchor in the document, nothing else
-        return None, fragment
+        return url, None, fragment
     try:
         cleaned_path, path_root = split_path(path, context)
         target = path_root.unrestrictedTraverse(cleaned_path)
@@ -131,20 +131,23 @@ def resolve_path(url, content_path, context, obj_type=u'link'):
                 path, context, context.get_root())
             target = path_root.unrestrictedTraverse(cleaned_path)
         except (AttributeError, KeyError, NotFound, TypeError):
-            logger.debug(u'Could not resolve %s %s in %s' % (obj_type, url, content_path))
-            return None, fragment
+            logger.debug(
+                u'Cannot resolve %s %s in %s',
+                obj_type, url, content_path)
+            return url, None, fragment
     if not ISilvaObject.providedBy(target):
         logger.error(
-            u'%s %s did not resolve to a Silva content in %s' % (
-                obj_type, path, content_path))
-        return None, fragment
+            u'%s %s did not resolve to a Silva content in %s',
+            obj_type, path, content_path)
+        return url, None, fragment
     try:
         [o for o in aq_iter(target, error=RuntimeError)]
-        return target, fragment
+        return url, target, fragment
     except RuntimeError:
-        logger.error(u'Invalid target %s %s in %s' %(
-                obj_type, path, content_path))
-        return None, fragment
+        logger.error(
+            u'Invalid target %s %s in %s',
+            obj_type, path, content_path)
+        return url, None, fragment
 
 
 class GhostUpgrader(BaseUpgrader):
@@ -199,7 +202,7 @@ class LinkVersionUpgrader(BaseUpgrader):
 
     def upgrade(self, version):
         link_path = content_path(version)
-        target, fragment = resolve_path(
+        url, target, fragment = resolve_path(
             version._url, link_path, version.get_container())
 
         if target:
@@ -207,6 +210,8 @@ class LinkVersionUpgrader(BaseUpgrader):
             version.set_relative(True)
             version.set_target(target)
             version._url = u''
+        else:
+            version._url = unicode(url, 'utf-8', 'ignore')
         return version
 
     def _is_absolute_url(self, url):
