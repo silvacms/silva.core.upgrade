@@ -10,6 +10,7 @@ import logging
 import datetime
 import gc
 import copy
+import os
 
 logger = logging.getLogger('silva.core.upgrade')
 
@@ -28,6 +29,7 @@ import transaction
 from Products.Silva.Membership import NoneMember
 from silva.core.interfaces import ISecurity, IPostUpgrader
 from silva.core.interfaces import IUpgrader, IUpgradeRegistry, IRoot
+from silva.core.interfaces.errors import UpgradeError
 from silva.core.interfaces.events import UpgradeFinishedEvent
 from silva.core.interfaces.events import UpgradeStartedEvent
 from silva.core.interfaces.events import UpgradeTransaction, IUpgradeTransaction
@@ -186,10 +188,10 @@ class UpgradeProcess(object):
                             # Object replaced, abort, return new object
                             return result
                         content = result
-            except ValueError as error:
+            except UpgradeError as error:
                 logger.error(
                     u'Error while upgrading object %s with %r: %s',
-                    content_path(content), upgrader, str(error))
+                    content_path(content), upgrader, str(error.reason))
         if post:
             self._post.extend(post)
         return content
@@ -228,10 +230,10 @@ class UpgradeProcess(object):
                     # Object replaced, abort upgraders.
                     break
                 content = result
-            except ValueError as error:
+            except UpgradeError as error:
                 logger.error(
                     u'Error while upgrading object %s with %r: %s',
-                    content_path(content), upgrader, str(error))
+                    content_path(content), upgrader, str(error.reason))
         self._post = []
 
 

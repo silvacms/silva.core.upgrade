@@ -22,6 +22,7 @@ except ImportError:
 from Acquisition import aq_base
 
 from silva.core import interfaces
+from silva.core.interfaces.errors import UpgradeError
 from silva.core.services.catalog import CatalogService
 from silva.core.services.interfaces import ICataloging
 from silva.core.services.interfaces import ICatalogService, IFilesService
@@ -126,18 +127,18 @@ class ImagesUpgrader(BaseUpgrader):
             try:
                 data = open(filename, 'rb')
             except IOError:
-                raise ValueError("Missing file %s." % filename)
+                raise UpgradeError("Missing file %s." % filename, img)
         elif hires_image.meta_type == 'Silva File':
             # Already converted ?
             return img
         else:
-            raise ValueError("Unknown mimetype.")
+            raise UpgradeError("Unknown mimetype.", img)
         data.seek(0)
         full_data = data.read()
         data.seek(0)
         content_type, encoding = self.guess_buffer_type(full_data)
         if content_type is None or encoding is not None:
-            raise ValueError("Impossible to detect mimetype")
+            raise UpgradeError("Impossible to detect mimetype", img)
         # fix some bug in old Images that could be BMP
         if img.web_format not in img.web_formats:
             img.web_format = 'JPEG'
