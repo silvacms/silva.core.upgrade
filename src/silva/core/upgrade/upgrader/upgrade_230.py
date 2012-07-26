@@ -211,7 +211,7 @@ class LinkVersionUpgrader(BaseUpgrader):
             version.set_target(target)
             version._url = u''
         else:
-            version._url = unicode(url, 'utf-8', 'ignore')
+            version._url = url
         return version
 
     def _is_absolute_url(self, url):
