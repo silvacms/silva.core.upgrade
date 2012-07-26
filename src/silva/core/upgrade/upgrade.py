@@ -10,7 +10,6 @@ import logging
 import datetime
 import gc
 import copy
-import os
 
 logger = logging.getLogger('silva.core.upgrade')
 
@@ -27,7 +26,7 @@ import transaction
 
 # Silva
 from Products.Silva.Membership import NoneMember
-from silva.core.interfaces import ISecurity, IPostUpgrader
+from silva.core.interfaces import ISecurity, IPostUpgrader, IVersionedContent
 from silva.core.interfaces import IUpgrader, IUpgradeRegistry, IRoot
 from silva.core.interfaces.errors import UpgradeError
 from silva.core.interfaces.events import UpgradeFinishedEvent
@@ -35,8 +34,9 @@ from silva.core.interfaces.events import UpgradeStartedEvent
 from silva.core.interfaces.events import UpgradeTransaction, IUpgradeTransaction
 from silva.core.references.interfaces import IReferenceService
 from silva.core.views.interfaces import ICustomizableTag
+from silva.core.services.interfaces import ICatalogService
 
-THRESHOLD = 2000
+THRESHOLD = 1000
 
 # marker for upgraders to be called for any object
 AnyMetaType = object()
@@ -149,6 +149,12 @@ class UpgradeProcess(object):
         self.versions = versions
         self.registry = registry
         self._count = 0
+        self._catalog_total = 0
+        self._catalog_expected = 0
+        catalog = getUtility(ICatalogService)
+        if 'meta_type' in catalog.indexes():
+            self._catalog_expected = catalog._catalog.getIndex(
+                'meta_type').numObjects()
         self._post = []
         self._upgraders = {}
         notify(UpgradeTransaction())
@@ -161,6 +167,9 @@ class UpgradeProcess(object):
 
     def notify_upgraded(self, content):
         self._count += 1
+        # XXX before 3.0, versioned content where not indexed in the catalog.
+        if not IVersionedContent.providedBy(content):
+            self._catalog_total += 1
         if self._count > THRESHOLD:
             transaction.commit()
             notify(UpgradeTransaction())
@@ -171,6 +180,11 @@ class UpgradeProcess(object):
                 # normally as well.
                 content._p_jar.cacheMinimize()
                 self._count = 0
+            if self._catalog_expected:
+                logger.info(
+                    u'Estimated progression (from the catalog) %.02f%%',
+                    self._catalog_total * 100.0 / self._catalog_expected)
+        return content
 
     def upgrade_content(self, content):
         post = []
@@ -183,10 +197,9 @@ class UpgradeProcess(object):
                     else:
                         result = upgrader.upgrade(content)
                         assert result is not None
-                        self.notify_upgraded(result)
                         if result.meta_type != content.meta_type:
                             # Object replaced, abort, return new object
-                            return result
+                            return self.notify_upgraded(result)
                         content = result
             except UpgradeError as error:
                 logger.error(
@@ -194,7 +207,7 @@ class UpgradeProcess(object):
                     content_path(content), upgrader, str(error.reason))
         if post:
             self._post.extend(post)
-        return content
+        return self.notify_upgraded(content)
 
     def upgrade_container(self, root, blacklist=[]):
         notify(UpgradeTransaction())
