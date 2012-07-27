@@ -162,7 +162,7 @@ class GhostUpgrader(BaseUpgrader):
                 target_path, None)
             if target is not None:
                 logger.info(
-                    u'Upgrade reference object for Ghost for %s.',
+                    u'Upgrading Ghost target for: %s.',
                     "/".join(ghost.getPhysicalPath()))
                 container = aq_parent(ghost).get_container()
                 ghost.set_haunted(
@@ -181,15 +181,17 @@ class VersionedContentUpgrader(BaseUpgrader):
     """Remove cache_data from versioned content as this is not used anymore.
     """
 
-    def validate(self, obj):
-        return IVersionedContent.providedBy(obj)
+    def validate(self, content):
+        return (IVersionedContent.providedBy(content) and
+                ('_cached_checked' in content.__dict__ or
+                 '_cached_data' in content.__dict__))
 
-    def upgrade(self, obj):
-        if hasattr(aq_base(obj), '_cached_checked'):
-            del obj._cached_checked
-        if hasattr(aq_base(obj), '_cached_data'):
-            del obj._cached_data
-        return obj
+    def upgrade(self, content):
+        if '_cached_checked' in content.__dict__:
+            del content._cached_checked
+        if '_cached_data' in content.__dict__:
+            del content._cached_data
+        return content
 
 
 class LinkVersionUpgrader(BaseUpgrader):

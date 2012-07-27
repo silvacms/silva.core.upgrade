@@ -282,7 +282,7 @@ class MetadataUpgrader(BaseUpgrader):
         return annotations is not None
 
     def upgrade(self, content):
-        logger.info('Upgrading metadata for %s.', content_path(content))
+        logger.info('Upgrading metadata for: %s.', content_path(content))
         new_annotations = IAnnotations(aq_base(content))
         old_annotations = getattr(aq_base(content), '_portal_annotations_')
         for key in old_annotations.keys():

@@ -95,7 +95,7 @@ class ContainerUpgrader(BaseUpgrader):
                 hasattr(container, '_ordered_ids'))
 
     def upgrade(self, container):
-        logger.info(u'Upgrade container order in %s.', content_path(container))
+        logger.info(u'Upgrading container order in: %s.', content_path(container))
         manager = IOrderManager(container)
         get_id = manager._get_id
         order = []
@@ -146,7 +146,7 @@ class UpdateHideFromTOC(BaseUpgrader):
         if to is None:
             to = annotations[self.to_ns] = PersistentMapping()
         to[self.key] = value
-        logger.info("Migrated hide_from_tocs for %s.", content_path(content))
+        logger.info("Migrated hide_from_tocs for: %s.", content_path(content))
         return content
 
 

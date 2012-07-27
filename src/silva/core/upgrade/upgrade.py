@@ -165,11 +165,13 @@ class UpgradeProcess(object):
                 self.versions, content.meta_type)
         return self._upgraders[content.meta_type]
 
-    def notify_upgraded(self, content):
-        self._count += 1
+    def notify_upgraded(self, content, modified=True):
         # XXX before 3.0, versioned content where not indexed in the catalog.
         if not IVersionedContent.providedBy(content):
             self._catalog_total += 1
+        if not modified:
+            return content
+        self._count += 1
         if self._count > THRESHOLD:
             transaction.commit()
             notify(UpgradeTransaction())
@@ -188,6 +190,7 @@ class UpgradeProcess(object):
 
     def upgrade_content(self, content):
         post = []
+        modified = False
         for upgrader in self.get_upgraders(content):
             __traceback_supplement__ = (UpgraderTraceback, content, upgrader)
             try:
@@ -196,6 +199,7 @@ class UpgradeProcess(object):
                         post.append((content, upgrader))
                     else:
                         result = upgrader.upgrade(content)
+                        modified = True
                         assert result is not None
                         if result.meta_type != content.meta_type:
                             # Object replaced, abort, return new object
@@ -207,7 +211,7 @@ class UpgradeProcess(object):
                     content_path(content), upgrader, str(error.reason))
         if post:
             self._post.extend(post)
-        return self.notify_upgraded(content)
+        return self.notify_upgraded(content, modified)
 
     def upgrade_container(self, root, blacklist=[]):
         notify(UpgradeTransaction())
