@@ -153,6 +153,44 @@ class ImagesUpgrader(BaseUpgrader):
 images_upgrader = ImagesUpgrader(VERSION_A1, 'Silva Image')
 
 
+class FilesUpgrader(BaseUpgrader):
+    """Convert storage for a file to blob storage.
+    """
+
+    def validate(self, content):
+        if interfaces.IBlobFile.providedBy(content):
+            return False
+        return interfaces.IFile.providedBy(content)
+
+    def upgrade(self, content):
+        identifier = content.getId()
+
+        tmp_identifier = identifier + 'conv_storage'
+        new_file = BlobFile(identifier)
+        container = content.aq_parent
+        if not interfaces.IContainer.providedBy(container):
+            logger.error(u'Invalid file: %s', content_path(content))
+            # Self-autodestruct file.
+            container._delObject(identifier)
+            raise StopIteration
+        container._setObject(tmp_identifier, new_file)
+        new_file = container._getOb(tmp_identifier)
+        self.replace_references(content, new_file)
+        self.replace(content, new_file)
+        new_file.set_file(content.get_file_fd())
+        new_file.set_content_type(content.get_content_type())
+        new_file.set_content_encoding(content.get_content_encoding())
+        container._delObject(identifier)
+        container.manage_renameObject(tmp_identifier, identifier)
+        logger.info(
+            u"File %s migrated.",
+            content_path(new_file.getPhysicalPath()))
+        return new_file
+
+files_upgrader = FilesUpgrader(VERSION_A1, 'Silva File')
+
+
+
 #-----------------------------------------------------------------------------
 # 2.2.0a1 to 2.2.0a2
 #-----------------------------------------------------------------------------

@@ -26,7 +26,8 @@ import transaction
 
 # Silva
 from Products.Silva.Membership import NoneMember
-from silva.core.interfaces import ISecurity, IPostUpgrader, IVersionedContent
+from silva.core.interfaces import IVersionedContent
+from silva.core.interfaces import ISecurity, IPostUpgrader
 from silva.core.interfaces import IUpgrader, IUpgradeRegistry, IRoot
 from silva.core.interfaces.errors import UpgradeError
 from silva.core.interfaces.events import UpgradeFinishedEvent

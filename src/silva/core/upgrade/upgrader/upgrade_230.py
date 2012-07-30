@@ -112,6 +112,13 @@ def split_path(path, context, root=None):
 def resolve_path(url, content_path, context, obj_type=u'link'):
     """Resolve path to an object or report an error.
     """
+    if isinstance(url, unicode):
+        # If the link contains unicode, that is not a link.
+        try:
+            url.encode('ascii')
+        except UnicodeEncodeError:
+            logger.error(u"Invalid %s '%s' (contains unicode).", obj_type, url)
+            return url, None, None
     url = url.strip()
     scheme, netloc, path, parameters, query, fragment = urlparse(url)
     if scheme:
@@ -158,9 +165,26 @@ class GhostUpgrader(BaseUpgrader):
     def upgrade(self, ghost):
         target_path = ghost._content_path
         if target_path:
-            target = ghost.get_root().unrestrictedTraverse(
-                target_path, None)
-            if target is not None:
+            try:
+                target = ghost.get_root().unrestrictedTraverse(target_path)
+            except (AttributeError, KeyError, NotFound, TypeError):
+                logger.error(
+                    u'Unexisting target for Ghost %s: %s.',
+                    content_path(ghost), "/".join(target_path))
+                return ghost
+            try:
+                [o for o in aq_iter(target, error=RuntimeError)]
+            except RuntimeError:
+                logger.error(
+                    u'Invalid target for Ghost %s: %s.',
+                    content_path(ghost), '/'.join(target_path))
+                return ghost
+            if not ISilvaObject.providedBy(target):
+                logger.error(
+                    u'Ghost target is not a Silva object for: %s.',
+                    content_path(ghost))
+                return ghost
+            if target is not None and ISilvaObject.providedBy(target):
                 logger.info(
                     u'Upgrading Ghost target for: %s.',
                     "/".join(ghost.getPhysicalPath()))
@@ -168,11 +192,6 @@ class GhostUpgrader(BaseUpgrader):
                 ghost.set_haunted(
                     target,
                     auto_delete=IGhostFolder.providedBy(container))
-            else:
-                logger.error(
-                    u'Ghost at %s point to a non existing object at %s',
-                    "/".join(ghost.getPhysicalPath()),
-                    "/".join(target_path))
             del ghost._content_path
         return ghost
 
