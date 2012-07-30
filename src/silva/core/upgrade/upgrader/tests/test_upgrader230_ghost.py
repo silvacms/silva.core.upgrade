@@ -53,8 +53,8 @@ class GhostUpgraderTestCase(unittest.TestCase):
 
         self.assertFalse(ghost_upgrader.validate(version))
         self.assertEqual(
-            self.root.document,
-            version.get_haunted())
+            version.get_haunted(),
+            self.root.document)
         self.assertEquals(
             aq_chain(self.root.document),
             aq_chain(version.get_haunted()))
@@ -65,6 +65,32 @@ class GhostUpgraderTestCase(unittest.TestCase):
         self.assertEquals(
             aq_chain(reference.source),
             aq_chain(version))
+
+    def test_upgrade_ghost_invalid_path(self):
+        version = self.root.publication.ghost.get_viewable()
+        self.assertIsNot(version, None)
+        version._content_path = ('', 'root', 'root', 'document')
+        self.assertTrue(ghost_upgrader.validate(version))
+        self.assertEqual(ghost_upgrader.upgrade(version), version)
+
+        # This didn't change anything, but didn't break.
+        self.assertTrue(ghost_upgrader.validate(version))
+        self.assertEqual(
+            version.get_haunted(),
+            None)
+
+    def test_upgrade_ghost_unexisting_path(self):
+        version = self.root.publication.ghost.get_viewable()
+        self.assertIsNot(version, None)
+        version._content_path = ('', 'root', 'lala')
+        self.assertTrue(ghost_upgrader.validate(version))
+        self.assertEqual(ghost_upgrader.upgrade(version), version)
+
+        # This didn't change anything, but didn't break.
+        self.assertTrue(ghost_upgrader.validate(version))
+        self.assertEqual(
+            version.get_haunted(),
+            None)
 
     def test_upgrade_ghost_in_ghost_folder(self):
         version = self.root.ghost_folder.ghost.get_viewable()

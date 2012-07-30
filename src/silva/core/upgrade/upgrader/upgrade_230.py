@@ -8,7 +8,7 @@ import logging
 from zope.event import notify
 from zope.lifecycleevent import ObjectCreatedEvent
 
-from Acquisition import aq_base, aq_parent
+from Acquisition import aq_base, aq_parent, aq_inner
 from zExceptions import NotFound
 from five.intid.site import aq_iter
 
@@ -142,6 +142,7 @@ def resolve_path(url, content_path, context, obj_type=u'link'):
                 u'Cannot resolve %s %s in %s',
                 obj_type, url, content_path)
             return url, None, fragment
+    target = aq_inner(target)
     if not ISilvaObject.providedBy(target):
         logger.error(
             u'%s %s did not resolve to a Silva content in %s',
@@ -172,17 +173,18 @@ class GhostUpgrader(BaseUpgrader):
                     u'Unexisting target for Ghost %s: %s.',
                     content_path(ghost), "/".join(target_path))
                 return ghost
+            target = aq_inner(target)
+            if not ISilvaObject.providedBy(target):
+                logger.error(
+                    u'Ghost target is not a Silva object for: %s.',
+                    content_path(ghost))
+                return ghost
             try:
                 [o for o in aq_iter(target, error=RuntimeError)]
             except RuntimeError:
                 logger.error(
                     u'Invalid target for Ghost %s: %s.',
                     content_path(ghost), '/'.join(target_path))
-                return ghost
-            if not ISilvaObject.providedBy(target):
-                logger.error(
-                    u'Ghost target is not a Silva object for: %s.',
-                    content_path(ghost))
                 return ghost
             if target is not None and ISilvaObject.providedBy(target):
                 logger.info(
