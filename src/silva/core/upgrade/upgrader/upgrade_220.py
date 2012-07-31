@@ -182,9 +182,7 @@ class FilesUpgrader(BaseUpgrader):
         new_file.set_content_encoding(content.get_content_encoding())
         container._delObject(identifier)
         container.manage_renameObject(tmp_identifier, identifier)
-        logger.info(
-            u"File %s migrated.",
-            content_path(new_file.getPhysicalPath()))
+        logger.info(u"File %s migrated.", content_path(new_file))
         return new_file
 
 files_upgrader = FilesUpgrader(VERSION_A1, 'Silva File')
