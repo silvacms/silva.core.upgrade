@@ -153,10 +153,7 @@ class UpgradeProcess(object):
         self._catalog_total = 0
         self._catalog_expected = 0
         catalog = queryUtility(ICatalogService)
-        if catalog is None:
-            # XXX Pre 3.0 migration
-            catalog = root.service_catalog
-        if 'meta_type' in catalog.indexes():
+        if catalog is not None and 'meta_type' in catalog.indexes():
             self._catalog_expected = catalog._catalog.getIndex(
                 'meta_type').numObjects()
         self._post = []
