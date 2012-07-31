@@ -20,7 +20,7 @@ from OFS.interfaces import IFolder
 from ZODB.broken import Broken
 from zope.interface import providedBy, alsoProvides
 from zope.annotation.interfaces import IAnnotations
-from zope.component import getUtility
+from zope.component import queryUtility, getUtility
 from zope.event import notify
 import transaction
 
@@ -152,7 +152,10 @@ class UpgradeProcess(object):
         self._count = 0
         self._catalog_total = 0
         self._catalog_expected = 0
-        catalog = getUtility(ICatalogService)
+        catalog = queryUtility(ICatalogService)
+        if catalog is None:
+            # XXX Pre 3.0 migration
+            catalog = root.service_catalog
         if 'meta_type' in catalog.indexes():
             self._catalog_expected = catalog._catalog.getIndex(
                 'meta_type').numObjects()
