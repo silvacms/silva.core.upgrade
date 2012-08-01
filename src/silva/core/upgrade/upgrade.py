@@ -363,8 +363,7 @@ class UpgraderTraceback(object):
     information is present.
     """
 
-    def __init__(self, context, content, upgrader):
-        self.context = context
+    def __init__(self, content, upgrader):
         self.content = content
         self.upgrader = upgrader
 
