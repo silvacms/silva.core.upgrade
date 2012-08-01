@@ -7,9 +7,10 @@ import logging
 
 from ZPublisher.BeforeTraverse import unregisterBeforeTraverse
 from zope.annotation.interfaces import IAnnotations
-from zope.site.hooks import setSite, setHooks
-from zope.location.interfaces import ISite
 from zope.component import getUtility
+from zope.interface import implements
+from zope.location.interfaces import ISite
+from zope.site.hooks import setSite, setHooks
 import ZODB.broken
 import zope.interface
 
@@ -29,6 +30,7 @@ from silva.core.services.interfaces import ICatalogService, IFilesService
 from silva.core.upgrade.localsite import setup_intid
 from silva.core.upgrade.silvaxml import NAMESPACES_CHANGES
 from silva.core.upgrade.upgrade import BaseUpgrader, AnyMetaType, content_path
+from silva.core.interfaces import IPostUpgrader
 
 from Products.Silva.File import BlobFile
 from Products.SilvaExternalSources.interfaces import ICodeSourceService
@@ -95,10 +97,24 @@ class RootUpgrader(BaseUpgrader):
             # For the upgrade
             service_files.storage = BlobFile
 
+        # Disable quota verification (but not accounting if this
+        # enabled) during the migration, so the file migration can
+        # safely happens.
+        root.service_extensions._quota_verify = False
         return root
 
 
 root_upgrader = RootUpgrader(VERSION_A1, 'Silva Root')
+
+class RootPostUpgrader(BaseUpgrader):
+    implements(IPostUpgrader)
+
+    def upgrade(self, root):
+        # Rest quota verification if this was enabled.
+        root.service_extensions._quota_verify = root.service_extensions._quota_enabled
+        return root
+
+root_post_upgrader = RootPostUpgrader(VERSION_A1, 'Silva Root')
 
 
 class ImagesUpgrader(BaseUpgrader):
