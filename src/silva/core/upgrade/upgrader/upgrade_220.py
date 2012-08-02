@@ -144,18 +144,18 @@ class ImagesUpgrader(BaseUpgrader):
             try:
                 data = open(filename, 'rb')
             except IOError:
-                raise UpgradeError("Missing file %s." % filename, img)
+                raise UpgradeError(u"Missing file %s." % filename, img)
         elif hires_image.meta_type == 'Silva File':
             # Already converted ?
             return img
         else:
-            raise UpgradeError("Unknown mimetype.", img)
+            raise UpgradeError(u"Unknown mimetype.", img)
         data.seek(0)
         full_data = data.read()
         data.seek(0)
         content_type, encoding = self.guess_buffer_type(full_data)
         if content_type is None or encoding is not None:
-            raise UpgradeError("Impossible to detect mimetype", img)
+            raise UpgradeError(u"Impossible to detect mimetype.", img)
         # fix some bug in old Images that could be BMP
         if img.web_format not in img.web_formats:
             img.web_format = 'JPEG'
@@ -166,7 +166,7 @@ class ImagesUpgrader(BaseUpgrader):
             logger.error(error.args[0])
         data.close()
         ICataloging(img).reindex()
-        logger.info("Update image %s rebuilt.", content_path(img))
+        logger.info(u"Update image %s rebuilt.", content_path(img))
         return img
 
 
