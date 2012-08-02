@@ -160,7 +160,10 @@ class ImagesUpgrader(BaseUpgrader):
         if img.web_format not in img.web_formats:
             img.web_format = 'JPEG'
         img._image_factory('hires_image', data, content_type)
-        img._create_derived_images()
+        try:
+            img._create_derived_images()
+        except ValueError as error:
+            logger.error(error.args[0])
         data.close()
         ICataloging(img).reindex()
         logger.info("Update image %s rebuilt.", content_path(img))
