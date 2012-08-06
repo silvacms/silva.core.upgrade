@@ -33,7 +33,6 @@ from silva.core.upgrade.upgrade import BaseUpgrader, AnyMetaType, content_path
 from silva.core.interfaces import IPostUpgrader
 
 from Products.Silva.File import BlobFile
-from Products.Silva.File.mimetypes import MagicException
 from Products.SilvaExternalSources.interfaces import ICodeSourceService
 from Products.SilvaMetadata.interfaces import IMetadataService
 from Products.Silva.install import configure_metadata
@@ -197,15 +196,10 @@ class FilesUpgrader(BaseUpgrader):
         new_file = container._getOb(tmp_identifier)
         self.replace_references(content, new_file)
         self.replace(content, new_file)
-        try:
-            new_file.set_file(content.get_file_fd())
-        except MagicException:
-            # Hopefully, this is done after the data have been copied,
-            # and we override the content_type after anyway, so we can
-            # ignore this error here.
-            pass
-        new_file.set_content_type(content.get_content_type())
-        new_file.set_content_encoding(content.get_content_encoding())
+        new_file.set_file(
+            content.get_file_fd(),
+            content_type=content.get_content_type(),
+            content_encoding=content.get_content_encoding())
         container._delObject(identifier)
         container.manage_renameObject(tmp_identifier, identifier)
         logger.info(u"File %s migrated.", content_path(new_file))
