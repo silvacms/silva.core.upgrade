@@ -28,11 +28,11 @@ class GhostUpgraderTestCase(unittest.TestCase):
         self.layer.login('editor')
         factory = self.root.manage_addProduct['Silva']
         factory.manage_addPublication('publication', 'Publication')
-        factory.manage_addGhostFolder('ghost_folder', 'Ghost Folder')
+        factory.manage_addGhostFolder('ghost_folder', None)
         factory.manage_addMockupVersionedContent('document', 'Document')
 
         factory = self.root.publication.manage_addProduct['Silva']
-        factory.manage_addGhost('ghost', 'Ghost of Document')
+        factory.manage_addGhost('ghost', None)
 
         version = self.root.publication.ghost.get_editable()
         version._content_path = ('', 'root', 'document')
@@ -40,7 +40,7 @@ class GhostUpgraderTestCase(unittest.TestCase):
 
         self.root.ghost_folder._content_path = ('', 'root', 'publication')
         factory = self.root.ghost_folder.manage_addProduct['Silva']
-        factory.manage_addGhost('ghost', 'Ghost of Document')
+        factory.manage_addGhost('ghost', None)
         version = self.root.ghost_folder.ghost.get_editable()
         version._content_path = ('', 'root', 'document')
         IPublicationWorkflow(self.root.ghost_folder.ghost).publish()
