@@ -72,7 +72,7 @@ class BaseUpgrader(object):
             target_annotations[key] = copy.deepcopy(source_annotations[key])
         if ISecurity.providedBy(old_obj):
             # Copy last author information
-            user = aq_base(old_obj.sec_get_last_author_info())
+            user = aq_base(old_obj.get_last_author_info())
             if not isinstance(user, NoneMember):
                 new_obj._last_author_userid = user.id
                 new_obj._last_author_info = user
