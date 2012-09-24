@@ -1,10 +1,14 @@
 Changelog
 =========
 
-3.0 (unreleased)
-----------------
+3.0c1 (2012/09/24)
+------------------
 
-* ...
+* Rewrite upgrader registry to optimize upgrade speed.
+
+* Add upgraders to Silva 3.0c1.
+
+* Fix upgrade from Silva 2.1 to 3.0.
 
 3.0b1 (2011/11/11)
 ------------------
