@@ -4,6 +4,7 @@
 
 from silva.system.utils.script import NEED_SILVA_SESSION
 from silva.core.upgrade.upgrade import registry
+from silva.core.interfaces import IContainer, IRoot
 import transaction
 import logging
 
@@ -18,6 +19,8 @@ class UpgradeCommand(object):
             'upgrade',
             help='upgrade a site to the latest version')
         parser.add_argument(
+            "--subtree", help="path to a subtree to upgrade")
+        parser.add_argument(
             "--from-version", dest="version",
             help="start upgrade from the given version")
         parser.add_argument(
@@ -30,11 +33,26 @@ class UpgradeCommand(object):
 
     def run(self, root, options):
         from_version = options.version
+        if options.subtree and not from_version:
+            logger.error('you need to provide --from-version '
+                'to upgrade a subtree')
+            exit(3)
         if not from_version:
             from_version = root.get_silva_content_version()
         to_version = root.get_silva_software_version()
         logger.info("upgrade from version %s to version %s" % (
                 from_version, to_version))
-        registry.upgrade(root, from_version, to_version)
-        root._content_version = to_version
+        target = root
+        if options.subtree:
+            try:
+                target = root.unrestrictedTraverse(options.subtree)
+            except KeyError:
+                logger.error('Invalid subtree.')
+                exit(1)
+        if not IContainer.providedBy(target):
+            logger.error('subtree is not a container.')
+            exit(2)
+        registry.upgrade(target, from_version, to_version)
+        if IRoot.providedBy(target):
+            target._content_version = to_version
         transaction.commit()
