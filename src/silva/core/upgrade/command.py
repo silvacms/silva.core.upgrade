@@ -29,6 +29,12 @@ class UpgradeCommand(object):
         parser.add_argument(
             "paths", nargs="+",
             help="path to Silva sites to work on")
+        parser.add_argument(
+            "--require-tags", nargs="+",
+            help="list of required tags")
+        parser.add_argument(
+            "--exclude-tags", nargs="+",
+            help="list of exclude tags")
         parser.set_defaults(plugin=self)
 
     def run(self, root, options):
@@ -52,7 +58,8 @@ class UpgradeCommand(object):
         if not IContainer.providedBy(target):
             logger.error('subtree is not a container.')
             exit(2)
-        registry.upgrade(target, from_version, to_version)
+        registry.upgrade(target, from_version, to_version,
+            whitelist=options.require_tags, blacklist=options.exclude_tags)
         if IRoot.providedBy(target):
             target._content_version = to_version
         transaction.commit()

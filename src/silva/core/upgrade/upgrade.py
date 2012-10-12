@@ -3,6 +3,7 @@
 # See also LICENSE.txt
 
 # Python
+from itertools import ifilter
 from bisect import insort_right
 from pkg_resources import parse_version
 import tempfile
@@ -144,11 +145,41 @@ def get_upgrade_chain(versions, from_version, to_version):
     return versions[version_start_index:version_end_index]
 
 
+_empty = set()
+
+
+class TagsFilter(object):
+
+    def __init__(self, tags):
+        self.tags = set(tags)
+
+    def __call__(self, upgrader):
+        tags = getattr(upgrader, 'tags', _empty)
+        return self._allowed(tags)
+
+
+class BlackListFilter(TagsFilter):
+
+    def _allowed(self, tags):
+        return not bool(tags & self.tags)
+
+
+class WhiteListFilter(TagsFilter):
+
+    def _allowed(self, tags):
+        return bool(tags & self.tags)
+
+
 class UpgradeProcess(object):
 
-    def __init__(self, registry, versions):
+    def __init__(self, registry, versions, blacklist=None, whitelist=None):
         self.versions = versions
         self.registry = registry
+        self.filters = []
+        if whitelist is not None:
+            self.filters.append(WhiteListFilter(whitelist))
+        if blacklist is not None:
+            self.filters.append(BlackListFilter(blacklist))
         self._count = 0
         self._catalog_total = 0
         self._catalog_expected = 0
@@ -162,8 +193,12 @@ class UpgradeProcess(object):
 
     def get_upgraders(self, content):
         if content.meta_type not in self._upgraders:
-            self._upgraders[content.meta_type] = self.registry.get_upgraders(
+            upgraders = self.registry.get_upgraders(
                 self.versions, content.meta_type)
+            for f in self.filters:
+                upgraders = ifilter(f, upgraders)
+            self._upgraders[content.meta_type] = list(upgraders)
+
         return self._upgraders[content.meta_type]
 
     def notify_upgraded(self, content, modified=True):
@@ -307,7 +342,8 @@ class UpgradeRegistry(object):
             logger.info(
                 u'Upgrade finished in %d seconds.', (end - start).seconds)
 
-    def upgrade(self, root, from_version, to_version):
+    def upgrade(self, root, from_version, to_version, whitelist=None,
+            blacklist=None):
         """Upgrade a root object from the from_version to the
         to_version.
         """
@@ -327,7 +363,8 @@ class UpgradeRegistry(object):
                 self.__registry.keys(), from_version, to_version)
             if not versions:
                 logger.info(u'Nothing needs to be done.')
-            process = UpgradeProcess(self, versions)
+            process = UpgradeProcess(self, versions, whitelist=whitelist,
+                blacklist=blacklist)
 
             if IRoot.providedBy(root):
                 # First, upgrade Silva Root so Silva services /
