@@ -2,8 +2,6 @@
 # Copyright (c) 2009-2012 Infrae. All rights reserved.
 # See also LICENSE.txt
 
-from . import monkeys
-
 CLASS_CHANGES = {
     'Products.Annotations.AnnotationTool Annotations':
         'persistent.mapping PersistentMapping',

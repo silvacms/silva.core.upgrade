@@ -12,7 +12,6 @@ from zope.component import queryUtility
 from zope.intid.interfaces import IIntIds
 from zope.location.interfaces import ISite
 from zope.site.hooks import setSite
-from ZODB.broken import Broken
 
 from silva.core.services.base import IntIdService
 from five.localsitemanager import make_objectmanager_site
@@ -26,7 +25,6 @@ def clean_old_five_sm(context, create=True):
     """Disable the old Five sucky SM.
     """
     from Products.Five.site.localsite import disableLocalSiteHook
-    std_msg = 'Please deinstall products using the local site feature.'
     disableLocalSiteHook(context)
     if not create:
         return None
