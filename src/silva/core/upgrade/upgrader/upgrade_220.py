@@ -4,6 +4,7 @@
 
 from cStringIO import StringIO
 import logging
+import os
 
 from ZPublisher.BeforeTraverse import unregisterBeforeTraverse
 from zope.annotation.interfaces import IAnnotations
@@ -11,6 +12,7 @@ from zope.component import getUtility
 from zope.interface import implements
 from zope.location.interfaces import ISite
 from zope.site.hooks import setSite, setHooks
+from OFS.SimpleItem import SimpleItem
 import ZODB.broken
 import zope.interface
 
@@ -23,6 +25,7 @@ except ImportError:
 from Acquisition import aq_base
 
 from silva.core import interfaces
+from silva.core import conf as silvaconf
 from silva.core.interfaces.errors import UpgradeError
 from silva.core.services.catalog import CatalogService
 from silva.core.services.interfaces import ICataloging
@@ -32,7 +35,7 @@ from silva.core.upgrade.silvaxml import NAMESPACES_CHANGES
 from silva.core.upgrade.upgrade import BaseUpgrader, AnyMetaType, content_path
 from silva.core.interfaces import IPostUpgrader
 
-from Products.Silva.File import BlobFile
+from Products.Silva.File import BlobFile, File
 from Products.SilvaExternalSources.interfaces import ICodeSourceService
 from Products.SilvaMetadata.interfaces import IMetadataService
 from Products.Silva.install import configure_metadata
@@ -45,6 +48,35 @@ logger = logging.getLogger('silva.core.upgrade')
 #-----------------------------------------------------------------------------
 
 VERSION_A1='2.2a1'
+
+
+class SilvaFileSystemFile(File):
+    silvaconf.baseclass()
+    _file = None
+
+    def get_file_fd(self):
+        return open(self._file.get_filename(), 'rb')
+
+
+class ExtFile(SimpleItem):
+    meta_type = 'ExtFile'
+    filename = ''
+    content_type = ''
+
+    def get_filename(self):
+        """Return the filename on the filesystem from the file.
+        """
+        path = [os.environ['EXTFILE_REPOSITORY_PATH']]
+        if isinstance(self.filename, list):
+            path.extend(self.filename)
+        elif self.filename != '':
+            path.append(self.filename)
+        return os.path.join(*path)
+
+    def get_size(self):
+        with open(self.get_filename(), 'rb') as stream:
+            stream.seek(0, 2)
+            return stream.tell()
 
 
 class RootUpgrader(BaseUpgrader):
@@ -138,7 +170,7 @@ class ImagesUpgrader(BaseUpgrader):
                 return img
         if hires_image.meta_type == 'Image':
             data = StringIO(str(hires_image.data))
-        elif hires_image.meta_type == 'ExtImage':
+        elif hires_image.meta_type in ('ExtImage', 'ExtFile'):
             filename = hires_image.get_filename()
             try:
                 data = open(filename, 'rb')

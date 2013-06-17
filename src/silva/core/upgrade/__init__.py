@@ -3,6 +3,12 @@
 # See also LICENSE.txt
 
 CLASS_CHANGES = {
+    'Products.ExtFile.ExtImage ExtImage':
+        'silva.core.upgrade.upgrader.upgrade_220 ExtFile',
+    'Products.ExtFile.ExtFile ExtFile':
+        'silva.core.upgrade.upgrader.upgrade_220 ExtFile',
+    'Products.Silva.File FileSystemFile':
+        'silva.core.upgrade.upgrader.upgrade_220 SilvaFileSystemFile',
     'Products.Annotations.AnnotationTool Annotations':
         'persistent.mapping PersistentMapping',
     'Products.Silva.emaillinesfield EmailLinesField':
