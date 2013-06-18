@@ -250,7 +250,6 @@ class UpgradeProcess(object):
         return self.notify_upgraded(content, modified)
 
     def upgrade_container(self, root, blacklist=[]):
-        notify(UpgradeTransaction())
         contents = [root]
         while contents:
             iterate = True
@@ -324,7 +323,48 @@ class UpgradeRegistry(object):
             upgraders.extend(v_mt.get(meta_type, []))
         return upgraders
 
+    def upgrade_content(self, content, from_version, to_version, whitelist=None,
+            blacklist=None):
+        """Upgrade a content object from the from_version to the
+        to_version.
+        """
+        if self.__in_process is True:
+            raise ValueError(u"An upgrade process is already going on")
+        log_stream = tempfile.NamedTemporaryFile()
+        log_handler = logging.StreamHandler(log_stream)
+        logger.addHandler(log_handler)
+        try:
+            logger.info(
+                u'Upgrading from %s to %s.', from_version, to_version)
+            notify(UpgradeStartedEvent(content, from_version, to_version))
+
+            start = datetime.datetime.now()
+            end = None
+            versions = get_upgrade_chain(
+                self.__registry.keys(), from_version, to_version)
+            if not versions:
+                logger.info(u'Nothing needs to be done.')
+            process = UpgradeProcess(self, versions, whitelist=whitelist,
+                blacklist=blacklist)
+
+            logger.info(
+                u'Upgrading content to versions %s.',
+                ', '.join(versions))
+            process.upgrade_content(content)
+            process.post_upgrade()
+
+            end = datetime.datetime.now()
+            logger.info(
+                u'Upgrade finished in %d seconds.', (end - start).seconds)
+        finally:
+            logger.removeHandler(log_handler)
+            self.__in_process = False
+        notify(UpgradeFinishedEvent(content, from_version, to_version, end is not None))
+        log_stream.seek(0, 0)
+        return log_stream
+
     def upgrade_tree(self, root, version, blacklist=[]):
+        # XXX Used by service files. This need refactored.
         logger.info(
             u'Upgrading container %s to %s.', content_path(root), version)
         start = datetime.datetime.now()
