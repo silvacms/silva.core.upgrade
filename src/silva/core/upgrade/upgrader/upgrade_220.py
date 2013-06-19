@@ -150,7 +150,11 @@ root_post_upgrader = RootPostUpgrader(VERSION_A1, 'Silva Root')
 
 
 class ImagesUpgrader(BaseUpgrader):
+    """Convert image storage to blob storage.
+    """
     _guess_buffer_type = None
+
+    tags = {'pre',}
 
     @property
     def guess_buffer_type(self):
@@ -208,6 +212,8 @@ class FilesUpgrader(BaseUpgrader):
     """Convert storage for a file to blob storage.
     """
 
+    tags = {'pre',}
+
     def validate(self, content):
         if interfaces.IBlobFile.providedBy(content):
             return False
@@ -250,6 +256,10 @@ VERSION_A2='2.2a2'
 
 
 class AllowedAddablesUpgrader(BaseUpgrader):
+    """Convert allowed addable attributes on containers.
+    """
+
+    tags = {'pre',}
 
     def validate(self, obj):
         return interfaces.IContainer.providedBy(obj)
@@ -361,6 +371,8 @@ metadata_set_upgrader = MetadataSetUpgrader(VERSION_B1, 'Silva Root', 40)
 class MetadataUpgrader(BaseUpgrader):
     """Migrate metadata information.
     """
+
+    tags = {'pre',}
 
     def validate(self, content):
         if not (interfaces.ISilvaObject.providedBy(content) or

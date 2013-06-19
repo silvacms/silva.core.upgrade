@@ -199,8 +199,11 @@ class GhostUpgrader(BaseUpgrader):
 
 
 class VersionedContentUpgrader(BaseUpgrader):
-    """Remove cache_data from versioned content as this is not used anymore.
+    """Remove cache_data from versioned content as this is not used
+    anymore.
     """
+
+    tags = {'pre',}
 
     def validate(self, content):
         return (IVersionedContent.providedBy(content) and
@@ -310,6 +313,8 @@ class SecondRootUpgrader(BaseUpgrader):
 
 
 class CSVSourceUpgrader(BaseUpgrader):
+
+    tags = {'pre',}
 
     def upgrade(self, content):
         from Products.SilvaExternalSources.CSVSource import (

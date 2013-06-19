@@ -130,6 +130,8 @@ class UpdateHideFromTOC(BaseUpgrader):
     to_ns = "http://infrae.com/namespace/metadata/silva-settings"
     key = "hide_from_tocs"
 
+    tags = {'pre',}
+
     def validate(self, content):
         annotations = getattr(content, '__annotations__', None)
         return annotations is not None and \

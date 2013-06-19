@@ -145,28 +145,28 @@ def get_upgrade_chain(versions, from_version, to_version):
     return versions[version_start_index:version_end_index]
 
 
-_empty = set()
-
-
 class TagsFilter(object):
 
     def __init__(self, tags):
         self.tags = set(tags)
 
+    def check(self, tags):
+        raise NotImplementedError
+
     def __call__(self, upgrader):
-        tags = getattr(upgrader, 'tags', _empty)
-        return self._allowed(tags)
+        tags = getattr(upgrader, 'tags', set())
+        return self.check(tags)
 
 
 class BlackListFilter(TagsFilter):
 
-    def _allowed(self, tags):
+    def check(self, tags):
         return not bool(tags & self.tags)
 
 
 class WhiteListFilter(TagsFilter):
 
-    def _allowed(self, tags):
+    def check(self, tags):
         return bool(tags & self.tags)
 
 

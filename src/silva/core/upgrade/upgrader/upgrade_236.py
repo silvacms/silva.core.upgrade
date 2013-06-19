@@ -16,6 +16,8 @@ VERSION_SIX='2.3.6'
 class FileUpgrader(BaseUpgrader):
     _update_filename = None
 
+    tags = {'pre',}
+
     @property
     def update_filename(self):
         if self._update_filename is None:
@@ -37,6 +39,8 @@ class FileUpgrader(BaseUpgrader):
 
 
 class ImageUpgrader(FileUpgrader):
+
+    tags = {'pre',}
 
     def upgrade(self, item):
         for file_id in ('hires_image', 'image', 'thumbnail_image'):
