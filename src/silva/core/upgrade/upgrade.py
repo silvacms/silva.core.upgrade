@@ -145,6 +145,11 @@ def get_upgrade_chain(versions, from_version, to_version):
     return versions[version_start_index:version_end_index]
 
 
+def commit():
+    transaction.commit()
+    notify(UpgradeTransaction())
+
+
 class TagsFilter(object):
 
     def __init__(self, tags):
@@ -209,8 +214,7 @@ class UpgradeProcess(object):
             return content
         self._count += 1
         if self._count > THRESHOLD:
-            transaction.commit()
-            notify(UpgradeTransaction())
+            commit()
             if (hasattr(aq_base(content), '_p_jar') and
                 content._p_jar is not None):
                 # Cache minimize kill the ZODB cache
@@ -413,7 +417,7 @@ class UpgradeRegistry(object):
                     u'Upgrading root to versions %s.',
                     ', '.join(versions))
                 process.upgrade_content(root)
-                transaction.commit()
+                commit()
 
             # Now, upgrade site content
             logger.info(u'Upgrading content to version %s.', ', '.join(versions))
