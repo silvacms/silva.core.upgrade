@@ -7,11 +7,9 @@ import unittest
 
 from zope.component import getUtility
 
-
-from Products.Silva.testing import FunctionalLayer
-from silva.core.upgrade.upgrader.upgrade_300 import hide_from_toc_upgrader
+from Products.Silva.testing import FunctionalLayer, Transaction
 from Products.SilvaMetadata.interfaces import IMetadataService
-
+from silva.core.upgrade.upgrader.upgrade_300 import hide_from_toc_upgrader
 
 SILVA_EXTRA = "http://infrae.com/namespace/metadata/silva-extra"
 
@@ -23,10 +21,10 @@ class HideFromTOCUpgraderTestCase(unittest.TestCase):
 
     def setUp(self):
         self.root = self.layer.get_application()
-        self.layer.login('manager')
-        factory = self.root.manage_addProduct['Silva']
-        factory.manage_addFolder('folder', 'Folder')
-        folder = self.root.folder
+        with Transaction():
+            self.layer.login('manager')
+            factory = self.root.manage_addProduct['Silva']
+            factory.manage_addFolder('folder', 'Folder')
 
     def test_hide_from_toc(self):
         service = getUtility(IMetadataService)
