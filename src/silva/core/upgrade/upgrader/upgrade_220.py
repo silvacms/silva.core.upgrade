@@ -29,6 +29,8 @@ from silva.core import conf as silvaconf
 from silva.core.interfaces.errors import UpgradeError
 from silva.core.services.catalog import CatalogService
 from silva.core.services.interfaces import ICataloging
+from silva.core.services.interfaces import IMetadataService
+from silva.core.services.interfaces import IExtensionService
 from silva.core.services.interfaces import ICatalogService, IFilesService
 from silva.core.upgrade.localsite import setup_intid
 from silva.core.upgrade.silvaxml import NAMESPACES_CHANGES
@@ -37,7 +39,6 @@ from silva.core.interfaces import IPostUpgrader
 
 from Products.Silva.File import BlobFile, File
 from Products.SilvaExternalSources.interfaces import ICodeSourceService
-from Products.SilvaMetadata.interfaces import IMetadataService
 from Products.Silva.install import configure_metadata
 
 logger = logging.getLogger('silva.core.upgrade')
@@ -295,6 +296,9 @@ class SecondRootUpgrader(BaseUpgrader):
             # We should have it however ...
             sm.registerUtility(
                 root.service_codesources, ICodeSourceService)
+
+        # Register service extensions.
+        sm.registerUtility(root.service_extensions, IExtensionService)
 
         # Update metadata service
         metadata = root.service_metadata
