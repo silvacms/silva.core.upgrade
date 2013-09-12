@@ -6,11 +6,12 @@ import logging
 
 from zope.interface import implements
 
-from silva.core.interfaces import IPostUpgrader
-from silva.core.interfaces import IOrderableContainer, IOrderManager
-from silva.core.upgrade.upgrade import BaseUpgrader, AnyMetaType, content_path
 from Products.Silva.install import configure_metadata
 from persistent.mapping import PersistentMapping
+from silva.core.interfaces import IOrderableContainer, IOrderManager
+from silva.core.interfaces import IPostUpgrader
+from silva.core.upgrade.upgrade import BaseUpgrader, AnyMetaType, content_path
+from silva.core.views.interfaces import IHTTPResponseHeaders
 
 
 logger = logging.getLogger('silva.core.upgrade')
@@ -133,6 +134,9 @@ class UpdateHideFromTOC(BaseUpgrader):
     tags = {'pre',}
 
     def validate(self, content):
+        # This might make a write to the database.
+        IHTTPResponseHeaders(content, None)
+        # Check da annotation.
         annotations = getattr(content, '__annotations__', None)
         return annotations is not None and \
             self.ns in annotations and \
