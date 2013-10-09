@@ -1,10 +1,10 @@
 # -*- coding: utf-8 -*-
-# Copyright (c) 2012  Infrae. All rights reserved.
+# Copyright (c) 2012-2013 Infrae. All rights reserved.
 # See also LICENSE.txt
 from setuptools import setup, find_packages
 import os
 
-version = '3.0.1dev'
+version = '3.0.1'
 
 tests_require = [
     'Products.Silva [test]',

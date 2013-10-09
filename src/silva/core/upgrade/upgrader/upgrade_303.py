@@ -1,3 +1,6 @@
+# -*- coding: utf-8 -*-
+# Copyright (c) 2013  Infrae. All rights reserved.
+# See also LICENSE.txt
 from silva.core.upgrade.upgrade import BaseUpgrader
 from silva.core.editor.utils import DEFAULT_PER_TAG_WHITELISTS
 from silva.core.editor.utils import DEFAULT_HTML_ATTR_WHITELIST
