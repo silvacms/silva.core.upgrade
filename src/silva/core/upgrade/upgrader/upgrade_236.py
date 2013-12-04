@@ -34,28 +34,38 @@ class ImagesUpgrader(BaseUpgrader):
                 IMimeTypeClassifier).guess_buffer_type
         return self._guess_buffer_type
 
-    def upgrade_to_ghost(self, img):
-        container = img.get_container()
+    def upgrade_to_ghost(self, content):
+        container = content.get_container()
         if not IGhostFolder.providedBy(container):
             return None
         if container.get_link_status() is not None:
             logger.warning(
                 u"Invalid ghost folder invalid, not transforming %s.",
-                content_path(img))
+                content_path(content))
             return None
-        img_id = img.getId()
+        content_id = content.getId()
         container_haunted = container.get_haunted()
-        img_haunted = container_haunted._getOb(img_id, None)
-        if not IImage.providedBy(img_haunted):
+        content_haunted = container_haunted._getOb(content_id, None)
+        if not IImage.providedBy(content_haunted):
             logger.warning(
                 u"Original found for %s, but is not an image, not transforming it.",
-                content_path(img))
+                content_path(content))
             return None
-        return get_factory(img_haunted)(
-                    ghost=img,
+        # Prevent quota system to fail if the image is an old one.
+        # XXX Quota will be out of sync after the upgrade.
+        if (content.hires_image is not None and
+            content.hires_image.meta_type != 'Silva File'):
+            content.hires_image = None
+        ghost = get_factory(content_haunted)(
+                    ghost=content,
                     container=container,
                     auto_delete=True,
-                    auto_publish=True).modify(img_haunted, img_id).verify()
+                    auto_publish=True).modify(
+            content_haunted, content_id).verify()
+        logger.info(
+            u"Image %s converted to ghost asset.",
+            content_path(content))
+        return ghost
 
     def upgrade_to_file(self, content, data):
         data.seek(0)
@@ -64,7 +74,7 @@ class ImagesUpgrader(BaseUpgrader):
         content_type, encoding = self.guess_buffer_type(full_data)
         if content_type is None or encoding is not None:
             raise UpgradeError(u"Impossible to detect mimetype.", content)
-        # fix some bug in old Images that could be BMP
+        # Fix some bug in old Images that could be BMP
         if content.web_format not in content.web_formats:
             content.web_format = 'JPEG'
         content._image_factory('hires_image', data, content_type)
@@ -134,11 +144,15 @@ class FilesUpgrader(BaseUpgrader):
                 u"Original found for %s, but is not an file, not transforming it.",
                 content_path(content))
             return None
-        return get_factory(file_haunted)(
+        ghost = get_factory(file_haunted)(
                     ghost=content,
                     container=container,
                     auto_delete=True,
                     auto_publish=True).modify(file_haunted, file_id).verify()
+        logger.info(
+            u"File %s converted to ghost asset.",
+            content_path(content))
+        return ghost
 
     def upgrade(self, content):
         identifier = content.getId()
