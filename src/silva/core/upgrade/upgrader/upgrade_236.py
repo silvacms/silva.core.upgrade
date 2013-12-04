@@ -40,7 +40,7 @@ class ImagesUpgrader(BaseUpgrader):
             return None
         if container.get_link_status() is not None:
             logger.warning(
-                u"Invalid ghost folder invalid, not transforming %s.",
+                u"Invalid ghost folder invalid, not transforming: %s.",
                 content_path(content))
             return None
         content_id = content.getId()
@@ -63,7 +63,7 @@ class ImagesUpgrader(BaseUpgrader):
                     auto_publish=True).modify(
             content_haunted, content_id).verify()
         logger.info(
-            u"Image %s converted to ghost asset.",
+            u"Image converted to ghost asset: %s.",
             content_path(content))
         return ghost
 
@@ -84,7 +84,7 @@ class ImagesUpgrader(BaseUpgrader):
             logger.error(error.args[0])
         data.close()
         ICataloging(content).reindex()
-        logger.info(u"Image %s rebuilt.", content_path(content))
+        logger.info(u"Image rebuilt: %s.", content_path(content))
         return content
 
     def upgrade(self, content):
@@ -133,7 +133,7 @@ class FilesUpgrader(BaseUpgrader):
             return None
         if container.get_link_status() is not None:
             logger.warning(
-                u"Invalid ghost folder invalid, not transforming %s.",
+                u"Invalid ghost folder invalid, not transforming: %s.",
                 content_path(content))
             return None
         file_id = content.getId()
@@ -150,7 +150,7 @@ class FilesUpgrader(BaseUpgrader):
                     auto_delete=True,
                     auto_publish=True).modify(file_haunted, file_id).verify()
         logger.info(
-            u"File %s converted to ghost asset.",
+            u"File converted to ghost asset: %s.",
             content_path(content))
         return ghost
 
@@ -179,7 +179,7 @@ class FilesUpgrader(BaseUpgrader):
             content_encoding=content.get_content_encoding())
         container._delObject(identifier)
         container.manage_renameObject(tmp_identifier, identifier)
-        logger.info(u"File %s rebuilt.", content_path(new_file))
+        logger.info(u"File rebuilt: %s.", content_path(new_file))
         return new_file
 
 file_upgrader = FilesUpgrader(VERSION_FINAL, 'Silva File')
