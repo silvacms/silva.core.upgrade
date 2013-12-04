@@ -40,7 +40,7 @@ class ImagesUpgrader(BaseUpgrader):
             return None
         if container.get_link_status() is not None:
             logger.warning(
-                u"Invalid ghost folder invalid, not transforming: %s.",
+                u"Invalid Ghost Folder, not transforming: %s.",
                 content_path(content))
             return None
         content_id = content.getId()
@@ -133,7 +133,7 @@ class FilesUpgrader(BaseUpgrader):
             return None
         if container.get_link_status() is not None:
             logger.warning(
-                u"Invalid ghost folder invalid, not transforming: %s.",
+                u"Invalid Ghost Folder, not transforming: %s.",
                 content_path(content))
             return None
         file_id = content.getId()
