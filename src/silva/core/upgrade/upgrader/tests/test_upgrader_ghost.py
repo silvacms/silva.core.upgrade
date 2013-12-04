@@ -10,11 +10,11 @@ from zope.component import getUtility
 from zope.interface.verify import verifyObject
 
 from Products.Silva.testing import FunctionalLayer
-from silva.core.upgrade.upgrader.upgrade_230 import ghost_upgrader
 from silva.core.interfaces import IPublicationWorkflow
+from silva.core.references.interfaces import IDeleteSourceReferenceValue
 from silva.core.references.interfaces import IReferenceService
 from silva.core.references.interfaces import IWeakReferenceValue
-from silva.core.references.interfaces import IDeleteSourceReferenceValue
+from silva.core.upgrade.upgrader.upgrade_230 import ghost_upgrader
 
 
 class GhostUpgraderTestCase(unittest.TestCase):
@@ -25,7 +25,7 @@ class GhostUpgraderTestCase(unittest.TestCase):
 
     def setUp(self):
         self.root = self.layer.get_application()
-        self.layer.login('editor')
+        self.layer.login('manager')
         factory = self.root.manage_addProduct['Silva']
         factory.manage_addPublication('publication', 'Publication')
         factory.manage_addGhostFolder('ghost_folder', None)
@@ -45,7 +45,7 @@ class GhostUpgraderTestCase(unittest.TestCase):
         version._content_path = ('', 'root', 'document')
         IPublicationWorkflow(self.root.ghost_folder.ghost).publish()
 
-    def test_upgrade_ghost(self):
+    def test_ghost(self):
         version = self.root.publication.ghost.get_viewable()
         self.assertIsNot(version, None)
         self.assertTrue(ghost_upgrader.validate(version))
@@ -66,7 +66,7 @@ class GhostUpgraderTestCase(unittest.TestCase):
             aq_chain(reference.source),
             aq_chain(version))
 
-    def test_upgrade_ghost_invalid_path(self):
+    def test_ghost_invalid_path(self):
         version = self.root.publication.ghost.get_viewable()
         self.assertIsNot(version, None)
         version._content_path = ('', 'root', 'root', 'document')
@@ -79,7 +79,7 @@ class GhostUpgraderTestCase(unittest.TestCase):
             version.get_haunted(),
             None)
 
-    def test_upgrade_ghost_unexisting_path(self):
+    def test_ghost_unexisting_path(self):
         version = self.root.publication.ghost.get_viewable()
         self.assertIsNot(version, None)
         version._content_path = ('', 'root', 'lala')
@@ -92,7 +92,7 @@ class GhostUpgraderTestCase(unittest.TestCase):
             version.get_haunted(),
             None)
 
-    def test_upgrade_ghost_in_ghost_folder(self):
+    def test_ghost_in_ghost_folder(self):
         version = self.root.ghost_folder.ghost.get_viewable()
         self.assertIsNot(version, None)
         self.assertTrue(ghost_upgrader.validate(version))
@@ -113,7 +113,7 @@ class GhostUpgraderTestCase(unittest.TestCase):
             aq_chain(reference.source),
             aq_chain(version))
 
-    def test_upgrade_ghost_folder(self):
+    def test_ghost_folder(self):
         folder = self.root.ghost_folder
         self.assertTrue(ghost_upgrader.validate(folder))
         self.assertEqual(ghost_upgrader.upgrade(folder), folder)

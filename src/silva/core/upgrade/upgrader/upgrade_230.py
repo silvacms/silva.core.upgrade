@@ -18,7 +18,7 @@ from silva.core.interfaces import ISilvaObject, IVersionedContent, IGhostFolder
 from silva.core.references.interfaces import IReferenceService
 from silva.core.services.interfaces import IContainerPolicyService
 from silva.core.services.interfaces import IMemberService
-from silva.core.upgrade.upgrade import BaseUpgrader, content_path
+from silva.core.upgrade.upgrade import BaseUpgrader, content_path, AnyMetaType
 
 logger = logging.getLogger('silva.core.upgrade')
 
@@ -29,6 +29,7 @@ logger = logging.getLogger('silva.core.upgrade')
 
 VERSION_B1='2.3b1'
 VERSION_B2='2.3b2'
+VERSION_B3='2.3b3'              # Added to convert files after ghosts.
 VERSION_FINAL='2.3'
 
 
@@ -198,11 +199,14 @@ class GhostUpgrader(BaseUpgrader):
         return ghost
 
 
+ghost_upgrader = GhostUpgrader(
+    VERSION_B1, ["Silva Ghost Version", "Silva Ghost Folder"])
+
+
 class VersionedContentUpgrader(BaseUpgrader):
     """Remove cache_data from versioned content as this is not used
     anymore.
     """
-
     tags = {'pre',}
 
     def validate(self, content):
@@ -216,6 +220,8 @@ class VersionedContentUpgrader(BaseUpgrader):
         if '_cached_data' in content.__dict__:
             del content._cached_data
         return content
+
+cache_upgrader = VersionedContentUpgrader(VERSION_B1, AnyMetaType)
 
 
 class LinkVersionUpgrader(BaseUpgrader):
@@ -246,10 +252,20 @@ class LinkVersionUpgrader(BaseUpgrader):
 
 link_upgrader = LinkVersionUpgrader(VERSION_B1, 'Silva Link Version')
 
-cache_upgrader = VersionedContentUpgrader(
-    VERSION_B1, ['Silva Ghost', 'Silva Link'])
-ghost_upgrader = GhostUpgrader(
-    VERSION_B1, ["Silva Ghost Version", "Silva Ghost Folder"])
+
+class CSVSourceUpgrader(BaseUpgrader):
+
+    tags = {'pre',}
+
+    def upgrade(self, content):
+        from Products.SilvaExternalSources.CSVSource import (
+            reset_parameter_form, reset_table_layout)
+        reset_parameter_form(content)
+        reset_table_layout(content)
+        return content
+
+
+csvsource_upgrader = CSVSourceUpgrader(VERSION_B2, 'Silva CSV Source')
 
 
 class SecondRootUpgrader(BaseUpgrader):
@@ -311,20 +327,6 @@ class SecondRootUpgrader(BaseUpgrader):
             delattr(root, '__initialization__')
         return root
 
-
-class CSVSourceUpgrader(BaseUpgrader):
-
-    tags = {'pre',}
-
-    def upgrade(self, content):
-        from Products.SilvaExternalSources.CSVSource import (
-            reset_parameter_form, reset_table_layout)
-        reset_parameter_form(content)
-        reset_table_layout(content)
-        return content
-
-
-csvsource_upgrader = CSVSourceUpgrader(VERSION_B2, 'Silva CSV Source')
 second_root_upgrader = SecondRootUpgrader(VERSION_B2, 'Silva Root')
 
 

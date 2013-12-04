@@ -2,13 +2,11 @@
 # Copyright (c) 2002-2013 Infrae. All rights reserved.
 # See also LICENSE.txt
 
-from cStringIO import StringIO
 import logging
 import os
 
 from ZPublisher.BeforeTraverse import unregisterBeforeTraverse
 from zope.annotation.interfaces import IAnnotations
-from zope.component import getUtility
 from zope.interface import implements
 from zope.location.interfaces import ISite
 from zope.site.hooks import setSite, setHooks
@@ -26,9 +24,7 @@ from Acquisition import aq_base
 
 from silva.core import interfaces
 from silva.core import conf as silvaconf
-from silva.core.interfaces.errors import UpgradeError
 from silva.core.services.catalog import CatalogService
-from silva.core.services.interfaces import ICataloging
 from silva.core.services.interfaces import IMetadataService
 from silva.core.services.interfaces import IExtensionService
 from silva.core.services.interfaces import ICatalogService, IFilesService
@@ -148,103 +144,6 @@ class RootPostUpgrader(BaseUpgrader):
         return root
 
 root_post_upgrader = RootPostUpgrader(VERSION_A1, 'Silva Root')
-
-
-class ImagesUpgrader(BaseUpgrader):
-    """Convert image storage to blob storage.
-    """
-    _guess_buffer_type = None
-
-    tags = {'pre',}
-
-    @property
-    def guess_buffer_type(self):
-        if self._guess_buffer_type is None:
-            self._guess_buffer_type = getUtility(
-                interfaces.IMimeTypeClassifier).guess_buffer_type
-        return self._guess_buffer_type
-
-    def upgrade(self, img):
-        # Add stuff here
-        data = None
-        hires_image = img.hires_image
-        if hires_image is None:
-            hires_image = img.image
-            if hires_image is None:
-                # Can't do anything
-                return img
-        if hires_image.meta_type == 'Image':
-            data = StringIO(str(hires_image.data))
-        elif hires_image.meta_type in ('ExtImage', 'ExtFile'):
-            filename = hires_image.get_filename()
-            try:
-                data = open(filename, 'rb')
-            except IOError:
-                raise UpgradeError(u"Missing file %s." % filename, img)
-        elif hires_image.meta_type == 'Silva File':
-            # Already converted ?
-            return img
-        else:
-            raise UpgradeError(u"Unknown mimetype.", img)
-        data.seek(0)
-        full_data = data.read()
-        data.seek(0)
-        content_type, encoding = self.guess_buffer_type(full_data)
-        if content_type is None or encoding is not None:
-            raise UpgradeError(u"Impossible to detect mimetype.", img)
-        # fix some bug in old Images that could be BMP
-        if img.web_format not in img.web_formats:
-            img.web_format = 'JPEG'
-        img._image_factory('hires_image', data, content_type)
-        try:
-            img._create_derived_images()
-        except ValueError as error:
-            logger.error(error.args[0])
-        data.close()
-        ICataloging(img).reindex()
-        logger.info(u"Update image %s rebuilt.", content_path(img))
-        return img
-
-
-images_upgrader = ImagesUpgrader(VERSION_A1, 'Silva Image')
-
-
-class FilesUpgrader(BaseUpgrader):
-    """Convert storage for a file to blob storage.
-    """
-
-    tags = {'pre',}
-
-    def validate(self, content):
-        if interfaces.IBlobFile.providedBy(content):
-            return False
-        return interfaces.IFile.providedBy(content)
-
-    def upgrade(self, content):
-        identifier = content.getId()
-
-        tmp_identifier = identifier + 'conv_storage'
-        new_file = BlobFile(identifier)
-        container = content.aq_parent
-        if not interfaces.IContainer.providedBy(container):
-            logger.error(u'Invalid file: %s', content_path(content))
-            # Self-autodestruct file.
-            container._delObject(identifier)
-            raise StopIteration
-        container._setObject(tmp_identifier, new_file)
-        new_file = container._getOb(tmp_identifier)
-        self.replace_references(content, new_file)
-        self.replace(content, new_file)
-        new_file.set_file(
-            content.get_file_fd(),
-            content_type=content.get_content_type(),
-            content_encoding=content.get_content_encoding())
-        container._delObject(identifier)
-        container.manage_renameObject(tmp_identifier, identifier)
-        logger.info(u"File %s migrated.", content_path(new_file))
-        return new_file
-
-files_upgrader = FilesUpgrader(VERSION_A1, 'Silva File')
 
 
 
