@@ -6,14 +6,15 @@ Introduction
 ============
 
 ``silva.core.upgrade`` provides an upgrade system that let you upgrade
-the Silva version of already created Silva instances.
+an already created `Silva`_ site.
 
-This is available in Silva, or via the command line tool ``silva`` and
-the option ``update``.
+This is available in the Silva management interface, or via the
+command line tool ``silva`` and the option ``update``.
 
 Code repository
 ===============
 
-You can find the code of this extension in Mercurial:
-https://hg.infrae.com/silva.core.upgrade/.
+You can find the code of this extension in Git:
+https://github.com/silvacms/silva.core.upgrade
 
+.. _Silva: http://silvacms.org

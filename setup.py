@@ -13,7 +13,7 @@ tests_require = [
 
 setup(name='silva.core.upgrade',
       version=version,
-      description="Generic upgrade functions used in Silva",
+      description="Upgrade between the different versions of Silva CMS",
       long_description=open("README.txt").read() + "\n" +
                        open(os.path.join("docs", "HISTORY.txt")).read(),
       classifiers=[
@@ -25,7 +25,7 @@ setup(name='silva.core.upgrade',
       keywords='silva core upgrade',
       author='Sylvain Viollon',
       author_email='info@infrae.com',
-      url='http://infrae.com/products/silva',
+      url='https://github.com/silvacms/silva.core.upgrade',
       license='BSD',
       package_dir={'': 'src'},
       packages=find_packages('src'),
