@@ -6,10 +6,11 @@ Introduction
 ============
 
 ``silva.core.upgrade`` provides an upgrade system that let you upgrade
-an already created `Silva`_ site.
+an already created `Silva`_ site to a newer version of `Silva`_.
 
-This is available in the Silva management interface, or via the
-command line tool ``silva`` and the option ``update``.
+This feature is available in the Zope management interface on the
+``service_extensions`` service, or via the command line tool ``silva``
+and the option ``update``.
 
 Code repository
 ===============

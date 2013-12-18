@@ -1,10 +1,12 @@
 Changelog
 =========
 
-3.0.2 (unreleased)
+3.0.2 (2013/12/18)
 ------------------
 
-* ...
+* Convert Silva File and Silva Image to Silva Ghost Asset if they are
+  located inside a valid Silva Ghost Folder and the original files
+  exists.
 
 3.0.1 (2013/10/09)
 ------------------
